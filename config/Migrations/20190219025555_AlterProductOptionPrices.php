@@ -34,9 +34,9 @@ class AlterProductOptionPrices extends AbstractMigration
             $table->removeColumn('height');
         }
 
-        if ($table->hasIndex('key_form')) {
-            $table->removeIndex(['key_form']);
-        }
+        //if ($table->hasIndex('key_form')) {
+        //    $table->removeIndex(['key_form']);
+        //}
 
         if ($table->hasColumn('key_form')) {
             $table->removeColumn('key_form');
