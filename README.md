@@ -31,6 +31,12 @@ up the built-in webserver with:
 bin/cake server -p 8765
 ```
 
+Custom seed :
+
+```bash
+php bin/cake.php migrations seed --seed SortSeed
+```
+
 Then visit `http://localhost:8765` to see the welcome page.
 
 ## Update
