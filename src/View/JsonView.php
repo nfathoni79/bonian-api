@@ -62,7 +62,7 @@ class JsonView extends View
 
         $this->Blocks->set('content', $this->renderLayout(json_encode($content), $this->layout));
 
-        $this->hasRendered = true;
+//        $this->hasRendered = true;
 
         return $this->Blocks->get('content');
     }

@@ -14,7 +14,7 @@
  */
 namespace App\Controller\V1\Web;
 
-use App\Controller\AppController As Controller;
+use App\Controller\V1\AppController As Controller;
 //use Cake\Controller\Controller;
 use Cake\Event\Event;
 
@@ -53,4 +53,5 @@ class AppController extends Controller
          */
         //$this->loadComponent('Security');
     }
+
 }

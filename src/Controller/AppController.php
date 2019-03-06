@@ -61,7 +61,9 @@ class AppController extends Controller
      */
     public function beforeRender(Event $event)
     {
-        $this->viewBuilder()->setClassName('App.Json');
-        return null;
+
+        //$this->viewBuilder()->setClassName('App.Json');
+        //return null;
+
     }
 }
