@@ -16,11 +16,11 @@ use Cake\ORM\Entity;
  * @property string $path
  * @property int|null $counter_view
  *
- * @property \App\Model\Entity\ParentProductCategory $parent_product_category
+ * @property \App\Model\Entity\ProductCategory $parent_product_category
  * @property \App\Model\Entity\Attribute[] $attributes
  * @property \App\Model\Entity\Brand[] $brands
  * @property \App\Model\Entity\CustomerLogBrowsing[] $customer_log_browsings
- * @property \App\Model\Entity\ChildProductCategory[] $child_product_categories
+ * @property \App\Model\Entity\ProductCategory[] $child_product_categories
  * @property \App\Model\Entity\ProductToCategory[] $product_to_categories
  */
 class ProductCategory extends Entity
