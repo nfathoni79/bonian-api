@@ -91,6 +91,32 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->fallbacks(DashedRoute::class);
 });
 
+Router::scope('/apis', function (RouteBuilder $routes) {
+    //$routes->applyMiddleware('ratelimit', 'auth.api');
+    $routes->scope('/v1', function (RouteBuilder $routes) {
+        //$routes->applyMiddleware('v1compat');
+        // Define routes here.
+        $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+    });
+});
+
+Router::prefix('v1', function (RouteBuilder $routes) {
+    // All routes here will be prefixed with `/admin`
+    // And have the prefix => admin route element added.
+    $routes->prefix('web', function(RouteBuilder $routes) {
+        $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+    });
+
+    $routes->prefix('mobile', function(RouteBuilder $routes) {
+        $routes->connect('/:controller');
+        $routes->connect('/:controller/:action');
+        $routes->connect('/:controller/:action/*');
+    });
+
+    $routes->fallbacks(DashedRoute::class);
+});
+
+
 /**
  * If you need a different set of middleware or none at all,
  * open new scope and define routes there.

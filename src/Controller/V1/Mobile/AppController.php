@@ -12,9 +12,10 @@
  * @since     0.2.9
  * @license   https://opensource.org/licenses/mit-license.php MIT License
  */
-namespace App\Controller;
+namespace App\Controller\V1\Mobile;
 
-use Cake\Controller\Controller;
+use App\Controller\AppController As Controller;
+//use Cake\Controller\Controller;
 use Cake\Event\Event;
 
 /**
@@ -51,17 +52,5 @@ class AppController extends Controller
          * see https://book.cakephp.org/3.0/en/controllers/components/security.html
          */
         //$this->loadComponent('Security');
-    }
-
-    /**
-     * beforeRender callback
-     *
-     * @param Event $event An Event instance
-     * @return null
-     */
-    public function beforeRender(Event $event)
-    {
-        $this->viewBuilder()->setClassName('App.Json');
-        return null;
     }
 }
