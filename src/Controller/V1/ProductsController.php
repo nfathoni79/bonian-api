@@ -26,9 +26,63 @@ class ProductsController extends Controller
     public function index($slug = null)
     {
         $product = $this->Products->find()
-            ->select()
-            ->where(['Products.slug' => $slug]);
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'model',
+                'price',
+                'price_sale',
+                'highlight',
+                'profile',
+                'view',
+                'point',
+                'created'
+            ])
+            ->where(['Products.slug' => $slug])
+            ->contain([
+                'ProductImages' => [
+                    'fields' => [
+                        'name',
+                        'product_id',
+                    ]
+                ],
+                'ProductOptionPrices' => [
+                    'fields' => [
+                        'id',
+                        'product_id',
+                        'sku',
+                        'expired',
+                        'price'
+                    ],
+                    'ProductOptionValueLists' => [
+                        'Options' => [
+                            'fields' => ['name']
+                        ],
+                        'OptionValues' => [
+                            'fields' => ['name']
+                        ]
+                    ],
+                    'ProductOptionStocks'
+                ]
+            ])
+            ->map(function (\App\Model\Entity\Product $row) {
+                $row->set('created', $row->created->timestamp);
+                $row->variant = $row->get('product_option_prices');
+                unset($row->product_option_prices);
+                return $row;
+            })
+            //->combine('name', 'created')
+            ->first();
+
+        if ($product && false) {
+            $product->set('view', $product->get('view') + 1);
+            $this->Products->save($product);
+            unset($product->modified);
+        }
+
         $this->set(compact('product'));
+
     }
 
 }
