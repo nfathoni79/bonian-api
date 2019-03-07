@@ -31,6 +31,7 @@ class ProductsController extends Controller
                 'name',
                 'slug',
                 'model',
+                'video_url',
                 'price',
                 'price_sale',
                 'highlight',
@@ -73,6 +74,10 @@ class ProductsController extends Controller
                 return $row;
             })
             ->first();
+
+        /**
+         * note price di timpa jika ada flash sale. ambil dari flash sale harga nya
+         */
 
         if ($product) {
             $product->set('view', $product->get('view') + 1);
