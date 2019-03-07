@@ -72,13 +72,15 @@ class ProductsController extends Controller
                 unset($row->product_option_prices);
                 return $row;
             })
-            //->combine('name', 'created')
             ->first();
 
-        if ($product && false) {
+        if ($product) {
             $product->set('view', $product->get('view') + 1);
             $this->Products->save($product);
             unset($product->modified);
+        } else {
+            //if product not found set response code to 404
+            $this->setResponse($this->response->withStatus(404, 'Product not found'));
         }
 
         $this->set(compact('product'));
