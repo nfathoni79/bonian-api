@@ -40,7 +40,7 @@ class PagesController extends AppController
      */
     public function display(){
         $this->autoRender = false;
-        echo 'Forbidden access;';
+        echo 'Forbidden access';
         exit;
     }
 }

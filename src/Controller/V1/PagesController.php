@@ -41,5 +41,46 @@ class PagesController extends Controller
      */
     public function home(){
 
+//        public $paginate = [
+//            'sortWhiteList' => [
+//                'transaction_id', 'amount'
+//            ]
+//        ];
+//        $this->request->allowMethod('get');
+//
+//        $currency = $this->request->getQuery('currency');
+//
+//
+//        $transactions = $this->TransactionMutations->find()
+//            ->select([
+//                'TransactionMutations.transaction_id',
+//                'TransactionMutations.amount',
+//                'TransactionMutations.balance',
+//                'TransactionMutations.currency',
+//                'Transactions.transaction_type_id',
+//                'Transactions.txid',
+//                'Transactions.gross',
+//                'Transactions.fee',
+//                'Transactions.tax',
+//                'Transactions.description',
+//                'TransactionTypes.name'
+//            ])
+//            ->contain(['Transactions.TransactionTypes'])
+//            ->where([
+//                'TransactionMutations.client_id' => $this->Authenticate->getId()
+//            ]);
+//
+//        if ($currency && strlen($currency) == 3) {
+//            $transactions->where([
+//                'currency' => $currency
+//            ]);
+//        }
+//
+//        $transactions
+//            ->orderDesc('TransactionMutations.id');
+//
+//        $data = $this->paginate($transactions);
+//
+//        $this->set(compact('data'));
     }
 }
