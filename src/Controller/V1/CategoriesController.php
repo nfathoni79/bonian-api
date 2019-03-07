@@ -25,9 +25,8 @@ class CategoriesController extends Controller
      */
     public function index()
     {
-        $categories = $this->ProductCategories->find('threaded')->toArray();
-        debug($categories);
-        exit;
+        $categories = $this->ProductCategories->find('threaded')
+            ->select(['id','parent_id','name'])->toArray();
         $this->set(compact('categories'));
     }
 
