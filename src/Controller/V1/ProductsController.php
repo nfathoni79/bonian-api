@@ -81,6 +81,7 @@ class ProductsController extends Controller
                     $stocks = [];
                     foreach($val->product_option_stocks as $i => $stock) {
                         $stocks[] = [
+                            'stock_id' => $stock['id'],
                             'branch_id' => $stock['branch_id'],
                             'branch_name' => $stock['branch']['name'],
                             'stock' => $stock['stock'],
@@ -104,6 +105,7 @@ class ProductsController extends Controller
                         }
                     }
                     unset($row->variant[$key]['product_option_value_lists']);
+                    unset($row->variant[$key]['product_id']);
                     $row->variant[$key]->options = $options;
 
                 }
