@@ -105,6 +105,9 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     // And have the prefix => admin route element added.
     $routes->prefix('web', function(RouteBuilder $routes) {
         $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+        $routes->connect('/:controller');
+        $routes->connect('/:controller/:action');
+        $routes->connect('/:controller/:action/*');
     });
 
     $routes->prefix('mobile', function(RouteBuilder $routes) {
