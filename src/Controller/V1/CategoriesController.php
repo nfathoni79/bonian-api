@@ -26,7 +26,28 @@ class CategoriesController extends Controller
     public function index()
     {
         $categories = $this->ProductCategories->find('threaded')
-            ->select(['id','parent_id','name'])->toArray();
+            ->select(['id','parent_id','name', 'slug','path'])
+            ->map(function (\App\Model\Entity\ProductCategory $row) {
+                if(is_array($row['children'])){
+                    foreach ($row['children'] as $key => $vals){
+                        unset($row->children[$key]->id);
+                        unset($row->children[$key]->parent_id);
+                        unset($row->children[$key]->path);
+                        if(is_array($vals['children'])){
+                            foreach ($vals['children'] as $k => $v){
+                                unset($row->children[$key]->children[$k]->id);
+                                unset($row->children[$key]->children[$k]->parent_id);
+                                unset($row->children[$key]->children[$k]->children);
+                                unset($row->children[$key]->children[$k]->path);
+                            }
+                        }
+                    }
+                }
+                unset($row->id);
+                unset($row->parent_id);
+                return $row;
+            })
+        ;
         $this->set(compact('categories'));
     }
 
