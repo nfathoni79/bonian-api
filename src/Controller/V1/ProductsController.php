@@ -2,7 +2,7 @@
 namespace App\Controller\V1;
 
 use App\Controller\V1\AppController as Controller;
-
+use Cake\Utility\Hash;
 /**
  * Categories Controller
  *
@@ -64,13 +64,53 @@ class ProductsController extends Controller
                             'fields' => ['name']
                         ]
                     ],
-                    'ProductOptionStocks'
+                    'ProductOptionStocks' => [
+                        'Branches' => [
+                            'fields' => [
+                                'id', 'name'
+                            ]
+                        ]
+                    ]
                 ]
             ])
             ->map(function (\App\Model\Entity\Product $row) {
                 $row->set('created', $row->created->timestamp);
                 $row->variant = $row->get('product_option_prices');
-                unset($row->product_option_prices);
+
+                foreach($row->variant as $key => $val) {
+                    $stocks = [];
+                    foreach($val->product_option_stocks as $i => $stock) {
+                        $stocks[] = [
+                            'branch_id' => $stock['branch_id'],
+                            'branch_name' => $stock['branch']['name'],
+                            'stock' => $stock['stock'],
+                            'weight' => $stock['weight'],
+                            'width' => $stock['width'],
+                            'length' => $stock['length'],
+                            'height' => $stock['height'],
+                        ];
+                    }
+                    unset($row->variant[$key]['product_option_stocks']);
+                    $row->variant[$key]->stocks = $stocks;
+
+                    $options = [];
+                    foreach($val->product_option_value_lists as $i => $list) {
+                        if (!isset($options[$list->option->name])) {
+                            $options[$list->option->name] = [];
+                        }
+
+                        if (!in_array($list->option_value->name, $options[$list->option->name])) {
+                            $options[$list->option->name][] = $list->option_value->name;
+                        }
+                    }
+                    unset($row->variant[$key]['product_option_value_lists']);
+                    $row->variant[$key]->options = $options;
+
+                }
+
+                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+
+                unset($row->product_option_prices, $row->product_images);
                 return $row;
             })
             ->first();
