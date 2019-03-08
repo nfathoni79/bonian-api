@@ -50,7 +50,7 @@ class AppController extends Controller
                 'Ajax' => [
                     //'finder' => 'auth',
                     'userModel' => 'Customers',
-                    'fields' => ['username' => 'username', 'password' => 'password']
+                    'fields' => ['username' => 'email', 'password' => 'password']
                 ]
             ],
             'unauthorizedRedirect' => false,
