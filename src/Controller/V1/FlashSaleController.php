@@ -58,6 +58,17 @@ class FlashSaleController extends Controller
                                 'product_id',
                             ]
                         ],
+                        'ProductToCategories' => [
+                            'fields' => [
+                                'product_id',
+                                'product_category_id',
+                            ],
+                            'ProductCategories' => [
+                                'fields' => [
+                                    'name'
+                                ]
+                            ]
+                        ],
                     ]
                 ]
             ])
@@ -106,7 +117,9 @@ class FlashSaleController extends Controller
 
                     /* Images*/
                     $row->product_deal_details[$key]->product->images = Hash::extract($row->product_deal_details[$key]->product->product_images, '{n}.name');
+                    $row->product_deal_details[$key]->product->categories = $row->product_deal_details[$key]->product->product_to_categories[0]->product_category->name;
 
+                    unset($row->product_deal_details[$key]->product->product_to_categories);
                     unset($row->product_deal_details[$key]->product->product_images);
                     unset($row->product_deal_details[$key]->product->id);
                     unset($row->product_deal_details[$key]->product_id);
