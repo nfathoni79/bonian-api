@@ -109,7 +109,7 @@ class FlashSaleController extends Controller
 
                     unset($row->product_deal_details[$key]->product->product_images);
                     unset($row->product_deal_details[$key]->product->id);
-//                    unset($row->product_deal_details[$key]->product_id);
+                    unset($row->product_deal_details[$key]->product_id);
                     unset($row->product_deal_details[$key]->product_deal_id);
                     unset($row->product_deal_details[$key]->price_sale);
                     unset($row->product_deal_details[$key]->start_stock);
