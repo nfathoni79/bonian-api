@@ -2,7 +2,7 @@
 namespace App\Controller\V1;
 
 use App\Controller\V1\AppController as Controller;
-use Cake\Utility\Hash; 
+use Cake\Utility\Hash;
 
 /**
  * Categories Controller
