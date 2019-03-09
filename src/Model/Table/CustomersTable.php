@@ -55,10 +55,10 @@ class CustomersTable extends Table
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('RefferalCustomers', [
-            'foreignKey' => 'refferal_customer_id',
-            'joinType' => 'INNER'
-        ]);
+//        $this->belongsTo('RefferalCustomers', [
+//            'foreignKey' => 'refferal_customer_id',
+//            'joinType' => 'INNER'
+//        ]);
         $this->belongsTo('CustomerGroups', [
             'foreignKey' => 'customer_group_id'
         ]);
@@ -122,33 +122,46 @@ class CustomersTable extends Table
             ->allowEmptyString('reffcode', false);
 
         $validator
-            ->email('email')
-            ->requirePresence('email', 'create')
-            ->allowEmptyString('email', false);
-
-        $validator
             ->scalar('username')
             ->maxLength('username', 30)
             ->requirePresence('username', 'create')
             ->allowEmptyString('username', false);
 
         $validator
-            ->scalar('password')
-            ->maxLength('password', 255)
+            ->email('email')
+            ->requirePresence('email', 'create')
+            ->notEmpty('email')
+            ->add('email', 'unique', ['rule' => 'validateUnique', 'provider' => 'table', 'message' => 'Email address already exist']);
+
+        $validator
             ->requirePresence('password', 'create')
-            ->allowEmptyString('password', false);
+            ->notEmpty('password', __d('MemberPanel','You must enter a password'), 'create')
+            ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
+            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password min 6 char at least one uppercase letter, one lowercase letter and one number');
 
         $validator
-            ->scalar('first_name')
-            ->maxLength('first_name', 40)
-            ->requirePresence('first_name', 'create')
-            ->allowEmptyString('first_name', false);
+            ->requirePresence('cpassword', 'create')
+            ->notEmpty('cpassword')
+            ->allowEmpty('cpassword', function ($context) {
+                return !isset($context['data']['password']);
+            })
+            ->equalToField('cpassword', 'password', 'Confirmation password does not match with your password')
+            ->add('cpassword', 'compareWith', [
+                'rule' => ['compareWith', 'password'],
+                'message' => __d('MemberPanel','Passwords do not match.')
+            ]);
 
-        $validator
-            ->scalar('last_name')
-            ->maxLength('last_name', 30)
-            ->requirePresence('last_name', 'create')
-            ->allowEmptyString('last_name', false);
+//        $validator
+//            ->scalar('first_name')
+//            ->maxLength('first_name', 40)
+//            ->requirePresence('first_name', 'create')
+//            ->allowEmptyString('first_name', false);
+//
+//        $validator
+//            ->scalar('last_name')
+//            ->maxLength('last_name', 30)
+//            ->requirePresence('last_name', 'create')
+//            ->allowEmptyString('last_name', false);
 
         $validator
             ->scalar('phone')
@@ -156,20 +169,15 @@ class CustomersTable extends Table
             ->requirePresence('phone', 'create')
             ->allowEmptyString('phone', false);
 
-        $validator
-            ->date('dob')
-            ->requirePresence('dob', 'create')
-            ->allowEmptyDate('dob', false);
+//        $validator
+//            ->date('dob')
+//            ->requirePresence('dob', 'create')
+//            ->allowEmptyDate('dob', false);
 
         $validator
             ->integer('is_verified')
             ->requirePresence('is_verified', 'create')
             ->allowEmptyString('is_verified', false);
-
-        $validator
-            ->scalar('activation')
-            ->maxLength('activation', 255)
-            ->allowEmptyString('activation');
 
         $validator
             ->scalar('platforrm')
@@ -180,6 +188,37 @@ class CustomersTable extends Table
         return $validator;
     }
 
+    public function validationPassword(Validator $validator)
+    {
+        $validator
+            ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
+            ->notEqualToField('password', 'current_password', __d('MemberPanel', 'New password cannot match with your current password'))
+            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
+                __d('MemberPanel', 'password min 6 char at least one uppercase letter, one lowercase letter and one number'));
+
+        $validator
+            ->equalToField('repeat_password', 'password', __d('MemberPanel', 'Repeat password does not match with your password'))
+            ->notEqualToField('repeat_password', 'current_password', __d('MemberPanel', 'Repeat password cannot match with your current password'))
+            ->allowEmpty('repeat_password', function ($context) {
+                return !isset($context['data']['password']);
+            });
+        return $validator;
+    }
+
+    public function validationPasswords(Validator $validator)
+    {
+        $validator
+            ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
+            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
+                __d('MemberPanel', 'password min 6 char at least one uppercase letter, one lowercase letter and one number'));
+
+        $validator
+            ->equalToField('repeat_password', 'password', __d('MemberPanel', 'Repeat password does not match with your password'))
+            ->allowEmpty('repeat_password', function ($context) {
+                return !isset($context['data']['password']);
+            });
+        return $validator;
+    }
     /**
      * Returns a rules checker object that will be used for validating
      * application integrity.
@@ -191,7 +230,8 @@ class CustomersTable extends Table
     {
         $rules->add($rules->isUnique(['email']));
         $rules->add($rules->isUnique(['username']));
-        $rules->add($rules->existsIn(['refferal_customer_id'], 'RefferalCustomers'));
+        $rules->add($rules->isUnique(['reffcode']));
+//        $rules->add($rules->existsIn(['refferal_customer_id'], 'RefferalCustomers'));
         $rules->add($rules->existsIn(['customer_group_id'], 'CustomerGroups'));
         $rules->add($rules->existsIn(['customer_status_id'], 'CustomerStatuses'));
 
