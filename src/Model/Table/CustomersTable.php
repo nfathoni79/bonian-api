@@ -135,9 +135,10 @@ class CustomersTable extends Table
 
         $validator
             ->requirePresence('password', 'create')
-            ->notEmpty('password', __d('MemberPanel','You must enter a password'), 'create')
+            ->notEmpty('password', 'You must enter a password', 'create')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
             ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password min 6 char at least one uppercase letter, one lowercase letter and one number');
+
 
         $validator
             ->requirePresence('cpassword', 'create')
@@ -148,7 +149,7 @@ class CustomersTable extends Table
             ->equalToField('cpassword', 'password', 'Confirmation password does not match with your password')
             ->add('cpassword', 'compareWith', [
                 'rule' => ['compareWith', 'password'],
-                'message' => __d('MemberPanel','Passwords do not match.')
+                'message' => 'Passwords do not match.'
             ]);
 
 //        $validator
@@ -192,13 +193,13 @@ class CustomersTable extends Table
     {
         $validator
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->notEqualToField('password', 'current_password', __d('MemberPanel', 'New password cannot match with your current password'))
+            ->notEqualToField('password', 'current_password', 'New password cannot match with your current password')
             ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
-                __d('MemberPanel', 'password min 6 char at least one uppercase letter, one lowercase letter and one number'));
+                'password min 6 char at least one uppercase letter, one lowercase letter and one number');
 
         $validator
-            ->equalToField('repeat_password', 'password', __d('MemberPanel', 'Repeat password does not match with your password'))
-            ->notEqualToField('repeat_password', 'current_password', __d('MemberPanel', 'Repeat password cannot match with your current password'))
+            ->equalToField('repeat_password', 'password', 'Repeat password does not match with your password')
+            ->notEqualToField('repeat_password', 'current_password', 'Repeat password cannot match with your current password')
             ->allowEmpty('repeat_password', function ($context) {
                 return !isset($context['data']['password']);
             });
@@ -210,10 +211,10 @@ class CustomersTable extends Table
         $validator
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
             ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
-                __d('MemberPanel', 'password min 6 char at least one uppercase letter, one lowercase letter and one number'));
+                'password min 6 char at least one uppercase letter, one lowercase letter and one number');
 
         $validator
-            ->equalToField('repeat_password', 'password', __d('MemberPanel', 'Repeat password does not match with your password'))
+            ->equalToField('repeat_password', 'password', 'Repeat password does not match with your password')
             ->allowEmpty('repeat_password', function ($context) {
                 return !isset($context['data']['password']);
             });
