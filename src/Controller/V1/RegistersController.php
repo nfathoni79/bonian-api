@@ -24,11 +24,11 @@ class RegistersController extends Controller
     public function initialize()
     {
         parent::initialize();
-        $this->loadModel('AdminPanel.Customers');
-        $this->loadModel('AdminPanel.CustomerBalances');
-        $this->loadModel('AdminPanel.CustomerMutationAmounts');
-        $this->loadModel('AdminPanel.CustomerMutationPoints');
-        $this->loadModel('AdminPanel.CustomerAddreses');
+        $this->loadModel('Customers');
+        $this->loadModel('CustomerBalances');
+        $this->loadModel('CustomerMutationAmounts');
+        $this->loadModel('CustomerMutationPoints');
+        $this->loadModel('CustomerAddreses');
     }
 
     private function reffcode($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'){
@@ -52,7 +52,7 @@ class RegistersController extends Controller
 
         $validator
             ->requirePresence('auth_code')
-            ->notEmpty('auth_code', __d('MemberPanel', 'This field is required'))
+            ->notEmpty('auth_code', 'This field is required')
             ->add('auth_code', 'is_valid', [
                 'rule' => function($value) {
                     return $this->SendAuth->isValid($value);
@@ -86,7 +86,7 @@ class RegistersController extends Controller
                     $this->SendAuth->setUsed();
                     $this->Mailer
                         ->setVar([
-                            'code' => \Cake\Utility\Text::uuid(),
+                            'code' => $save->get('activation'),
                             'name' => $save->get('username'),
                             'email' => $save->get('email'),
                         ])
@@ -143,7 +143,7 @@ class RegistersController extends Controller
                 if($this->Customers->save($update)){
                     $this->Mailer
                         ->setVar([
-                            'code' => \Cake\Utility\Text::uuid(),
+                            'code' => $customers->get('activation'),
                             'name' => $customers->get('username'),
                             'email' => $customers->get('email'),
                         ])
