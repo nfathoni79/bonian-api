@@ -152,6 +152,8 @@ class ProductsController extends Controller
                 'id',
                 'name',
                 'slug',
+                'price',
+                'price_sale',
                 'point',
                 'created'
             ])
