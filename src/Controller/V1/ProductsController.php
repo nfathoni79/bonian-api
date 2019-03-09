@@ -8,6 +8,7 @@ use Cake\I18n\Time;
  * Categories Controller
  *
  * @property \App\Model\Table\ProductsTable $Products
+ * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ProductsController extends Controller
@@ -17,6 +18,7 @@ class ProductsController extends Controller
     {
         parent::initialize();
         $this->loadModel('Products');
+        $this->loadModel('ProductDealDetails');
     }
 
     /**
@@ -129,11 +131,33 @@ class ProductsController extends Controller
         /**
          * note price di timpa jika ada flash sale. ambil dari flash sale harga nya
          */
+        $product_deals = $this->ProductDealDetails->find()
+            ->where([
+                'ProductDeals.status' => 1,
+                'ProductDealDetails.product_id' => $product->get('id'),
+            ])
+            ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                $exp->lte('date_start', (Time::now())->format('Y-m-d H:i:s'));
+                $exp->gte('date_end', (Time::now())->format('Y-m-d H:i:s'));
+                return $exp;
+            })
+            ->contain([
+                'ProductDeals'
+            ])
+            ->first();
+
+        if ($product_deals) {
+            $product->set('price_sale', $product_deals->get('price_sale'));
+            $product->set('is_flash_sale', true);
+        } else {
+            $product->set('is_flash_sale', false);
+        }
 
         if ($product) {
-            $product->set('view', $product->get('view') + 1);
-            $this->Products->save($product);
-            unset($product->modified);
+            $saveProduct = clone $product;
+            $saveProduct->set('view', $saveProduct->get('view') + 1);
+            $this->Products->save($saveProduct);
+            //unset($product->modified);
         } else {
             //if product not found set response code to 404
             $this->setResponse($this->response->withStatus(404, 'Product not found'));
