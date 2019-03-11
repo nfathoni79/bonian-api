@@ -14,7 +14,7 @@
  */
 namespace App\Controller\V1\Web;
 
-
+use Cake\I18n\Time;
 /**
  * Customers controller
  *
@@ -30,6 +30,9 @@ class CustomersController extends AppController
         $this->loadModel('Customers');
     }
 
+    /**
+     * get balance
+     */
     public function getBalance()
     {
 
@@ -45,5 +48,46 @@ class CustomersController extends AppController
             ->first();
 
         $this->set(compact('balance'));
+    }
+
+    /**
+     * get detail of customer
+     */
+    public function detail()
+    {
+        $customer = $this->Customers->find()
+            ->select([
+                'id',
+                'reffcode',
+                'email',
+                'username',
+                'first_name',
+                'last_name',
+                'phone',
+                'dob',
+                'is_verified',
+                'platforrm',
+                'created',
+            ])
+            ->contain([
+                'CustomerAddreses' => [
+                    'Provinces',
+                    'Cities',
+                    'Subdistricts',
+                ]
+            ])
+            ->where([
+                'Customers.id' => $this->Auth->user('id')
+            ])
+            ->map(function (\App\Model\Entity\Customer $row) {
+                $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                foreach($row->customer_addreses as $key => &$val) {
+                    unset($val['customer_id']);
+                }
+                return $row;
+            })
+            ->first();
+
+        $this->set(compact('customer'));
     }
 }
