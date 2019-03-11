@@ -76,6 +76,22 @@ class CustomerAddresesTable extends Table
             ->requirePresence('address', 'create')
             ->allowEmptyString('address', false);
 
+        $validator
+            ->requirePresence('province_id')
+            ->notBlank('province_id');
+
+        $validator
+            ->requirePresence('city_id')
+            ->notBlank('city_id');
+
+        $validator
+            ->requirePresence('title')
+            ->notBlank('title');
+
+        $validator
+            ->requirePresence('recipient_name')
+            ->notBlank('recipient_name');
+
         return $validator;
     }
 
