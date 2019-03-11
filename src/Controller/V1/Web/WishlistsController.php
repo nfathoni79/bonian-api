@@ -15,6 +15,7 @@
 namespace App\Controller\V1\Web;
 
 use Cake\I18n\Time;
+use Cake\Utility\Hash;
 /**
  * Customers controller
  *
@@ -46,6 +47,13 @@ class WishlistsController extends AppController
                         'price',
                         'price_sale',
                         'point',
+                    ],
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC']
                     ]
                 ]
             ])
@@ -54,9 +62,11 @@ class WishlistsController extends AppController
             ])
             ->map(function (\App\Model\Entity\CustomerWish $row) {
                 unset($row->customer_id);
-
+                $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
                 $row->modified = $row->modified instanceof \Cake\I18n\FrozenTime  ? $row->modified->timestamp : 0;
+
+                unset($row->product->product_images);
 
                 return $row;
             });
