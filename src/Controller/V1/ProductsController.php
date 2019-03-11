@@ -41,6 +41,7 @@ class ProductsController extends Controller
                 'profile',
                 'view',
                 'point',
+                'rating',
                 'created'
             ])
             ->where([
@@ -196,6 +197,7 @@ class ProductsController extends Controller
                 'price',
                 'price_sale',
                 'point',
+                'rating',
                 'created'
             ])
             ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
@@ -234,6 +236,7 @@ class ProductsController extends Controller
                 'price',
                 'price_sale',
                 'point',
+                'rating',
                 'created'
             ])
             ->where(function(\Cake\Database\Expression\QueryExpression $exp) {

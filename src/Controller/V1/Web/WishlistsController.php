@@ -47,6 +47,7 @@ class WishlistsController extends AppController
                         'price',
                         'price_sale',
                         'point',
+                        'rating',
                     ],
                     'ProductImages' => [
                         'fields' => [
