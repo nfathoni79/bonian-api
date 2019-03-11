@@ -82,6 +82,8 @@ class CustomersController extends AppController
             ->map(function (\App\Model\Entity\Customer $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 foreach($row->customer_addreses as $key => &$val) {
+                    $val->created = $val->created instanceof \Cake\I18n\FrozenTime  ? $val->created->timestamp : 0;
+                    $val->modified = $val->modified instanceof \Cake\I18n\FrozenTime  ? $val->modified->timestamp : 0;
                     unset($val['customer_id']);
                 }
                 return $row;
