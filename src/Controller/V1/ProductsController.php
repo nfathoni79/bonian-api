@@ -68,10 +68,10 @@ class ProductsController extends Controller
                     ],
                     'ProductOptionValueLists' => [
                         'Options' => [
-                            'fields' => ['name']
+                            'fields' => ['id','name']
                         ],
                         'OptionValues' => [
-                            'fields' => ['name']
+                            'fields' => ['id','name']
                         ]
                     ],
                     'ProductOptionStocks' => [
@@ -106,9 +106,11 @@ class ProductsController extends Controller
                     $row->variant[$key]->stocks = $stocks;
 
                     $options = [];
+                    $optionsId = [];
                     foreach($val->product_option_value_lists as $i => $list) {
                         if (!isset($options[$list->option->name])) {
                             $options[$list->option->name] = [];
+                            $optionsId[] = $list->id;
                         }
 
                         if (!in_array($list->option_value->name, $options[$list->option->name])) {
@@ -120,6 +122,7 @@ class ProductsController extends Controller
                     unset($row->variant[$key]['product_id']);
                     unset($row->variant[$key]['id']);
                     $row->variant[$key]->options = $options;
+                    $row->variant[$key]->options['code'] = implode(',',$optionsId);
 
                 }
 
