@@ -85,4 +85,35 @@ class ProductDealDetailsTable extends Table
 
         return $rules;
     }
+
+    public function checkStatusProduct($productId = null){
+        $check = $this->find()
+            ->contain('ProductDeals')
+            ->where(['product_id' => $productId])
+            ->order(['ProductDealDetails.id' => 'DESC'])
+            ->first();
+        if($check){
+            if($check['product_deal']['status'] == 1){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+
+    public function getPrices($productId = null){
+        $check = $this->find()
+            ->contain('ProductDeals')
+            ->where(['product_id' => $productId])
+            ->order(['ProductDealDetails.id' => 'DESC'])
+            ->first();
+        if($check){
+            if($check['product_deal']['status'] == 1){
+                return $check['price_sale'];
+            }
+        }
+    }
+
 }
