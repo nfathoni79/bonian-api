@@ -11,6 +11,12 @@ use Cake\ORM\Entity;
  * @property int|null $province_id
  * @property int|null $city_id
  * @property int|null $subdistrict_id
+ * @property int|null $is_primary
+ * @property string $title
+ * @property string $recipient_name
+ * @property string $recipient_phone
+ * @property float $latitude
+ * @property float $longitude
  * @property string $address
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
@@ -37,6 +43,12 @@ class CustomerAddrese extends Entity
         'province_id' => true,
         'city_id' => true,
         'subdistrict_id' => true,
+        'is_primary' => true,
+        'title' => true,
+        'recipient_name' => true,
+        'recipient_phone' => true,
+        'latitude' => true,
+        'longitude' => true,
         'address' => true,
         'created' => true,
         'modified' => true,
