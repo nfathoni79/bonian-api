@@ -87,6 +87,19 @@ class AddressesController extends AppController
 
         if ($this->Customers->CustomerAddreses->save($entity)) {
             //success
+            if ($entity->get('is_primary') == 1) {
+                $this->Customers->CustomerAddreses->query()
+                    ->update()
+                    ->set([
+                        'is_primary' => 0
+                    ])
+                    ->where([
+                        'customer_id' => $entity->get('customer_id')
+                    ])
+                    ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($entity) {
+                        return $exp->notEq('CustomerAddreses.id', $entity->get('id'));
+                    });
+            }
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add address'));
             $errors = $entity->getErrors();
