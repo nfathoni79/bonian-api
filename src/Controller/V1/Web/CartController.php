@@ -311,12 +311,12 @@ class CartController extends AppController
             ->contain(['CustomerCarts'])
             ->where([
                 'CustomerCarts.customer_id' => $customerId,
-                'CustomerCartDetails.id' => $this->request->getData('id'),
+                'CustomerCartDetails.id' => $this->request->getData('cartid'),
                 'CustomerCartDetails.status' => 1
             ])
             ->first();
         if($find){
-            $entity = $this->CustomerCartDetails->get($this->request->getData('id'));
+            $entity = $this->CustomerCartDetails->get($this->request->getData('cartid'));
             $entity->set('status', 4);
             if ($this->CustomerCartDetails->save($entity)) {
                 //success
@@ -340,12 +340,12 @@ class CartController extends AppController
             ->contain(['CustomerCarts'])
             ->where([
                 'CustomerCarts.customer_id' => $customerId,
-                'CustomerCartDetails.id' => $this->request->getData('id'),
+                'CustomerCartDetails.id' => $this->request->getData('cartid'),
                 'CustomerCartDetails.status' => 1
             ])
             ->first();
         if($find){
-            $entity = $this->CustomerCartDetails->get($this->request->getData('id'));
+            $entity = $this->CustomerCartDetails->get($this->request->getData('cartid'));
             $entity->set('status', 5);
             if ($this->CustomerCartDetails->save($entity)) {
                 //success
