@@ -99,7 +99,8 @@ class ProductRatingsTable extends Table
             $product_ratings = $this->find();
             $product_ratings = $product_ratings
                 ->select([
-                    'rate' => $product_ratings->func()->avg('rating')
+                    'rate' => $product_ratings->func()->avg('rating'),
+                    'total' => $product_ratings->func()->count('*')
                 ])
                 ->where([
                     'product_id' => $product_id
@@ -110,6 +111,7 @@ class ProductRatingsTable extends Table
                     $product = $this->Products->get($product_id);
                     if ($product) {
                         $product->set('rating', $product_ratings->get('rate'));
+                        $product->set('rating_count', $product_ratings->get('total'));
                         $this->Products->save($product);
                     }
                 } catch(\Exception $e) {}

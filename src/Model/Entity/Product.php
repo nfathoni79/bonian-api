@@ -31,6 +31,7 @@ use Cake\ORM\Entity;
  * @property int $view
  * @property int $point
  * @property float $rating
+ * @property int $rating_count
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
  *
@@ -94,6 +95,7 @@ class Product extends Entity
         'view' => true,
         'point' => true,
         'rating' => true,
+        'rating_count' => true,
         'created' => true,
         'modified' => true,
         'product_stock_status' => true,
