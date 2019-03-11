@@ -55,6 +55,9 @@ class ProductsController extends Controller
                     ],
                     'sort' => ['ProductImages.primary' => 'DESC']
                 ],
+                'ProductTags' => [
+                    'Tags'
+                ],
                 'ProductOptionPrices' => [
                     'fields' => [
                         'id',
@@ -113,13 +116,21 @@ class ProductsController extends Controller
                         }
                     }
 
-
                     unset($row->variant[$key]['product_option_value_lists']);
                     unset($row->variant[$key]['product_id']);
                     unset($row->variant[$key]['id']);
                     $row->variant[$key]->options = $options;
 
                 }
+
+                foreach($row->product_tags as $key => &$val) {
+                    $val->name = $val->tag ? $val->tag->name : null;
+                    unset($val->id);
+                    unset($val->product_id);
+                    unset($val->tag);
+                }
+                $row->tags = $row->product_tags;
+                unset($row->product_tags);
 
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
 
@@ -131,27 +142,30 @@ class ProductsController extends Controller
         /**
          * note price di timpa jika ada flash sale. ambil dari flash sale harga nya
          */
-        $product_deals = $this->ProductDealDetails->find()
-            ->where([
-                'ProductDeals.status' => 1,
-                'ProductDealDetails.product_id' => $product->get('id'),
-            ])
-            ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
-                $exp->lte('date_start', (Time::now())->format('Y-m-d H:i:s'));
-                $exp->gte('date_end', (Time::now())->format('Y-m-d H:i:s'));
-                return $exp;
-            })
-            ->contain([
-                'ProductDeals'
-            ])
-            ->first();
+        if ($product) {
+            $product_deals = $this->ProductDealDetails->find()
+                ->where([
+                    'ProductDeals.status' => 1,
+                    'ProductDealDetails.product_id' => $product->get('id'),
+                ])
+                ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                    $exp->lte('date_start', (Time::now())->format('Y-m-d H:i:s'));
+                    $exp->gte('date_end', (Time::now())->format('Y-m-d H:i:s'));
+                    return $exp;
+                })
+                ->contain([
+                    'ProductDeals'
+                ])
+                ->first();
 
-        if ($product_deals) {
-            $product->set('price_sale', $product_deals->get('price_sale'));
-            $product->set('is_flash_sale', true);
-        } else {
-            $product->set('is_flash_sale', false);
+            if ($product_deals) {
+                $product->set('price_sale', $product_deals->get('price_sale'));
+                $product->set('is_flash_sale', true);
+            } else {
+                $product->set('is_flash_sale', false);
+            }
         }
+
 
         if ($product) {
             $saveProduct = clone $product;
