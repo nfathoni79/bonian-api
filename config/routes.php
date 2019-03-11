@@ -116,6 +116,15 @@ Router::prefix('v1', function (RouteBuilder $routes) {
         $routes->connect('/:controller/:action/*');
     });
 
+    $routes->connect('/:controller');
+    $routes->connect('/:controller/:action');
+    $routes->connect('/:controller/:action/*');
+
+    $routes->connect('/products/new-arrivals', ['controller' => 'Products', 'action' => 'newArrivals']);
+    $routes->connect('/products/popular-products', ['controller' => 'Products', 'action' => 'popularProducts']);
+    $routes->connect('/products/:slug', ['controller' => 'Products', 'action' => 'index'])
+        ->setPass(['slug']);
+
     $routes->fallbacks(DashedRoute::class);
 });
 
