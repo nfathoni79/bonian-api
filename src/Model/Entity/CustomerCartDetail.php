@@ -54,6 +54,9 @@ class CustomerCartDetail extends Entity
         'modified' => true,
         'customer_cart' => true,
         'product' => true,
+        'point' => true,
+        'totalpoint' => true,
+        'comment' => true,
         'product_option_price' => true,
         'product_option_stock' => true
     ];

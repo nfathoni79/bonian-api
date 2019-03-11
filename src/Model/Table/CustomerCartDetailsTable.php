@@ -77,7 +77,7 @@ class CustomerCartDetailsTable extends Table
 
         $validator
             ->integer('qty')
-            ->requirePresence('qty', 'create')
+            ->requirePresence('qty')
             ->allowEmptyString('qty', false)
             ->add('qty',[
                 'stock'=>[
@@ -86,6 +86,8 @@ class CustomerCartDetailsTable extends Table
                     'message'=>'not enought stock'
                 ]
             ]);
+
+
 
         $validator
             ->integer('product_id')
@@ -127,7 +129,6 @@ class CustomerCartDetailsTable extends Table
             ])
             ->where(['ProductOptionPrices.id' => $priceId])
             ->first()->toArray();
-
         foreach($prices['product_option_stocks'] as $vals){
             if($vals['id'] == $stockId){
                 $stockAvailable = $vals['stock'];
