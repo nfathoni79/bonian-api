@@ -64,7 +64,8 @@ class ProductRatingsTable extends Table
 
         $validator
             ->integer('rating')
-            ->allowEmptyString('rating');
+            ->allowEmptyString('rating')
+            ->inList('rating', [1,2,3,4,5], 'Rating harus skala 1 - 5');
 
         $validator
             ->scalar('comment')
@@ -85,6 +86,35 @@ class ProductRatingsTable extends Table
         $rules->add($rules->existsIn(['product_id'], 'Products'));
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
 
+        $rules->add($rules->isUnique(['product_id', 'customer_id'], 'Anda sudah pernah melakukan review'));
+
         return $rules;
+    }
+
+    public function afterSave(\Cake\Event\Event $event,  \App\Model\Entity\ProductRating $entity, \ArrayObject $options)
+    {
+        if ($entity->isNew()) {
+            $product_id = $entity->get('product_id');
+
+            $product_ratings = $this->find();
+            $product_ratings = $product_ratings
+                ->select([
+                    'rate' => $product_ratings->func()->avg('rating')
+                ])
+                ->where([
+                    'product_id' => $product_id
+                ])
+                ->first();
+            if ($product_ratings) {
+                try {
+                    $product = $this->Products->get($product_id);
+                    if ($product) {
+                        $product->set('rating', $product_ratings->get('rate'));
+                        $this->Products->save($product);
+                    }
+                } catch(\Exception $e) {}
+            }
+
+        }
     }
 }
