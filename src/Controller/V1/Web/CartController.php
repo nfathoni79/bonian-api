@@ -91,6 +91,7 @@ class CartController extends AppController
                             'CustomerCartDetails.product_id' => $this->request->getData('product_id'),
                             'CustomerCartDetails.product_option_price_id' => $this->request->getData('price_id'),
                             'CustomerCartDetails.product_option_stock_id' => $this->request->getData('stock_id'),
+                            'CustomerCartDetails.status' => 1,
                         ])
                         ->first();
                     if($findCart){
@@ -100,7 +101,9 @@ class CartController extends AppController
                             $this->request->getData('product_id'),
                             $this->request->getData('price_id'),
                             $this->request->getData('stock_id'),
-                            $this->request->getData('comment')
+                            $this->request->getData('comment'),
+                            $this->request->getData('type')
+
                         );
 
                         if(!$update){
@@ -169,7 +172,7 @@ class CartController extends AppController
     }
 
 
-    private function updateCart($customerId, $qty, $productId, $priceId, $stockId, $comment = null ){
+    private function updateCart($customerId, $qty, $productId, $priceId, $stockId, $comment, $type = null ){
         $findCart = $this->CustomerCartDetails->find()
             ->contain(['CustomerCarts'])
             ->where([
@@ -177,12 +180,18 @@ class CartController extends AppController
                 'CustomerCartDetails.product_id' => $productId,
                 'CustomerCartDetails.product_option_price_id' => $priceId,
                 'CustomerCartDetails.product_option_stock_id' => $stockId,
+                'CustomerCartDetails.status' => 1,
             ])
             ->first();
         if($findCart){
+            if($type == 'force'){
+                $newQty = $qty;
+            }else{
+                $oldQty = $findCart->get('qty');
+                $newQty = $qty + $oldQty;
+            }
+            
             $id = $findCart->get('id');
-            $oldQty = $findCart->get('qty');
-            $newQty = $qty + $oldQty;
 
             $cartDetails = $this->CustomerCartDetails->get($id, [
                 'contain' => []
