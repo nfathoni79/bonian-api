@@ -196,6 +196,46 @@ class ProductsController extends Controller
                     'sort' => ['ProductImages.primary' => 'DESC']
                 ]
             ])
+            ->limit(10)
+            ->map(function(\App\Model\Entity\Product $row) {
+                $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+                unset($row->product_images);
+                return $row;
+            });
+
+        $this->set(compact('product'));
+    }
+
+    public function popularProducts()
+    {
+        $product = $this->Products->find()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'price_sale',
+                'point',
+                'created'
+            ])
+            ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                return $exp->gte('created', (Time::now())->addDays(-20)->format('Y-m-d H:i:s'));
+            })
+            ->where([
+                'product_status_id' => 1
+            ])
+            ->contain([
+                'ProductImages' => [
+                    'fields' => [
+                        'name',
+                        'product_id',
+                    ],
+                    'sort' => ['ProductImages.primary' => 'DESC']
+                ]
+            ])
+            ->orderDesc('Products.view')
+            ->limit(10)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
