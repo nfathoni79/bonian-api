@@ -26,6 +26,7 @@ use Cake\Utility\Hash;
  * @property \App\Model\Table\ProductOptionPricesTable $ProductOptionPrices
  * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
  * @property \App\Model\Table\ProductGroupDetailsTable $ProductGroupDetails
+ * @property \App\Model\Table\CustomerWishesTable $CustomerWishes
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class CartController extends AppController
@@ -41,6 +42,7 @@ class CartController extends AppController
         $this->loadModel('ProductOptionPrices');
         $this->loadModel('ProductDealDetails');
         $this->loadModel('ProductGroupDetails');
+        $this->loadModel('CustomerWishes');
     }
 
     public function add(){
@@ -215,7 +217,7 @@ class CartController extends AppController
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                     return $q
-                        ->where(['CustomerCartDetails.status' => 1]);
+                        ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
                 }
             )
             ->contain([
@@ -247,12 +249,23 @@ class CartController extends AppController
             ])
             ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
             ->map(function (\App\Model\Entity\CustomerCart $row) {
-
+                $status = [
+                    1 => 'available',
+                    2 => 'expired',
+                    3 => 'outoff stock',
+                    4 => 'deleted',
+                    5 => 'move to whislist'
+                ];
                 foreach ($row['customer_cart_details'] as $key => $vals){
+                    $row->customer_cart_details[$key]->cartid = $row->customer_cart_details[$key]->id;
+                    $row->customer_cart_details[$key]->status = $status[$row->customer_cart_details[$key]->status];
                     $row->customer_cart_details[$key]->name = $row->customer_cart_details[$key]->product->name;
                     $row->customer_cart_details[$key]->slug = $row->customer_cart_details[$key]->product->slug;
                     $row->customer_cart_details[$key]->regular_price = $row->customer_cart_details[$key]->product->price;
                     $row->customer_cart_details[$key]->price = $row->customer_cart_details[$key]->price;
+
+
+
                     $row->customer_cart_details[$key]->sku = $row->customer_cart_details[$key]->product_option_price->sku;
                     $row->customer_cart_details[$key]->origin = $row->customer_cart_details[$key]->product_option_stock->branch->name;
 
@@ -287,6 +300,77 @@ class CartController extends AppController
             })
             ->first();
         $this->set(compact('cart'));
+
+    }
+
+    public function delete(){
+        $this->request->allowMethod(['post', 'put']);
+
+        $customerId = $this->Auth->user('id');
+        $find =  $this->CustomerCartDetails->find()
+            ->contain(['CustomerCarts'])
+            ->where([
+                'CustomerCarts.customer_id' => $customerId,
+                'CustomerCartDetails.id' => $this->request->getData('id'),
+                'CustomerCartDetails.status' => 1
+            ])
+            ->first();
+        if($find){
+            $entity = $this->CustomerCartDetails->get($this->request->getData('id'));
+            $entity->set('status', 4);
+            if ($this->CustomerCartDetails->save($entity)) {
+                //success
+
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Failed to delete cart'));
+                $errors = $entity->getErrors();
+            }
+        }else{
+            $this->setResponse($this->response->withStatus(406, 'Failed to delete cart'));
+        }
+        $this->set(compact('errors'));
+
+    }
+
+    public function moveWishlist(){
+        $this->request->allowMethod(['post', 'put']);
+
+        $customerId = $this->Auth->user('id');
+        $find =  $this->CustomerCartDetails->find()
+            ->contain(['CustomerCarts'])
+            ->where([
+                'CustomerCarts.customer_id' => $customerId,
+                'CustomerCartDetails.id' => $this->request->getData('id'),
+                'CustomerCartDetails.status' => 1
+            ])
+            ->first();
+        if($find){
+            $entity = $this->CustomerCartDetails->get($this->request->getData('id'));
+            $entity->set('status', 5);
+            if ($this->CustomerCartDetails->save($entity)) {
+                //success
+
+                $entityWhishlist = $this->CustomerWishes->newEntity();
+                $entityWhishlist->set('customer_id', $customerId);
+                $entityWhishlist->set('product_id', $entity->get('product_id'));
+                $entityWhishlist->set('price', $entity->get('price'));
+
+                if ($this->CustomerWishes->save($entityWhishlist)) {
+                    //success
+
+                } else {
+                    $this->setResponse($this->response->withStatus(406, 'Failed to add wishlists'));
+                    $errors = $entityWhishlist->getErrors();
+                }
+
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Failed move to whishlist'));
+                $errors = $entity->getErrors();
+            }
+        }else{
+            $this->setResponse($this->response->withStatus(406, 'Failed move to whishlist'));
+        }
+        $this->set(compact('errors'));
 
     }
 
