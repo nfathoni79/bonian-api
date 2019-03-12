@@ -138,6 +138,9 @@ class AddressesController extends AppController
         }
     }
 
+    /**
+     * @param $address_id
+     */
     public function view($address_id)
     {
         $this->request->allowMethod('get');
@@ -163,6 +166,61 @@ class AddressesController extends AppController
         }
 
         $this->set(compact('address'));
+    }
+
+    /**
+     * @param $address_id
+     */
+    public function update($address_id)
+    {
+        $this->request->allowMethod(['post', 'put']);
+        if ($address_id) {
+            $address = $this->Customers->CustomerAddreses->find()
+                ->where([
+                    'customer_id' => $this->Auth->user('id'),
+                    'CustomerAddreses.id' => $address_id
+                ])
+                ->first();
+
+            if ($address) {
+                $this->Customers->CustomerAddreses->patchEntity($address, $this->request->getData(), [
+                    'fields' => [
+                        'province_id',
+                        'city_id',
+                        'subdistrict_id',
+                        'is_primary',
+                        'title',
+                        'recipient_name',
+                        'recipient_phone',
+                        'latitude',
+                        'longitude',
+                        'address',
+                    ]
+                ]);
+                if (!$this->Customers->CustomerAddreses->save($address)) {
+                    $this->setResponse($this->response->withStatus(406, 'Fail to save address'));
+                } else {
+                    if ($address->get('is_primary') == 1) {
+                        $this->Customers->CustomerAddreses->query()
+                            ->update()
+                            ->set([
+                                'is_primary' => 0
+                            ])
+                            ->where([
+                                'customer_id' => $address->get('customer_id')
+                            ])
+                            ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($address) {
+                                return $exp->notEq('CustomerAddreses.id', $address->get('id'));
+                            });
+                    }
+                }
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Address not found'));
+            }
+
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Invalid address_id'));
+        }
     }
 
     /**
