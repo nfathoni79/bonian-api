@@ -6,7 +6,7 @@ use Cake\Core\Configure;
 use Cake\Log\Log;
 use
 
-class IpnController extends AppController
+class TestController extends AppController
 {
 
     public function initialize()
