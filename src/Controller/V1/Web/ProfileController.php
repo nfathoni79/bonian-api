@@ -1,0 +1,191 @@
+<?php
+/**
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link      https://cakephp.org CakePHP(tm) Project
+ * @since     0.2.9
+ * @license   https://opensource.org/licenses/mit-license.php MIT License
+ */
+namespace App\Controller\V1\Web;
+
+use Cake\I18n\Time;
+use Cake\Utility\Hash;
+use Cake\I18n\FrozenTime;
+use  Cake\ORM\ResultSet;
+/**
+ * Customers controller
+ *
+ * @property \App\Model\Table\CustomerWishesTable $CustomerWishes
+ * @property \App\Model\Table\CustomersTable $Customers
+ * @property \App\Model\Table\CustomerNotificationsTable $CustomerNotifications
+ * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
+ * @property \App\Model\Table\CustomerMutationAmountsTable $CustomerMutationAmounts
+ * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
+ */
+class ProfileController extends AppController
+{
+
+    public function initialize()
+    {
+        parent::initialize();
+        $this->loadModel('Customers');
+        $this->loadModel('CustomerNotifications');
+        $this->loadModel('CustomerMutationPoints');
+        $this->loadModel('CustomerMutationAmounts');
+
+    }
+
+    public function index(){
+        $this->request->allowMethod('get');
+        $data = $this->Customers->find()
+            ->select([
+                'id',
+                'reffcode',
+                'email',
+                'username',
+                'phone',
+                'first_name',
+                'last_name',
+                'customer_group_id',
+                'is_verified',
+            ])
+            ->contain([
+                'CustomerGroups' => [
+                    'fields' => [
+                        'name'
+                    ]
+                ],
+                'CustomerBalances' => [
+                    'fields' => [
+                        'customer_id',
+                        'balance',
+                        'point',
+                    ]
+                ]
+            ])
+            ->where(['Customers.id' => $this->Auth->user('id')])
+            ->map(function (\App\Model\Entity\Customer $row) {
+                $row->name = $row->first_name .' '. $row->last_name;
+                $row->account_type = $row->customer_group->name;
+                $row->is_verified = ($row->is_verified != '1') ? 'Not Verified' : 'Verified';
+                $row->wallet_balance = $row->customer_balances[0]->balance;
+                $row->point_balance =  $row->customer_balances[0]->point;
+
+                unset($row->customer_balances);
+                unset($row->customer_group);
+                unset($row->customer_group_id);
+                unset($row->first_name);
+                unset($row->last_name);
+                unset($row->id);
+                return $row;
+            })
+            ->first();
+
+        $this->set(compact('data'));
+
+    }
+
+
+    public function notifications(){
+
+        $this->request->allowMethod('get');
+
+        $timeJsonFormat = 'yyyy-MM-dd HH:mm';
+
+        FrozenTime::setJsonEncodeFormat($timeJsonFormat);
+        FrozenTime::setToStringFormat($timeJsonFormat);
+        $notifications = $this->CustomerNotifications->find()
+            ->select([
+                'kategori' => 'CustomerNotificationTypes.name',
+                'CustomerNotifications.content',
+                'CustomerNotifications.status',
+                'CustomerNotifications.created'
+            ])
+            ->contain(['CustomerNotificationTypes'])
+            ->where([
+                'CustomerNotifications.customer_id' => $this->Auth->user('id')
+            ]);
+
+
+        $notifications
+            ->orderDesc('CustomerNotifications.id');
+
+        $data = $this->paginate($notifications);
+
+        $this->set(compact('data'));
+    }
+
+    public function points(){
+
+        $this->request->allowMethod('get');
+
+        $timeJsonFormat = 'yyyy-MM-dd HH:mm';
+
+        FrozenTime::setJsonEncodeFormat($timeJsonFormat);
+        FrozenTime::setToStringFormat($timeJsonFormat);
+        $notifications = $this->CustomerMutationPoints->find()
+            ->select([
+                'kategori' => 'CustomerMutationPointTypes.name',
+                'tipe' => 'CustomerMutationPointTypes.type',
+                'desctiption' => 'CustomerMutationPoints.description',
+                'amount' => 'CustomerMutationPoints.amount',
+                'balance' => 'CustomerMutationPoints.balance',
+                'created' => 'CustomerMutationPoints.created'
+            ])
+            ->contain(['CustomerMutationPointTypes'])
+            ->where([
+                'CustomerMutationPoints.customer_id' => $this->Auth->user('id')
+            ]);
+
+
+        $notifications
+            ->orderDesc('CustomerMutationPoints.id');
+
+        $data = $this->paginate($notifications);
+
+        $this->set(compact('data'));
+    }
+
+//    public function test(){
+//
+//        $this->CustomerMutationAmounts->saving('14','1', '-500','Test mutation'); //mutation amount
+//        $this->CustomerMutationPoints->saving('14','1', '-100','Test mutation'); //mutation point
+//    }
+
+    public function wallet(){
+
+        $this->request->allowMethod('get');
+
+        $timeJsonFormat = 'yyyy-MM-dd HH:mm';
+
+        FrozenTime::setJsonEncodeFormat($timeJsonFormat);
+        FrozenTime::setToStringFormat($timeJsonFormat);
+        $notifications = $this->CustomerMutationAmounts->find()
+            ->select([
+                'kategori' => 'CustomerMutationAmountTypes.name',
+                'tipe' => 'CustomerMutationAmountTypes.type',
+                'desctiption' => 'CustomerMutationAmounts.description',
+                'amount' => 'CustomerMutationAmounts.amount',
+                'balance' => 'CustomerMutationAmounts.balance',
+                'created' => 'CustomerMutationAmounts.created'
+            ])
+            ->contain(['CustomerMutationAmountTypes'])
+            ->where([
+                'CustomerMutationAmounts.customer_id' => $this->Auth->user('id')
+            ]);
+
+
+        $notifications
+            ->orderDesc('CustomerMutationAmounts.id');
+
+        $data = $this->paginate($notifications);
+
+        $this->set(compact('data'));
+    }
+}

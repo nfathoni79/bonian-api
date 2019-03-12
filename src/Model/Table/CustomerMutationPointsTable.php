@@ -5,6 +5,7 @@ use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use Cake\ORM\TableRegistry;
 
 /**
  * CustomerMutationPoints Model
@@ -93,5 +94,45 @@ class CustomerMutationPointsTable extends Table
         $rules->add($rules->existsIn(['customer_mutation_point_type_id'], 'CustomerMutationPointTypes'));
 
         return $rules;
+    }
+
+    public function saving($customerId, $transaction_id, $amount,$description) {
+        $amount = bcmul( $amount,'1');
+        $customerBalances = TableRegistry::get('CustomerBalances');
+        $pointRates = TableRegistry::get('CustomerPointRates');
+
+        $rates = $pointRates->find()->first();
+        $getSaldo = $customerBalances->find()
+            ->where(['customer_id' => $customerId])
+            ->first();
+        if($getSaldo){
+            $amount = bcmul($amount , $rates->get('value'));
+            $saldo = $getSaldo->get('point');
+            $balance = bcadd($saldo,$amount);
+
+            if($balance >= 0){
+
+                $data = $this->newEntity();
+                $data->customer_id = $customerId;
+                $data->customer_mutation_point_type_id = $transaction_id;
+                $data->amount = $amount;
+                $data->balance = $balance;
+                $data->description = $description;
+                if($this->save($data)){
+                    $customerBalances->query()
+                        ->update()
+                        ->set(['point' => $balance])
+                        ->where(['id' => $getSaldo->get('id')])
+                        ->execute();
+                    return true;
+                }else{
+                    return false;
+                }
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
     }
 }

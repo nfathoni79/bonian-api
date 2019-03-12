@@ -3,7 +3,7 @@ namespace App\Controller;
 
 use Cake\Event\Event;
 use Cake\Core\Configure;
-use Cake\Log\Log; 
+use Cake\Log\Log;
 
 class TestController extends AppController
 {

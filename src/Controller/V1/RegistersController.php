@@ -66,7 +66,7 @@ class RegistersController extends Controller
             $success = false;
             $register = $this->Customers->newEntity();
             $register = $this->Customers->patchEntity($register, $this->request->getData(),['fields' => ['email','username','password','cpassword','phone']]);
-            $register->set('reffcode', $this->reffcode('10'));
+            $register->set('reffcode', strtoupper($this->reffcode('10')));
             $register->set('customer_group_id', 1);
             $register->set('customer_status_id', 1);
             $register->set('is_verified', 0);
