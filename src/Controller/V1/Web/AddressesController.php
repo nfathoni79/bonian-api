@@ -19,6 +19,8 @@ use Cake\I18n\Time;
  * Customers controller
  *
  * @property \App\Model\Table\CustomersTable $Customers
+ * @property \App\Model\Table\ProvincesTable $Provinces
+ * @property \App\Model\Table\CitiesTable $Cities
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class AddressesController extends AppController
@@ -28,6 +30,8 @@ class AddressesController extends AppController
     {
         parent::initialize();
         $this->loadModel('Customers');
+        $this->loadModel('Provinces');
+        $this->loadModel('Cities');
     }
 
     /**
@@ -55,7 +59,9 @@ class AddressesController extends AppController
         $this->set(compact('addresses'));
     }
 
-
+    /**
+     * process add address
+     */
     public function add()
     {
         $this->request->allowMethod(['post', 'put']);
@@ -107,6 +113,33 @@ class AddressesController extends AppController
 
         $this->set(compact('errors'));
 
+    }
+
+    /**
+     * get province
+     */
+    public function getProvince()
+    {
+        $province = $this->Provinces->find('list')->toArray();
+        $this->set(compact('province'));
+    }
+
+    /**
+     * @param null $province_id
+     */
+    public function getCity($province_id = null)
+    {
+        $city = $this->Cities->find('list');
+
+        if ($province_id) {
+            $city->where([
+                'province_id' => $province_id
+            ]);
+        }
+
+        $city = $city->toArray();
+
+        $this->set(compact('city'));
     }
 
 
