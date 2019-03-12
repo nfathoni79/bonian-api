@@ -5,6 +5,7 @@ use Cake\Event\Event;
 use Cake\Core\Configure;
 use Cake\Log\Log;
 
+
 /**
  * Static content controller
  *
