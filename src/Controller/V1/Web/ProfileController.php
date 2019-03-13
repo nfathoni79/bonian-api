@@ -19,6 +19,9 @@ use Cake\Utility\Hash;
 use Cake\I18n\FrozenTime;
 use  Cake\ORM\ResultSet;
 use Cake\Validation\Validator;
+use Cake\Http\Client;
+use Cake\Core\Configure;
+use Cake\Http\Client\FormData;
 /**
  * Customers controller
  *
@@ -76,13 +79,47 @@ class ProfileController extends AppController
 
         }else {
             $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
-            $error = $errors;
+            $errors = $errors;
         }
 
-        $this->set(compact('error'));
+        $this->set(compact('errors'));
 
 
     }
+
+
+    public function uploadImage(){
+
+        $this->request->allowMethod('post');
+        $validator = new Validator();
+        $validator
+            ->requirePresence('avatar')
+            ->add('avatar', [
+                'validExtension' => [
+                    'rule' => ['extension',['jpg','png','jpeg']], // default  ['gif', 'jpeg', 'png', 'jpg']
+                    'message' => __('These files extension are allowed: .jpg, .png')
+                ]
+            ]);
+
+        $errors = $validator->errors($this->request->getData());
+        if (empty($errors)) {
+            $http = new Client();
+            $data = new FormData();
+            $data->add('customer_id', $this->Auth->user('id'));
+            $file = $data->addFile('avatar', fopen($this->request->getData('avatar.tmp_name'), 'r'));
+            $file->filename($this->request->getData('avatar.name'));
+
+            $response = $http->post(Configure::read('postImage').'/avatar', (string)$data,['headers' => ['Content-Type' => $data->contentType()]]);
+            $result = json_decode($response->getBody()->getContents());
+            if($result->is_success){
+
+            }else{
+                $this->setResponse($this->response->withStatus(406, 'Unable to update data profile'));
+            }
+        }
+        $this->set(compact('errors'));
+    }
+
 
     public function index(){
         $this->request->allowMethod('get');
