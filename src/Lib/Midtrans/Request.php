@@ -45,6 +45,47 @@ class Request
         return $this;
     }
 
+    /**
+     * @param $bank
+     * @param null $va_number
+     * @return $this
+     */
+    public function setBankTransfer($bank, $va_number = null)
+    {
+        $this->bank_transfer = array_filter([
+            'bank' => $bank,
+            'va_number' => $va_number
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * recipient name using for permata virtual account
+     */
+    public function setRecipientName($name)
+    {
+        if (strtolower($this->bank_transfer['bank']) == 'permata') {
+            $this->bank_transfer['permata'] = [
+                'recipient_name' => $name
+            ];
+        }
+        return $this;
+    }
+
+    /**
+     * recipient name using for bca virtual account
+     */
+    public function setSubCompanyCode($company_code)
+    {
+        if (strtolower($this->bank_transfer['bank']) == 'bca') {
+            $this->bank_transfer['bca'] = [
+                'sub_company_code' => $company_code
+            ];
+        }
+        return $this;
+    }
+
     public function setCustomer($email, $fist_name, $last_name, $phone)
     {
         $this->customer_details = [
@@ -92,7 +133,10 @@ class Request
         return $this;
     }
 
-
+    public function __set($name, $value)
+    {
+        $this->{$name} = $value;
+    }
 
     protected function validRequest()
     {
