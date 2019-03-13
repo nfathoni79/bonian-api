@@ -70,6 +70,7 @@ class Customer extends Entity
         'platforrm' => true,
         'created' => true,
         'modified' => true,
+        'gender' => true,
         'refferal_customer' => true,
         'customer_group' => true,
         'customer_status' => true,

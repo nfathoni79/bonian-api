@@ -18,6 +18,7 @@ use Cake\I18n\Time;
 use Cake\Utility\Hash;
 use Cake\I18n\FrozenTime;
 use  Cake\ORM\ResultSet;
+use Cake\Validation\Validator;
 /**
  * Customers controller
  *
@@ -41,6 +42,48 @@ class ProfileController extends AppController
 
     }
 
+    public function edit(){
+        $customerId = $this->Auth->user('id');
+        $this->request->allowMethod('post');
+
+        $validator = new Validator();
+        $validator
+            ->requirePresence('name')
+            ->notBlank('name', 'name field is required');
+        $validator
+            ->requirePresence('dob')
+            ->date('dob')
+            ->notBlank('dob', 'DOB field is required');
+        $validator
+            ->requirePresence('gender')
+            ->inList('gender',['m','f'])
+            ->notBlank('gender', 'Gender field is required');
+        $errors = $validator->errors($this->request->getData());
+        if (empty($errors)) {
+
+            $entity = $this->Customers->get($customerId);
+            $explodeName = explode(' ', $this->request->getData('name'));
+            $entity->set('first_name',$explodeName[0]);
+            $entity->set('last_name',@$explodeName[1]);
+            $entity->set('dob',$this->request->getData('dob'));
+            $entity->set('gender',$this->request->getData('gender'));
+
+            if($this->Customers->save($entity)){
+
+            }else{
+                $this->setResponse($this->response->withStatus(406, 'Unable to update data profile'));
+            }
+
+        }else {
+            $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
+            $error = $errors;
+        }
+
+        $this->set(compact('error'));
+
+
+    }
+
     public function index(){
         $this->request->allowMethod('get');
         $data = $this->Customers->find()
@@ -50,6 +93,7 @@ class ProfileController extends AppController
                 'email',
                 'username',
                 'phone',
+                'gender',
                 'first_name',
                 'last_name',
                 'customer_group_id',
@@ -76,6 +120,7 @@ class ProfileController extends AppController
                 $row->is_verified = ($row->is_verified != '1') ? 'Not Verified' : 'Verified';
                 $row->wallet_balance = $row->customer_balances[0]->balance;
                 $row->point_balance =  $row->customer_balances[0]->point;
+                $row->gender = ($row->gender == 'm') ? 'Male' : 'Female';
 
                 unset($row->customer_balances);
                 unset($row->customer_group);
