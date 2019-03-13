@@ -9,8 +9,6 @@
 namespace App\Lib\MidTrans;
 
 
-use phpDocumentor\Reflection\Types\Boolean;
-
 /**
  * Class Token
  * @package App\Lib\MidTrans
