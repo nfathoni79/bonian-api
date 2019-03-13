@@ -65,12 +65,12 @@ class CheckoutController extends AppController
                 ->setBillingAddress()
                 ->setShippingFromBilling();
 
-            /*$token = $this->MidTrans->createToken(new Token(
+            $token = $this->MidTrans->createToken(new Token(
                 '4411 1111 1111 1118',
                 '01',
                 '20',
                 '123'
-            ), $trx->getAmount());*/
+            ), $trx->getAmount());
 
 			//$token['status_code'] = 200;
 			//$token['token_id'] = '441111-1118-d9c7689a-82eb-469f-a797-cd0aa13edf2e';
