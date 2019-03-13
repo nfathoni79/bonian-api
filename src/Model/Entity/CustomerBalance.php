@@ -31,6 +31,7 @@ class CustomerBalance extends Entity
         'balance' => true,
         'point' => true,
         'modified' => true,
+        'modified_point' => true,
         'customer' => true
     ];
 }
