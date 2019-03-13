@@ -46,16 +46,20 @@ class CustomerCard extends Entity
      * @var array
      */
     protected $_hidden = [
-        'token'
+        //'token'
     ];
 
     protected function _setToken($token)
     {
+		debug($token);
         return base64_encode(Security::encrypt($token, Configure::read('Encrypt.salt') . $this->get('customer_id')));
     }
 
     protected function _getToken($token)
     {
+		if ($this->isDirty('token')) {
+			return $token;
+		}
         return Security::decrypt(base64_decode($token), Configure::read('Encrypt.salt') . $this->get('customer_id'));
     }
 }

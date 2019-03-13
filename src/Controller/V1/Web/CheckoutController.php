@@ -45,8 +45,9 @@ class CheckoutController extends AppController
 
         $this->request->allowMethod(['post', 'put']);
 
-
-        $trx = new Transaction('ord-0019-x101');
+		
+	
+        $trx = new Transaction('ord-0019-x10157');
         $trx->addItem(1, 2500, 1, 'barang oke');
         $trx->addItem(2, 2500, 1, 'barang oke');
 
@@ -64,19 +65,23 @@ class CheckoutController extends AppController
                 ->setBillingAddress()
                 ->setShippingFromBilling();
 
-            $token = $this->MidTrans->createToken(new Token(
+            /*$token = $this->MidTrans->createToken(new Token(
                 '4411 1111 1111 1118',
                 '01',
                 '20',
                 '123'
-            ), $trx->getAmount());
+            ), $trx->getAmount());*/
 
-
+			//$token['status_code'] = 200;
+			//$token['token_id'] = '441111-1118-d9c7689a-82eb-469f-a797-cd0aa13edf2e';
 
             if ($token['status_code'] == 200) {
                 $request->setCreditCard($token['token_id'], true);
 
                 $charge = $this->MidTrans->charge($request);
+				
+				//$charge = json_decode('{"status_code":"200","status_message":"Success, Credit Card transaction is successful","transaction_id":"d9c7689a-82eb-469f-a797-cd0aa13edf2e","order_id":"ord-0019-x100","gross_amount":"5000.00","currency":"IDR","payment_type":"credit_card","transaction_time":"2019-03-13 19:40:47","transaction_status":"capture","fraud_status":"accept","approval_code":"1552480848068","masked_card":"441111-1118","bank":"cimb","card_type":"credit","saved_token_id":"441111lSmrlWhaoZtyTjOAscGBrc1118","saved_token_id_expired_at":"2020-01-31 07:00:00","channel_response_code":"00","channel_response_message":"Approved"}', true);
+				
                 if (isset($charge['status_code']) && $charge['status_code'] == 200) {
                     if ($request->isCreditCard() && $request->isSavedToken()) {
                         //saved token
@@ -107,12 +112,14 @@ class CheckoutController extends AppController
                             $cardEntity = $this->CustomerCards->newEntity([
                                 'customer_id' => $this->Auth->user('id'),
                                 'is_primary' => $count_card > 0 ? 0 : 1,
-                                'token' => $saved_token,
                                 'masked_card' => $masked_card,
+								'token' => $saved_token,
                                 'expired_at' => $saved_token_id_expired_at
                             ]);
-
+							
+							
                             $this->CustomerCards->save($cardEntity);
+							
                         }
 
                     }
