@@ -37,7 +37,7 @@ class WishlistsController extends AppController
     public function index()
     {
 
-        $wishlists = $this->CustomerWishes->find()
+        $data = $this->CustomerWishes->find()
             ->contain([
                 'Products' => [
                     'fields' => [
@@ -72,7 +72,7 @@ class WishlistsController extends AppController
                 return $row;
             });
 
-        $this->set(compact('wishlists'));
+        $this->set(compact('data'));
     }
 
 
@@ -106,10 +106,10 @@ class WishlistsController extends AppController
 
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add wishlists'));
-            $errors = $entity->getErrors();
+            $error = $entity->getErrors();
         }
 
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
 
     }
 

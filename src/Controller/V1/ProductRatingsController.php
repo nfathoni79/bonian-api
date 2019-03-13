@@ -68,7 +68,9 @@ class ProductRatingsController extends Controller
             return $row;
         });
 
-        $this->set(compact('product_ratings'));
+        $data = $product_ratings;
+
+        $this->set(compact('data'));
     }
 
 }

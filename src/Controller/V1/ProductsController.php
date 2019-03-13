@@ -181,7 +181,9 @@ class ProductsController extends Controller
             $this->setResponse($this->response->withStatus(404, 'Product not found'));
         }
 
-        $this->set(compact('product'));
+        $data = $product;
+
+        $this->set(compact('data'));
 
     }
 
@@ -189,7 +191,7 @@ class ProductsController extends Controller
     public function newArrivals()
     {
 
-        $product = $this->Products->find()
+        $data = $this->Products->find()
             ->select([
                 'id',
                 'name',
@@ -223,12 +225,12 @@ class ProductsController extends Controller
                 return $row;
             });
 
-        $this->set(compact('product'));
+        $this->set(compact('data'));
     }
 
     public function popularProducts()
     {
-        $product = $this->Products->find()
+        $data = $this->Products->find()
             ->select([
                 'id',
                 'name',
@@ -263,7 +265,7 @@ class ProductsController extends Controller
                 return $row;
             });
 
-        $this->set(compact('product'));
+        $this->set(compact('data'));
     }
 
 }

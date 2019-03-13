@@ -42,10 +42,10 @@ class ProductRatingsController extends AppController
             //save logic
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add rating'));
-            $errors = $entity->getErrors();
+            $error = $entity->getErrors();
         }
 
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
 
     }
 

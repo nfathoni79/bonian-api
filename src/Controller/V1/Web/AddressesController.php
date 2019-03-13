@@ -40,7 +40,7 @@ class AddressesController extends AppController
     public function index()
     {
 
-        $addresses = $this->Customers->CustomerAddreses->find()
+        $data = $this->Customers->CustomerAddreses->find()
             ->contain([
                 'Provinces',
                 'Cities',
@@ -56,7 +56,7 @@ class AddressesController extends AppController
                 return $row;
             });
 
-        $this->set(compact('addresses'));
+        $this->set(compact('data'));
     }
 
     /**
@@ -108,10 +108,10 @@ class AddressesController extends AppController
             }
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add address'));
-            $errors = $entity->getErrors();
+            $error = $entity->getErrors();
         }
 
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
 
     }
 
@@ -145,7 +145,7 @@ class AddressesController extends AppController
     {
         $this->request->allowMethod('get');
         if ($address_id) {
-            $address = $this->Customers->CustomerAddreses->find()
+            $data = $this->Customers->CustomerAddreses->find()
                 ->where([
                     'customer_id' => $this->Auth->user('id'),
                     'CustomerAddreses.id' => $address_id
@@ -165,7 +165,7 @@ class AddressesController extends AppController
                 ->first();
         }
 
-        $this->set(compact('address'));
+        $this->set(compact('data'));
     }
 
     /**
@@ -228,8 +228,8 @@ class AddressesController extends AppController
      */
     public function getProvince()
     {
-        $province = $this->Provinces->find('list')->toArray();
-        $this->set(compact('province'));
+        $data = $this->Provinces->find('list')->toArray();
+        $this->set(compact('data'));
     }
 
     /**
@@ -245,20 +245,20 @@ class AddressesController extends AppController
             ]);
         }
 
-        $city = $city->toArray();
+        $data = $city->toArray();
 
-        $this->set(compact('city'));
+        $this->set(compact('data'));
     }
 
     public function getDistrict($city_id)
     {
-        $district = $this->Cities->Subdistricts->find('list')
+        $data = $this->Cities->Subdistricts->find('list')
             ->where([
                 'city_id' => $city_id
             ])
             ->toArray();
 
-        $this->set(compact('district'));
+        $this->set(compact('data'));
     }
 
 

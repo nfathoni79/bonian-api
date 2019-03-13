@@ -36,7 +36,7 @@ class CustomersController extends AppController
     public function getBalance()
     {
 
-        $balance = $this->Customers->CustomerBalances->find()
+        $data = $this->Customers->CustomerBalances->find()
             ->select([
                 'customer_id',
                 'balance',
@@ -47,7 +47,7 @@ class CustomersController extends AppController
             ])
             ->first();
 
-        $this->set(compact('balance'));
+        $this->set(compact('data'));
     }
 
     /**
@@ -55,7 +55,7 @@ class CustomersController extends AppController
      */
     public function detail()
     {
-        $customer = $this->Customers->find()
+        $data = $this->Customers->find()
             ->select([
                 'id',
                 'reffcode',
@@ -90,6 +90,6 @@ class CustomersController extends AppController
             })
             ->first();
 
-        $this->set(compact('customer'));
+        $this->set(compact('data'));
     }
 }
