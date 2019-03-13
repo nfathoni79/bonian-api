@@ -33,6 +33,29 @@ class Request
         return $this;
     }
 
+    public function getPaymentType()
+    {
+        return $this->payment_type;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCreditCard()
+    {
+        return $this->payment_type === 'credit_card';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSavedToken()
+    {
+        if ($this->isCreditCard()) {
+            return boolval($this->credit_card['save_token_id']) == 1;
+        }
+    }
+
     public function addTransaction(Transaction $transaction)
     {
         foreach($transaction->toObject() as $key => $val) {

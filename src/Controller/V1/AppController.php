@@ -22,6 +22,8 @@ use Cake\Event\Event;
  *
  * Add your application-wide methods in the class below, your controllers
  * will inherit them.
+ * @property \App\Controller\Component\MidTransComponent $MidTrans
+ * @property \App\Controller\Component\SendAuthComponent $SendAuth
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
@@ -47,6 +49,7 @@ class AppController extends Controller
         $this->loadComponent('Flash');
 
         $this->loadComponent('SendAuth');
+        $this->loadComponent('MidTrans');
         $this->loadComponent('Mailer', ['transport' => 'default']);
         /*
          * Enable the following component for recommended CakePHP security settings.
