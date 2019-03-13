@@ -4,7 +4,15 @@ namespace App\Controller;
 use Cake\Event\Event;
 use Cake\Core\Configure;
 use Cake\Log\Log;
+use App\Lib\MidTrans\Token;
+use App\Lib\MidTrans\Request;
+use App\Lib\MidTrans\Transaction;
 
+/**
+ * Class TestController
+ * @property \App\Controller\Component\MidTransComponent $MidTrans
+ * @package App\Controller
+ */
 class TestController extends AppController
 {
 
@@ -14,6 +22,53 @@ class TestController extends AppController
         $this->merchant_id = $config['merchantid'];
         $this->client_key = $config['clientKey'];
         $this->server_key = $config['serverKey'];
+        $this->loadComponent('MidTrans');
+    }
+
+
+    public function oke()
+    {
+        /*
+        $trx = new Transaction('ord-0019-x92');
+        $trx->addItem(1, 2500, 1, 'barang oke');
+        $trx->addItem(2, 2500, 1, 'barang oke');
+
+        try {
+
+            $request = new Request('credit_card');
+            $request->addTransaction($trx);
+
+            $request->setCustomer(
+                'iwaninfo@gmail.com',
+                'Ridwan',
+                'Rumi',
+                '08112823746'
+            )
+            ->setBillingAddress()
+            ->setShippingFromBilling();
+
+            $token = $this->MidTrans->createToken(new Token(
+                '4411 1111 1111 1118',
+                '01',
+                '20',
+                '123'
+            ), $trx->getAmount());
+
+            if ($token['status_code'] == 200) {
+                $request->setCreditCard($token['token_id'], true);
+
+                $charge = $this->MidTrans->charge($request);
+                debug($charge);
+            }
+
+            debug($request->toObject());
+
+        } catch(\Exception $e) {
+
+        }
+        */
+
+        exit;
     }
 
     public function index(){
