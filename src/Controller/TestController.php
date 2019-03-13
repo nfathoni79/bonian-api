@@ -68,6 +68,52 @@ class TestController extends AppController
         }
         */
 
+        /*
+        $trx = new Transaction('ord-0019-x93');
+        $trx->addItem(1, 2500, 1, 'barang oke');
+        $trx->addItem(2, 2500, 1, 'barang oke');
+        $request = new Request('bank_transfer');
+        $request->addTransaction($trx);
+
+        $request->setCustomer(
+            'iwaninfo@gmail.com',
+            'Ridwan',
+            'Rumi',
+            '08112823746'
+        );
+
+        $request->setBankTransfer('bca')
+            ->setSubCompanyCode('1111');
+
+        $charge = $this->MidTrans->charge($request);
+        debug($charge);
+
+        debug($request->toObject());
+        */
+
+        /*
+         * sample request for gopay
+        $trx = new Transaction('ord-0019-x94');
+        $trx->addItem(1, 2500, 1, 'barang oke');
+        $trx->addItem(2, 2500, 1, 'barang oke');
+        $request = new Request('gopay');
+        $request->addTransaction($trx);
+
+        $request->setCustomer(
+            'iwaninfo@gmail.com',
+            'Ridwan',
+            'Rumi',
+            '08112823746'
+        );
+
+        $request->setGopayCallback('http://localhost/2018');
+
+        $charge = $this->MidTrans->charge($request);
+        debug($charge);
+
+        debug($request->toObject());
+        */
+
         exit;
     }
 

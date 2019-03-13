@@ -108,6 +108,88 @@ class MidTransComponent extends Component
     }
 
 
+    /**
+     *
+     * cc
+     * $trx = new Transaction('ord-0019-x92');
+     * $trx->addItem(1, 2500, 1, 'barang oke');
+     * $trx->addItem(2, 2500, 1, 'barang oke');
+     *
+     * try {
+     *
+     * $request = new Request('credit_card');
+     * $request->addTransaction($trx);
+     *
+     * $request->setCustomer(
+     * 'iwaninfo@gmail.com',
+     * 'Ridwan',
+     * 'Rumi',
+     * '08112823746'
+     * )
+     * ->setBillingAddress()
+     * ->setShippingFromBilling();
+     *
+     * $token = $this->MidTrans->createToken(new Token(
+     * '4411 1111 1111 1118',
+     * '01',
+     * '20',
+     * '123'
+     * ), $trx->getAmount());
+     *
+     * if ($token['status_code'] == 200) {
+     * $request->setCreditCard($token['token_id'], true);
+     *
+     * $charge = $this->MidTrans->charge($request);
+     * debug($charge);
+     * }
+     *
+     * debug($request->toObject());
+     *
+     * } catch(\Exception $e) {
+     *
+     * }
+     *
+     *
+     * virtual account
+     * $trx = new Transaction('ord-0019-x93');
+     * $trx->addItem(1, 2500, 1, 'barang oke');
+     * $trx->addItem(2, 2500, 1, 'barang oke');
+     * $request = new Request('bank_transfer');
+     * $request->addTransaction($trx);
+     *
+     * $request->setCustomer(
+     * 'iwaninfo@gmail.com',
+     * 'Ridwan',
+     * 'Rumi',
+     * '08112823746'
+     * );
+     *
+     * $request->setBankTransfer('bca')
+     * ->setSubCompanyCode('1111');
+     *
+     * $charge = $this->MidTrans->charge($request);
+     *
+     * gopay
+     * $trx = new Transaction('ord-0019-x94');
+     * $trx->addItem(1, 2500, 1, 'barang oke');
+     * $trx->addItem(2, 2500, 1, 'barang oke');
+     * $request = new Request('gopay');
+     * $request->addTransaction($trx);
+
+     * $request->setCustomer(
+     *  'iwaninfo@gmail.com',
+     *  'Ridwan',
+     *  'Rumi',
+     *  '08112823746'
+     * );
+     *
+     * $request->setGopayCallback('http://localhost/2018');
+     *
+     * $charge = $this->MidTrans->charge($request);
+     *
+     * @param \App\Lib\MidTrans\Request $request
+     * @return \Psr\Http\Message\StreamInterface|null
+     */
     public function charge(\App\Lib\MidTrans\Request $request)
     {
         $this->_response = $this->makeRequest()->post('v2/charge', [

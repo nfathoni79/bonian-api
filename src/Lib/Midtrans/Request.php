@@ -22,6 +22,11 @@ class Request
     protected $item_details = [];
 
 
+    /**
+     * Request constructor.
+     * payment_type: bank_transfer, credit_card, echannel, gopay
+     * @param $payment_type
+     */
     public function __construct($payment_type)
     {
         $this->payment_type = $payment_type;
@@ -74,7 +79,22 @@ class Request
     }
 
     /**
-     * recipient name using for bca virtual account
+     * @param $url
+     */
+    public function setGopayCallback($url)
+    {
+        if ($this->payment_type == 'gopay') {
+            $this->gopay = [
+                'enable_callback' => true,
+                'callback_url' => $url
+            ];
+        }
+    }
+
+    /**
+     * this request using for bca virtual account
+     * @param $company_code
+     * @return $this
      */
     public function setSubCompanyCode($company_code)
     {
@@ -158,7 +178,7 @@ class Request
     public function toObject()
     {
         $this->validRequest();
-        return get_object_vars($this);
+        return array_filter(get_object_vars($this));
     }
 
 }
