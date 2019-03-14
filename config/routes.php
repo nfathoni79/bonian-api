@@ -128,6 +128,10 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->fallbacks(DashedRoute::class);
 });
 
+Router::scope('/ipn', function (RouteBuilder $routes) {
+    $routes->connect('/', ['controller' => 'Ipn', 'action' => 'index']);
+});
+
 
 /**
  * If you need a different set of middleware or none at all,

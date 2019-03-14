@@ -23,10 +23,12 @@ class IpnController extends AppController
         $this->server_key = $config['serverKey'];
     }
 
-	public function index(){
-		
-        if ($this->request->is('post')) { 
-            Log::info($this->request->getBody()->getContents(), ['scope' => ['midtrans']]);
+
+
+	public function index() {
+		$this->disableAutoRender();
+        if ($this->request->is('post')) {
+            Log::notice($this->request->getBody()->getContents(), ['scope' => ['midtrans']]);
 		}
 	}
 	

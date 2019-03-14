@@ -37,19 +37,25 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCards');
     }
 
-    /**
-     * list all address
-     */
+
     public function index()
+    {
+        
+    }
+
+    /**
+     * payment process
+     */
+    public function payment()
     {
 
         $this->request->allowMethod(['post', 'put']);
 
 		
 	
-        $trx = new Transaction('ord-0019-x10157');
+        $trx = new Transaction('ord-0021-x10160');
         $trx->addItem(1, 2500, 1, 'barang oke');
-        $trx->addItem(2, 2500, 1, 'barang oke');
+        $trx->addItem(2, 2500, 1, 'barang oke 2');
 
         try {
 
@@ -65,12 +71,13 @@ class CheckoutController extends AppController
                 ->setBillingAddress()
                 ->setShippingFromBilling();
 
-            $token = $this->MidTrans->createToken(new Token(
-                '4411 1111 1111 1118',
+            $token = $this->MidTrans->createToken((new Token(
+                '5211 1111 1111 1117',
                 '01',
                 '20',
                 '123'
-            ), $trx->getAmount());
+            ))->setSecure(true), $trx->getAmount());
+
 
 			//$token['status_code'] = 200;
 			//$token['token_id'] = '441111-1118-d9c7689a-82eb-469f-a797-cd0aa13edf2e';

@@ -51,7 +51,6 @@ class CustomerCard extends Entity
 
     protected function _setToken($token)
     {
-		debug($token);
         return base64_encode(Security::encrypt($token, Configure::read('Encrypt.salt') . $this->get('customer_id')));
     }
 
