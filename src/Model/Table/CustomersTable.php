@@ -238,4 +238,41 @@ class CustomersTable extends Table
 
         return $rules;
     }
+
+    public function checkRefferal($id){
+        /* check refferal already registered or not */
+        $find = $this->find()
+            ->where(['id' => $id, 'refferal_customer_id != ' => '0'])
+            ->first();
+        if($find){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    public function getRefferalCode($id){
+        /* check refferal already registered or not */
+        $find = $this->find()
+            ->where(['id' => $id])
+            ->first();
+        if($find){
+            return $find->get('reffcode');
+        }
+    }
+    public function checkRefferalCode($reff, $customer_id){
+        /* check refferal already registered or not */
+        $find = $this->find()
+            ->where(['reffcode' => $reff])
+            ->first();
+        if($find){
+            if($find->get('id') == $customer_id){
+                return false;
+            }else{
+                return true;
+            }
+        }else{
+            return false;
+        }
+    }
 }

@@ -30,6 +30,8 @@ use Cake\Http\Client\FormData;
  * @property \App\Model\Table\CustomerNotificationsTable $CustomerNotifications
  * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
  * @property \App\Model\Table\CustomerMutationAmountsTable $CustomerMutationAmounts
+ * @property \App\Controller\Component\GenerationsTreeComponent $GenerationsTree
+ * @property \App\Controller\Component\SmsComponentComponent $Sms
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class ProfileController extends AppController
@@ -42,7 +44,8 @@ class ProfileController extends AppController
         $this->loadModel('CustomerNotifications');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerMutationAmounts');
-
+        $this->loadComponent('GenerationsTree');
+        $this->loadComponent('Sms');
     }
 
     public function edit(){
@@ -270,4 +273,38 @@ class ProfileController extends AppController
 
         $this->set(compact('data'));
     }
+
+
+    public function addRefferal(){
+
+        $this->request->allowMethod('post');
+
+        $customerId = $this->Auth->user('id');
+        if($this->Customers->checkRefferal($customerId)){
+            $getReffCode = $this->Customers->getRefferalCode($customerId);
+            $validator = new Validator();
+            $validator
+                ->requirePresence('refferal')
+                ->notBlank('refferal', 'Refferal code wajib di isi')
+                ->notEquals('refferal', $getReffCode, 'Referal code tidak bisa di gunakan pada diri sendiri' )
+                ->add('refferal', 'custom', [
+                    'rule' => function ($value, $context) use($customerId) {
+                        return $this->Customers->checkRefferalCode($value, $customerId) ;
+                    },
+                    'message' => 'Refferal tidak tersedia',
+                ]);
+
+            $errors = $validator->errors($this->request->getData());
+            if (empty($errors)) {
+                $this->GenerationsTree->save($getReffCode, $this->request->getData('refferal'));
+            }else{
+                $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
+                $errors = $errors;
+            }
+            $this->set(compact('errors'));
+        }else{
+            $this->setResponse($this->response->withStatus(406, 'Refferal is already registered'));
+        }
+    }
+
 }

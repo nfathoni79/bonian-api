@@ -29,6 +29,7 @@ class RegistersController extends Controller
         $this->loadModel('CustomerMutationAmounts');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerAddreses');
+        $this->loadComponent('Sms');
     }
 
     private function reffcode($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'){
@@ -111,16 +112,13 @@ class RegistersController extends Controller
     }
 
     public function sendcode(){
-
-
         $this->SendAuth->register('register', $this->request->getData('phone'));
         $code = $this->SendAuth->generates();
         if($code){
-            $text = 'Demi keamanan akun Anda, mohon TIDAK MEMBERIKAN kode verifikasi kepada siapapun TERMASUK TIM ZOLAKU. Kode verifikasi berlaku 15 mnt : '.$code;
-//            $this->SendAuth->sendsms($text);
-//            send sms
+            $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Kode berlaku 15 mnt : '.$code;
+            $this->Sms->send($this->request->getData('phone'),$text);
         }else{
-            $this->setResponse($this->response->withStatus(406, 'Failed request verification'));
+            $this->setResponse($this->response->withStatus(406, 'request telah di kirim, silahkan tunggu 15 menit sampai sesi habis.'));
         }
         $this->set(compact('error'));
     }

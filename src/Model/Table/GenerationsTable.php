@@ -45,7 +45,7 @@ class GenerationsTable extends Table
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id'
         ]);
-        $this->belongsTo('Refferals', [
+        $this->belongsTo('Customers', [
             'foreignKey' => 'refferal_id'
         ]);
     }
@@ -80,7 +80,7 @@ class GenerationsTable extends Table
     public function buildRules(RulesChecker $rules)
     {
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
-        $rules->add($rules->existsIn(['refferal_id'], 'Refferals'));
+        $rules->add($rules->existsIn(['refferal_id'], 'Customers'));
 
         return $rules;
     }

@@ -321,7 +321,7 @@ class CartController extends AppController
             ->where([
                 'CustomerCarts.customer_id' => $customerId,
                 'CustomerCartDetails.id' => $this->request->getData('cartid'),
-                'CustomerCartDetails.status' => 1
+//                'CustomerCartDetails.status IN ' => 1
             ])
             ->first();
         if($find){

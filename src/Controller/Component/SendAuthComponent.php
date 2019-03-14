@@ -74,15 +74,15 @@ class SendAuthComponent extends Component
         try {
 
 
-//            $find =  $this->AuthCodes->find()
-//                ->select(['AuthCodes.id'])
-//                ->where([
-//                    'AuthCodes.phone' => $this->phone,
-//                    'AuthCodes.name' => $this->name,
-//                    'AuthCodes.used' => 0
-//                ])->toArray();
+            $find =  $this->AuthCodes->find()
+                ->select(['AuthCodes.id'])
+                ->where([
+                    'AuthCodes.phone' => $this->phone,
+                    'AuthCodes.name' => $this->name,
+                    'AuthCodes.used' => 0
+                ])->toArray();
 
-//            if(empty($find)){
+            if(empty($find)){
                 $entity = $this->AuthCodes->newEntity([
                     'phone' => $this->phone,
                     'name' => $this->name,
@@ -93,9 +93,9 @@ class SendAuthComponent extends Component
                     $this->_id = $entity->get('id');
                 }
                 return $entity->get('code');
-//            }else{
-//
-//            }
+            }else{
+
+            }
 
         } catch (\Exception $e) {}
 
