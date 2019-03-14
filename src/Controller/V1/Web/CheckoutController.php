@@ -14,6 +14,15 @@
  */
 namespace App\Controller\V1\Web;
 
+use App\Lib\MidTrans\Payment\BcaKlikPay;
+use App\Lib\MidTrans\Payment\BcaVirtualAccount;
+use App\Lib\MidTrans\Payment\BniVirtualAccount;
+use App\Lib\MidTrans\Payment\CreditCard;
+use App\Lib\MidTrans\Payment\Gopay;
+use App\Lib\MidTrans\Payment\MandiriBillPayment;
+use App\Lib\MidTrans\Payment\MandiriClickPay;
+use App\Lib\MidTrans\Payment\PermataVirtualAccount;
+use App\Lib\MidTrans\PaymentRequest;
 use Cake\I18n\Time;
 use App\Lib\MidTrans\Token;
 use App\Lib\MidTrans\Request;
@@ -35,12 +44,123 @@ class CheckoutController extends AppController
         parent::initialize();
         $this->loadModel('Customers');
         $this->loadModel('CustomerCards');
+
+        $this->Auth->allow(['index']);
     }
 
 
     public function index()
     {
+        /*$cards = $this->CustomerCards->find()
+            ->where([
+                'customer_id' => $this->Auth->user('id'),
+                'is_primary' => 1
+            ])
+            ->first();
 
+        debug($cards->get('token'));exit;*/
+
+        $trx = new Transaction('ord-0021-x10175');
+        $trx->addItem(1, 2500, 1, 'barang oke');
+        $trx->addItem(2, 2500, 1, 'barang oke 2');
+
+
+        $payment_type = 'gopay';
+
+        switch ($payment_type) {
+            case 'credit_card':
+                //for credit card
+                $payment = new CreditCard();
+                $payment->setToken('441111lSmrlWhaoZtyTjOAscGBrc1118')
+                    ->saveToken(true)
+                    ->setInstallment('bca', 6)
+                    ->setCustomer(
+                        'iwaninfo@gmail.com',
+                        'Ridwan',
+                        'Rumi',
+                        '08112823746'
+                    )
+                    ->setBillingAddress()
+                    ->setShippingFromBilling();
+
+                break;
+
+            case 'bca_va':
+                //for bca
+                $payment = (new BcaVirtualAccount(1111111))
+                    ->setSubCompanyCode(1111);
+                break;
+
+            case 'mandiri_billpayment':
+                $payment = (new MandiriBillPayment());
+                break;
+
+            case 'permata_va':
+                //for permata
+                $payment = (new PermataVirtualAccount())
+                    ->setRecipientName('Ridwan');
+                break;
+
+            case 'bni_va':
+                $payment = new BniVirtualAccount('111111');
+                break;
+
+            case 'bca_klikpay':
+                $payment = new BcaKlikPay();
+                break;
+
+            case 'mandiri_clickpay':
+                $token = (new \App\Lib\MidTrans\CreditCardToken())
+                    ->setCardNumber('4111 1111 1111 1111')
+                    ->request(10000);
+                if ($token->status_code == 200) {
+                    $payment = new MandiriClickPay($token->token_id, '54321', '000000');
+                }
+                break;
+
+            case 'gopay':
+                $payment = new Gopay('http://php.net');
+                break;
+        }
+
+
+        $request = new Request($payment);
+        $request->addTransaction($trx);
+
+        $request->setCustomer(
+            'iwaninfo@gmail.com',
+            'Ridwan',
+            'Rumi',
+            '0817123123'
+        );
+
+
+        debug($request);
+
+        $charge = $this->MidTrans->charge($request);
+        debug($charge);
+
+        exit;
+
+        $ccToken = new \App\Lib\MidTrans\CreditCardToken();
+        $getToken = $ccToken->setCvv(123)
+            ->setToken('441111lSmrlWhaoZtyTjOAscGBrc1118')
+            ->setSecure(true)
+            ->request(5000);
+
+        if ($getToken->status_code == 200) {
+            if ($getToken->redirect_url) {
+                return $this->redirect($getToken->redirect_url);
+            }
+
+            $payment_type = 'credit_card';
+
+
+
+
+
+
+        }
     }
 
     /**
