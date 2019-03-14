@@ -40,7 +40,7 @@ class CheckoutController extends AppController
 
     public function index()
     {
-        
+
     }
 
     /**
@@ -83,6 +83,12 @@ class CheckoutController extends AppController
 			//$token['token_id'] = '441111-1118-d9c7689a-82eb-469f-a797-cd0aa13edf2e';
 
             if ($token['status_code'] == 200) {
+
+                if (isset($token['redirect_url'])) {
+                    return $this->redirect($token['redirect_url']);
+                }
+
+
                 $request->setCreditCard($token['token_id'], true);
 
                 $charge = $this->MidTrans->charge($request);
