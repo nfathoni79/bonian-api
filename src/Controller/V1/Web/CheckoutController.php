@@ -22,13 +22,15 @@ use App\Lib\MidTrans\Payment\Gopay;
 use App\Lib\MidTrans\Payment\MandiriBillPayment;
 use App\Lib\MidTrans\Payment\MandiriClickPay;
 use App\Lib\MidTrans\Payment\PermataVirtualAccount;
-use App\Lib\MidTrans\PaymentRequest;
-use Cake\I18n\Time;
-use App\Lib\MidTrans\Token;
 use App\Lib\MidTrans\Request;
 use App\Lib\MidTrans\Transaction;
+
+use Cake\I18n\Time;
+use App\Lib\MidTrans\Token;
 use Cake\Utility\Security;
 use Cake\Core\Configure;
+
+
 /**
  * Customers controller
  *
@@ -51,22 +53,23 @@ class CheckoutController extends AppController
 
     public function index()
     {
-        /*$cards = $this->CustomerCards->find()
-            ->where([
-                'customer_id' => $this->Auth->user('id'),
-                'is_primary' => 1
-            ])
-            ->first();
+        //list checkout and default customer address
 
-        debug($cards->get('token'));exit;*/
+    }
 
+    /**
+     * payment process
+     */
+    public function payment()
+    {
+
+        $this->request->allowMethod(['post', 'put']);
         $trx = new Transaction('ord-0021-x10175');
         $trx->addItem(1, 2500, 1, 'barang oke');
         $trx->addItem(2, 2500, 1, 'barang oke 2');
 
 
         $payment_type = 'gopay';
-
         switch ($payment_type) {
             case 'credit_card':
                 //for credit card
@@ -135,138 +138,8 @@ class CheckoutController extends AppController
         );
 
 
-        debug($request);
+        $data = $this->MidTrans->charge($request);
 
-        $charge = $this->MidTrans->charge($request);
-        debug($charge);
-
-        exit;
-
-        $ccToken = new \App\Lib\MidTrans\CreditCardToken();
-        $getToken = $ccToken->setCvv(123)
-            ->setToken('441111lSmrlWhaoZtyTjOAscGBrc1118')
-            ->setSecure(true)
-            ->request(5000);
-
-        if ($getToken->status_code == 200) {
-            if ($getToken->redirect_url) {
-                return $this->redirect($getToken->redirect_url);
-            }
-
-            $payment_type = 'credit_card';
-
-
-
-
-
-
-        }
-    }
-
-    /**
-     * payment process
-     */
-    public function payment()
-    {
-
-        $this->request->allowMethod(['post', 'put']);
-
-		
-	
-        $trx = new Transaction('ord-0021-x10160');
-        $trx->addItem(1, 2500, 1, 'barang oke');
-        $trx->addItem(2, 2500, 1, 'barang oke 2');
-
-        try {
-
-            $request = new Request('credit_card');
-            $request->addTransaction($trx);
-
-            $request->setCustomer(
-                'iwaninfo@gmail.com',
-                'Ridwan',
-                'Rumi',
-                '08112823746'
-            )
-                ->setBillingAddress()
-                ->setShippingFromBilling();
-
-            $token = $this->MidTrans->createToken((new Token(
-                '5211 1111 1111 1117',
-                '01',
-                '20',
-                '123'
-            ))->setSecure(true), $trx->getAmount());
-
-
-			//$token['status_code'] = 200;
-			//$token['token_id'] = '441111-1118-d9c7689a-82eb-469f-a797-cd0aa13edf2e';
-
-            if ($token['status_code'] == 200) {
-
-                if (isset($token['redirect_url'])) {
-                    return $this->redirect($token['redirect_url']);
-                }
-
-
-                $request->setCreditCard($token['token_id'], true);
-
-                $charge = $this->MidTrans->charge($request);
-				
-				//$charge = json_decode('{"status_code":"200","status_message":"Success, Credit Card transaction is successful","transaction_id":"d9c7689a-82eb-469f-a797-cd0aa13edf2e","order_id":"ord-0019-x100","gross_amount":"5000.00","currency":"IDR","payment_type":"credit_card","transaction_time":"2019-03-13 19:40:47","transaction_status":"capture","fraud_status":"accept","approval_code":"1552480848068","masked_card":"441111-1118","bank":"cimb","card_type":"credit","saved_token_id":"441111lSmrlWhaoZtyTjOAscGBrc1118","saved_token_id_expired_at":"2020-01-31 07:00:00","channel_response_code":"00","channel_response_message":"Approved"}', true);
-				
-                if (isset($charge['status_code']) && $charge['status_code'] == 200) {
-                    if ($request->isCreditCard() && $request->isSavedToken()) {
-                        //saved token
-
-
-
-                        $saved_token = $charge['saved_token_id'];
-                        $saved_token_id_expired_at = $charge['saved_token_id_expired_at'];
-                        $masked_card = $charge['masked_card'];
-
-                        $cardEntity = $this->CustomerCards->find()
-                            ->where([
-                                'customer_id' => $this->Auth->user('id'),
-                                'masked_card' => $masked_card
-                            ])
-                            ->first();
-
-                        $count_card = $this->CustomerCards->find()
-                            ->where([
-                                'customer_id' => $this->Auth->user('id')
-                            ])
-                            ->count();
-
-
-
-                        if (empty($cardEntity)) {
-
-                            $cardEntity = $this->CustomerCards->newEntity([
-                                'customer_id' => $this->Auth->user('id'),
-                                'is_primary' => $count_card > 0 ? 0 : 1,
-                                'masked_card' => $masked_card,
-								'token' => $saved_token,
-                                'expired_at' => $saved_token_id_expired_at
-                            ]);
-							
-							
-                            $this->CustomerCards->save($cardEntity);
-							
-                        }
-
-                    }
-                } else {
-                    $this->setResponse($this->response->withStatus(406, 'failed to request payment'));
-                }
-
-            }
-
-
-
-        } catch(\Exception $e) {
-
-        }
 
         $this->set(compact('data'));
     }

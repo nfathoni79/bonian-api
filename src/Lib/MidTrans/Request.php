@@ -22,17 +22,17 @@ class Request
     protected $item_details = [];
 
 
-    /**
-     * Request constructor.
-     * payment_type: bank_transfer, credit_card, echannel, gopay
-     * @param $payment_type
-     */
+
     /*public function __construct($payment_type)
     {
         $this->payment_type = $payment_type;
         return $this;
     }*/
 
+    /**
+     * Request constructor.
+     * @param PaymentRequest $payment
+     */
     public function __construct(PaymentRequest $payment)
     {
         foreach(get_object_vars($payment) as $key => $val) {
@@ -96,46 +96,7 @@ class Request
         return $this;
     }
 
-    /**
-     * recipient name using for permata virtual account
-     */
-    public function setRecipientName($name)
-    {
-        if (strtolower($this->bank_transfer['bank']) == 'permata') {
-            $this->bank_transfer['permata'] = [
-                'recipient_name' => $name
-            ];
-        }
-        return $this;
-    }
 
-    /**
-     * @param $url
-     */
-    public function setGopayCallback($url)
-    {
-        if ($this->payment_type == 'gopay') {
-            $this->gopay = [
-                'enable_callback' => true,
-                'callback_url' => $url
-            ];
-        }
-    }
-
-    /**
-     * this request using for bca virtual account
-     * @param $company_code
-     * @return $this
-     */
-    public function setSubCompanyCode($company_code)
-    {
-        if (strtolower($this->bank_transfer['bank']) == 'bca') {
-            $this->bank_transfer['bca'] = [
-                'sub_company_code' => $company_code
-            ];
-        }
-        return $this;
-    }
 
     public function setCustomer($email, $fist_name, $last_name, $phone)
     {
@@ -155,26 +116,15 @@ class Request
         $this->{$name} = $value;
     }
 
-    protected function validRequest()
-    {
-        if ($this->payment_type == 'credit_card') {
-            unset($this->bank_transfer);
-        }
 
-        if ($this->payment_type == 'bank_transfer') {
-            unset($this->credit_card);
-        }
-    }
 
     public function __toString()
     {
-        $this->validRequest();
         return json_encode(array_filter(get_object_vars($this)));
     }
 
     public function toObject()
     {
-        $this->validRequest();
         return array_filter(get_object_vars($this));
     }
 
