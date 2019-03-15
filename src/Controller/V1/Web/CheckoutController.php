@@ -227,7 +227,8 @@ class CheckoutController extends AppController
                 foreach($val['costs'] as $k => $cost) {
                     $result[] = [
                         'code' => $val['code'],
-                        'name' => $val['code'] . ' - ' . $cost['service'],
+                        'service' => $cost['service'],
+                        'name' => $val['code'] . ' - ' . strtolower($cost['service']),
                         'description' => $cost['description'],
                         'cost' => $cost['cost'][0]['value'],
                         'etd' => $cost['cost'][0]['etd'],
