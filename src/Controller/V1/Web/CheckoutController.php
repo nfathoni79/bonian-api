@@ -54,8 +54,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCarts');
 
         $this->loadComponent('RajaOngkir');
-
-        $this->Auth->allow(['index']);
+        
     }
 
 
