@@ -15,6 +15,17 @@ class MandiriClickPay extends PaymentRequest
     public $payment_type = "mandiri_clickpay";
     public $mandiri_clickpay = [];
 
+    /**
+     * MandiriClickPay constructor.
+     * create 3 challenge
+     * challenge 1 auto generate last 10 digit from debit card
+     * challenge 2 amount of transaction example: 250000
+     * challenge 3 5 digit random from server
+     *
+     * @param $token_id
+     * @param $input3
+     * @param $token
+     */
     public function __construct($token_id, $input3, $token)
     {
         $this->mandiri_clickpay = [

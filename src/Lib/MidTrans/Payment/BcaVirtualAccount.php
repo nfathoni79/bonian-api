@@ -21,7 +21,7 @@ class BcaVirtualAccount extends PaymentRequest
     {
         $this->bank_transfer['bank'] = 'bca';
         $this->bank_transfer['va_number'] = $va_number;
-
+        $this->bca['sub_company_code'] = '00000';
         return $this;
     }
 
