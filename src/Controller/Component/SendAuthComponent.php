@@ -80,7 +80,10 @@ class SendAuthComponent extends Component
                     'AuthCodes.phone' => $this->phone,
                     'AuthCodes.name' => $this->name,
                     'AuthCodes.used' => 0
-                ])->toArray();
+                ])
+                ->andwhere(function (QueryExpression $exp, Query $query) {
+                    return $exp->gte('expired', date('Y-m-d H:i:s'));
+                })->toArray();
 
             if(empty($find)){
                 $entity = $this->AuthCodes->newEntity([

@@ -9,8 +9,10 @@ use Cake\Validation\Validator;
 /**
  * Generations Model
  *
+ * @property |\Cake\ORM\Association\BelongsTo $ParentGenerations
  * @property \App\Model\Table\CustomersTable|\Cake\ORM\Association\BelongsTo $Customers
- * @property \App\Model\Table\RefferalsTable|\Cake\ORM\Association\BelongsTo $Refferals
+ * @property |\Cake\ORM\Association\BelongsTo $Refferals
+ * @property |\Cake\ORM\Association\HasMany $ChildGenerations
  *
  * @method \App\Model\Entity\Generation get($primaryKey, $options = [])
  * @method \App\Model\Entity\Generation newEntity($data = null, array $options = [])
@@ -22,6 +24,7 @@ use Cake\Validation\Validator;
  * @method \App\Model\Entity\Generation findOrCreate($search, callable $callback = null, $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
+ * @mixin \Cake\ORM\Behavior\TreeBehavior
  */
 class GenerationsTable extends Table
 {
@@ -41,12 +44,21 @@ class GenerationsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('Tree');
 
-        $this->belongsTo('Customers', [
-            'foreignKey' => 'customer_id'
+        $this->belongsTo('ParentGenerations', [
+            'className' => 'Generations',
+            'foreignKey' => 'parent_id'
         ]);
         $this->belongsTo('Customers', [
-            'foreignKey' => 'refferal_id'
+            'foreignKey' => 'customer_id',
+        ]);
+        $this->belongsTo('Customers', [
+            'foreignKey' => 'refferal_id',
+        ]);
+        $this->hasMany('ChildGenerations', [
+            'className' => 'Generations',
+            'foreignKey' => 'parent_id'
         ]);
     }
 
@@ -79,6 +91,7 @@ class GenerationsTable extends Table
      */
     public function buildRules(RulesChecker $rules)
     {
+        $rules->add($rules->existsIn(['parent_id'], 'ParentGenerations'));
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
         $rules->add($rules->existsIn(['refferal_id'], 'Customers'));
 

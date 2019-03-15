@@ -25,8 +25,7 @@ class GenerationsTableTest extends TestCase
      */
     public $fixtures = [
         'app.Generations',
-        'app.Customers',
-        'app.Refferals'
+        'app.Customers'
     ];
 
     /**

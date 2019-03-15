@@ -7,13 +7,15 @@ use Cake\ORM\Entity;
  * Generation Entity
  *
  * @property int $id
+ * @property int|null $parent_id
+ * @property int $lft
+ * @property int $rght
  * @property int|null $customer_id
  * @property int|null $refferal_id
  * @property int $level
  * @property \Cake\I18n\FrozenTime $created
  *
  * @property \App\Model\Entity\Customer $customer
- * @property \App\Model\Entity\Refferal $refferal
  */
 class Generation extends Entity
 {
@@ -28,11 +30,13 @@ class Generation extends Entity
      * @var array
      */
     protected $_accessible = [
+        'parent_id' => true,
+        'lft' => true,
+        'rght' => true,
         'customer_id' => true,
         'refferal_id' => true,
         'level' => true,
         'created' => true,
-        'customer' => true,
-        'refferal' => true
+        'customer' => true
     ];
 }

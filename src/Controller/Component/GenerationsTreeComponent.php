@@ -33,45 +33,59 @@ class GenerationsTreeComponent extends Component
 
     public function save($reffNewUser,$reffSponsor) {
 
-        $customers = $this->Customers->find()->where(['reffcode' => $reffNewUser])->first();
-
         $sponsor = $this->Customers->find()->where(['reffcode' => $reffSponsor])->first();
+        $customers = $this->Customers->find()->where(['reffcode' => $reffNewUser])->first();
+        if($customers){
 
-        $customerId = $customers->get('id');
-        $sponsorId = $sponsor->get('id');
+            $findSponsorParent = $this->Generations
+                ->find()
+                ->where(['customer_id' => $sponsor->get('id')])
+                ->order(['id' => 'ASC'])
+                ->first();
+            if($findSponsorParent){
+                $parentIds = $findSponsorParent->get('id');
+            }else{
+                $parentIds = 'NULL';
+            }
+            $customerId = $customers->get('id');
+            $sponsorId = $sponsor->get('id');
 
-        $entity = $this->Generations->newEntity([
-            'customer_id' => $customerId,
-            'refferal_id' => $sponsorId,
-            'level' => 1
-        ]);
+            $entity = $this->Generations->newEntity([
+                'parent_id' => $parentIds,
+                'customer_id' => $customerId,
+                'refferal_id' => $sponsorId,
+                'level' => 1
+            ]);
+            if($this->Generations->save($entity)) {
 
-        if($this->Generations->save($entity)) {
-            $customers->set('refferal_customer_id', $sponsorId);
-            if($this->Customers->save($customers)){
+                $customers->set('refferal_customer_id', $sponsorId);
+                if($this->Customers->save($customers)){
 
-                $findSponsor = $this->Generations
-                    ->find()
-                    ->select(['refferal_id' , 'level'])
-                    ->where(['customer_id' => $sponsorId])
-                    ->all()
-                    ->toArray();
+                    $findSponsor = $this->Generations
+                        ->find()
+                        ->select(['refferal_id' , 'level','parent_id','id'])
+                        ->where(['customer_id' => $sponsorId])
+                        ->all()
+                        ->toArray();
 
-                foreach ($findSponsor as $vals){
-                    $lvl = intval($vals['level']) + 1;
-                    $reffClientId = $vals['refferal_id'];
+                    foreach ($findSponsor as $vals){
+                        $lvl = intval($vals['level']) + 1;
+                        $reffClientId = $vals['refferal_id'];
+                        $parentId = $vals['id'];
 
-                    if ($lvl <= 10) {
-                        $newEntity = $this->Generations->newEntity([
-                            'client_id' => $customerId,
-                            'refferal_id' => $reffClientId,
-                            'level' => $lvl
-                        ]);
-                        $this->Generations->save($newEntity);
+                        if ($lvl <= 10) {
+                            $newEntity = $this->Generations->newEntity([
+                                'parent_id' => $parentId,
+                                'customer_id' => $customerId,
+                                'refferal_id' => $reffClientId,
+                                'level' => $lvl
+                            ]);
+                            $this->Generations->save($newEntity);
+                        }
                     }
                 }
-            }
 
+            }
         }
 
     }

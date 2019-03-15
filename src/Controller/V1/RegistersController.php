@@ -15,6 +15,7 @@ use Cake\ORM\Rule\IsUnique;
  * @property \App\Model\Table\CustomerBalancesTable $CustomerBalances
  * @property \App\Model\Table\CustomerMutationAmountsTable $CustomerMutationAmounts
  * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
+ * @property \App\Controller\Component\GenerationsTreeComponent $GenerationsTree
  * @property \App\Model\Table\CustomerAddresesTable $CustomerAddreses
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
@@ -29,6 +30,7 @@ class RegistersController extends Controller
         $this->loadModel('CustomerMutationAmounts');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerAddreses');
+        $this->loadComponent('GenerationsTree');
         $this->loadComponent('Sms');
     }
 
@@ -50,7 +52,8 @@ class RegistersController extends Controller
 
         $this->SendAuth->register('register', $this->request->getData('phone'));
         $validator = new Validator();
-
+//        $this->GenerationsTree->save('R2JVYDV9FN','WYD4KUOB1U');
+//        exit;
         $validator
             ->requirePresence('auth_code')
             ->notEmpty('auth_code', 'This field is required')
