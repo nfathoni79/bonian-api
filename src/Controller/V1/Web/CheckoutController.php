@@ -54,7 +54,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCarts');
 
         $this->loadComponent('RajaOngkir');
-        
+
     }
 
 
@@ -185,6 +185,7 @@ class CheckoutController extends AppController
                     }
 
                     $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
+                    $cart_group_origin[$val['origin_id']]['total_weight'] = $val['weight'] * $val['qty'];
                     $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
                         implode(':', $courier_group),
                         $val['origin_district_id'],
@@ -194,7 +195,7 @@ class CheckoutController extends AppController
                     $cart_group_origin[$val['origin_id']]['data'][] = $val;
 
                 } else {
-
+                    $cart_group_origin[$val['origin_id']]['total_weight'] += $val['weight'] * $val['qty'];
                     $cart_group_origin[$val['origin_id']]['data'][] = $val;
 
                 }
