@@ -25,6 +25,8 @@ use App\Lib\MidTrans\Payment\PermataVirtualAccount;
 use App\Lib\MidTrans\Request;
 use App\Lib\MidTrans\Transaction;
 
+use Cake\Utility\Hash;
+
 use Cake\I18n\Time;
 use App\Lib\MidTrans\Token;
 use Cake\Utility\Security;
@@ -36,6 +38,9 @@ use Cake\Core\Configure;
  *
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerCardsTable $CustomerCards
+ * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
+ * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
+ *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class CheckoutController extends AppController
@@ -46,6 +51,9 @@ class CheckoutController extends AppController
         parent::initialize();
         $this->loadModel('Customers');
         $this->loadModel('CustomerCards');
+        $this->loadModel('CustomerCarts');
+
+        $this->loadComponent('RajaOngkir');
 
         $this->Auth->allow(['index']);
     }
@@ -54,7 +62,181 @@ class CheckoutController extends AppController
     public function index()
     {
         //list checkout and default customer address
+        $data = [];
+        $customer_id = $this->Auth->user('id');
 
+        $data['customer_address'] = $this->Customers->CustomerAddreses->find()
+            ->where([
+                'customer_id' => $customer_id
+            ])
+            ->orderDesc('is_primary')
+            ->map(function(\App\Model\Entity\CustomerAddrese $row) {
+                unset($row->customer_id);
+                return $row;
+            })
+            ->first();
+
+
+        $product_to_couriers = [];
+        $cart = $this->CustomerCarts->find()
+            ->contain(
+                'CustomerCartDetails', function (\Cake\ORM\Query $q) {
+                return $q
+                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+            })
+            ->contain([
+                'CustomerCartDetails' => [
+                    'Products' => [
+                        'fields' => [
+                            'id',
+                            'name',
+                            'slug',
+                            'price',
+                        ],
+                        'ProductImages' => [
+                            'fields' => [
+                                'name',
+                                'product_id',
+                            ]
+                        ],
+                        'ProductToCourriers' => [
+                            'Courriers'
+                        ],
+                    ],
+                    'ProductOptionPrices' => [
+                        'ProductOptionValueLists' => [
+                            'Options',
+                            'OptionValues'
+                        ],
+                    ],
+                    'ProductOptionStocks' => [
+                        'Branches'
+                    ],
+                ]
+            ])
+            ->where(['CustomerCarts.customer_id' => $customer_id,'CustomerCarts.status' => 1 ])
+            ->map(function (\App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+                $status = [
+                    1 => 'available',
+                    2 => 'expired',
+                    3 => 'outoff stock',
+                    4 => 'deleted',
+                    5 => 'move to whislist'
+                ];
+                foreach ($row['customer_cart_details'] as $key => $vals){
+                    $row->customer_cart_details[$key]->cartid = $row->customer_cart_details[$key]->id;
+                    $row->customer_cart_details[$key]->status = $status[$row->customer_cart_details[$key]->status];
+                    $row->customer_cart_details[$key]->name = $row->customer_cart_details[$key]->product->name;
+                    $row->customer_cart_details[$key]->slug = $row->customer_cart_details[$key]->product->slug;
+                    $row->customer_cart_details[$key]->regular_price = $row->customer_cart_details[$key]->product->price;
+
+
+                    $row->customer_cart_details[$key]->sku = $row->customer_cart_details[$key]->product_option_price->sku;
+                    $row->customer_cart_details[$key]->origin = $row->customer_cart_details[$key]->product_option_stock->branch->name;
+                    $row->customer_cart_details[$key]->origin_id = $row->customer_cart_details[$key]->product_option_stock->branch->id;
+                    $row->customer_cart_details[$key]->origin_district_id = $row->customer_cart_details[$key]->product_option_stock->branch->subdistrict_id;
+
+                    $row->customer_cart_details[$key]->weight = $row->customer_cart_details[$key]->product_option_stock->weight;
+
+                    $variant = [];
+                    foreach($vals['product_option_price']['product_option_value_lists'] as $val){
+                        $variant[$key][] = $val['option']['name'] .' : '. $val['option_value']['name'];
+                    }
+
+                    $row->customer_cart_details[$key]->variant = implode(', ', $variant[$key]);
+                    $row->customer_cart_details[$key]->price_id = $row->customer_cart_details[$key]->product_option_price_id;
+                    $row->customer_cart_details[$key]->stock_id = $row->customer_cart_details[$key]->product_option_stock_id;
+                    $row->customer_cart_details[$key]->images = Hash::extract($row->customer_cart_details[$key]->product->product_images, '{n}.name');
+
+                    $couriers = [];
+                    foreach($row->customer_cart_details[$key]->product->product_to_courriers as $k => $courier) {
+                        array_push($couriers, $courier['courrier']['code']);
+                    }
+                    $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $couriers;
+                    $row->customer_cart_details[$key]->couriers = $couriers;
+
+
+                    unset($row->customer_cart_details[$key]->created);
+                    unset($row->customer_cart_details[$key]->modified);
+                    unset($row->customer_cart_details[$key]->product);
+                    unset($row->customer_cart_details[$key]->product_option_stock);
+                    unset($row->customer_cart_details[$key]->product_option_price);
+                    unset($row->customer_cart_details[$key]->id);
+                    unset($row->customer_cart_details[$key]->customer_cart_id);
+                    unset($row->customer_cart_details[$key]->product_option_price_id);
+                    unset($row->customer_cart_details[$key]->product_option_stock_id);
+                }
+                unset($row->id);
+                unset($row->customer_id);
+                unset($row->status);
+                unset($row->created);
+                unset($row->modified);
+                return $row;
+            })
+            ->first();
+
+        //grouping by origin_id
+        $cart_group_origin = [];
+        if ($cart['customer_cart_details']) {
+            foreach($cart['customer_cart_details'] as $key => $val) {
+                if (!array_key_exists($val['origin_id'], $cart_group_origin)) {
+                    $courier_group = $product_to_couriers[$val['origin_id']][0];
+                    if (count($product_to_couriers[$val['origin_id']]) > 1) {
+                        $courier_group = call_user_func_array('array_intersect', $product_to_couriers[$val['origin_id']]);
+                    }
+
+                    $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
+                    $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
+                        implode(':', $courier_group),
+                        $val['origin_district_id'],
+                        $data['customer_address']->subdistrict_id,
+                        $val['weight'] * $val['qty']
+                    );
+                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
+
+                } else {
+
+                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
+
+                }
+
+            }
+        }
+
+        $data['carts'] = $cart_group_origin;
+
+        $this->set(compact('data'));
+
+    }
+
+    protected function getShipping($couriers, $origin_district_id, $dest_district_id, $weight)
+    {
+        $out = $this->RajaOngkir->cost(
+            $origin_district_id,
+            'subdistrict',
+            $dest_district_id,
+            'subdistrict',
+            $couriers,
+            $weight
+        );
+
+        $result = [];
+
+        if ($out && $out['rajaongkir']['status']['code'] == 200) {
+            foreach($out['rajaongkir']['results'] as $key => $val) {
+                foreach($val['costs'] as $k => $cost) {
+                    $result[] = [
+                        'code' => $val['code'],
+                        'name' => $val['code'] . ' - ' . $cost['service'],
+                        'description' => $cost['description'],
+                        'cost' => $cost['cost'][0]['value'],
+                        'etd' => $cost['cost'][0]['etd'],
+                    ];
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
