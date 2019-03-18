@@ -220,11 +220,13 @@ class CheckoutController extends AppController
 
     }
 
+
+
     /**
      * process checkout json input params
      *
      * [
-     * 'shippings' => [
+     * 'shipping' => [
      *    (int) 1 => [
      *   'code' => 'jne',
      *    'service' => 'REG'
@@ -251,7 +253,7 @@ class CheckoutController extends AppController
             ->requirePresence('service')
             ->notBlank('service');
 
-        $validator->addNestedMany('shippings', $shippingValidation);
+        $validator->addNestedMany('shipping', $shippingValidation);
 
         $validator->requirePresence('payment_method')
             ->inList('payment_method', [
@@ -264,6 +266,22 @@ class CheckoutController extends AppController
                 'mandiri_clickpay',
                 'gopay'
             ]);
+
+        if ($payment_method = $this->request->getData('payment_method') == 'credit_card') {
+            $validator->requirePresence('card_id')
+                ->notBlank('card_id')
+                ->add('card_id', 'check_card', [
+                    'rule' => function($value) use($customer_id) {
+                        return $this->CustomerCards->find()
+                                ->where([
+                                    'customer_id' => $customer_id,
+                                    'id' => $value
+                                ])
+                                ->count() > 0;
+                    },
+                    'message' => 'Silahkan masukan credit credit card'
+                ]);
+        }
 
         $validator->requirePresence('address_id')
             ->notBlank('address_id', 'Silahkan pilih alamat yang dikirim')
@@ -285,6 +303,62 @@ class CheckoutController extends AppController
         } else {
             unset($error);
             //process checkout
+            $payment_method = $this->request->getData('payment_method');
+            switch ($payment_method) {
+                case 'credit_card':
+                    //for credit card
+                    $payment = new CreditCard();
+                    $payment->setToken('441111lSmrlWhaoZtyTjOAscGBrc1118')
+                        ->saveToken(true)
+                        ->setCustomer(
+                            'iwaninfo@gmail.com',
+                            'Ridwan',
+                            'Rumi',
+                            '08112823746'
+                        )
+                        ->setBillingAddress()
+                        ->setShippingFromBilling();
+
+                    break;
+
+                case 'bca_va':
+                    //for bca
+                    $payment = (new BcaVirtualAccount(1111111))
+                        ->setSubCompanyCode(1111);
+                    break;
+
+                case 'mandiri_billpayment':
+                    $payment = (new MandiriBillPayment());
+                    break;
+
+                case 'permata_va':
+                    //for permata
+                    $payment = (new PermataVirtualAccount())
+                        ->setRecipientName('Ridwan');
+                    break;
+
+                case 'bni_va':
+                    $payment = new BniVirtualAccount('111111');
+                    break;
+
+                case 'bca_klikpay':
+                    $payment = new BcaKlikPay();
+                    break;
+
+                case 'mandiri_clickpay':
+                    $token = (new \App\Lib\MidTrans\CreditCardToken())
+                        ->setCardNumber('4111 1111 1111 1111')
+                        ->request(10000);
+                    if ($token->status_code == 200) {
+                        $payment = new MandiriClickPay($token->token_id, '54321', '000000');
+                    }
+                    break;
+
+                case 'gopay':
+                    $payment = new Gopay('http://php.net');
+                    break;
+            }
+
         }
 
 
