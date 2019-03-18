@@ -97,7 +97,9 @@ class CardsController extends AppController
 
 
             //process saved token
-
+            $token = new CreditCardToken($number, $exp_month, $exp_year);
+            $response = $token->register();
+            debug($response);
 
         }
 

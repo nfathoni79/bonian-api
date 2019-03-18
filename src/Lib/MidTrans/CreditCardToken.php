@@ -149,6 +149,35 @@ class CreditCardToken
 
     }
 
+
+    /**
+     * @return string
+     */
+    public function register()
+    {
+        $midtrans = Configure::read('Midtrans');
+        $client =  new Client([
+            // Base URI is used with relative requests
+            'base_uri' => $midtrans['url'],
+            // You can set any number of default request options.
+            'timeout'  => 30.0,
+            'auth' => [$midtrans['serverKey'], ''],
+            'headers' => [
+                'User-Agent' => 'zolaku/1.0'
+            ]
+        ]);
+
+        $token = $this->getRequest();
+        $token['client_key'] = $midtrans['clientKey'];
+
+
+        $response = $client->get('v2/card/register', [
+            'query' => $token
+        ]);
+
+        return $response->getBody()->getContents();
+    }
+
     /**
      * @param $cvv
      * @return $this
