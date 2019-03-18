@@ -77,6 +77,14 @@ class CheckoutController extends AppController
             })
             ->first();
 
+        $get_point = $this->Customers->CustomerBalances->find()
+            ->where([
+                'customer_id' => $customer_id
+            ])
+            ->first();
+
+        $data['point'] = (int) $get_point->get('point');
+
 
         $product_to_couriers = [];
         $cart = $this->CustomerCarts->find()
