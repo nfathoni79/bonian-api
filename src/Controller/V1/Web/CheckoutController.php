@@ -39,6 +39,7 @@ use Cake\Core\Configure;
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerCardsTable $CustomerCards
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
+ * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -52,6 +53,7 @@ class CheckoutController extends AppController
         $this->loadModel('Customers');
         $this->loadModel('CustomerCards');
         $this->loadModel('CustomerCarts');
+        $this->loadModel('CustomerVouchers');
 
         $this->loadComponent('RajaOngkir');
 
@@ -207,6 +209,77 @@ class CheckoutController extends AppController
 
         $this->set(compact('data'));
 
+    }
+
+    /**
+     * apply voucher
+     */
+    public function applyVoucher()
+    {
+        $this->request->allowMethod('post');
+        $customer_id = $this->Auth->user('id');
+        $code_voucher = $this->request->getData('code_voucher');
+        if ($code_voucher) {
+            $find = $this->CustomerVouchers->Vouchers->find()
+                ->where([
+                    'code_voucher' => $code_voucher,
+                    'status' => 1
+                ])
+                ->where(function (\Cake\Database\Expression\QueryExpression $exp) {
+                    $now = (Time::now())->format('Y-m-d H:i:s');
+                    return $exp->lte('date_start', $now)
+                        ->gte('date_end', $now);
+                })
+                ->first();
+
+            if ($find) {
+
+                //check quota
+                $total_used_voucher = $this->CustomerVouchers->find()
+                    ->where([
+                        'voucher_id' => $find->get('id')
+                    ])
+                    ->count();
+
+                if ($total_used_voucher <= $find->get('qty')) {
+                    //save customer voucher with status pending
+
+                    $exists = $this->CustomerVouchers->find()
+                        ->where([
+                            'customer_id' => $customer_id,
+                            'voucher_id' => $find->get('id'),
+                            'status' => 1
+                        ])
+                        ->first();
+
+                    if (!$exists) {
+                        $customer_voucher_entity = $this->CustomerVouchers->newEntity([
+                            'customer_id' => $customer_id,
+                            'voucher_id' => $find->get('id'),
+                            'status' => 1
+                        ]);
+                        $this->CustomerVouchers->save($customer_voucher_entity);
+                    }
+
+                    $data = [
+                        'code_voucher' => $code_voucher,
+                        'expired' => $find->get('date_end')
+                    ];
+
+                } else {
+                    $this->setResponse($this->response->withStatus(406, 'Voucher melebihi batas limit'));
+                }
+
+
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Kode voucher tidak ditemukan.'));
+            }
+
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'code_voucher is required'));
+        }
+
+        $this->set(compact('data'));
     }
 
     protected function getShipping($couriers, $origin_district_id, $dest_district_id, $weight)
