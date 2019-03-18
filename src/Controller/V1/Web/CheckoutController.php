@@ -31,6 +31,7 @@ use Cake\I18n\Time;
 use App\Lib\MidTrans\Token;
 use Cake\Utility\Security;
 use Cake\Core\Configure;
+use Cake\Validation\Validator;
 
 
 /**
@@ -217,6 +218,78 @@ class CheckoutController extends AppController
 
         $this->set(compact('data'));
 
+    }
+
+    /**
+     * process checkout json input params
+     *
+     * [
+     * 'shippings' => [
+     *    (int) 1 => [
+     *   'code' => 'jne',
+     *    'service' => 'REG'
+     *    ]
+     *    ],
+     *    'payment_method' => 'bca_va',
+     *    'address_id' => '3',
+     *    'use_point' => '1'
+     * ]
+     */
+    public function process()
+    {
+        $this->request->allowMethod('post');
+        //debug($this->request->getData());
+
+        $customer_id = $this->Auth->user('id');
+
+        $validator = new Validator();
+
+        $shippingValidation = new Validator();
+        $shippingValidation->requirePresence('code')
+            ->inList('code', ['jne', 'jnt', 'tiki', 'pos'])
+            ->notBlank('code')
+            ->requirePresence('service')
+            ->notBlank('service');
+
+        $validator->addNestedMany('shippings', $shippingValidation);
+
+        $validator->requirePresence('payment_method')
+            ->inList('payment_method', [
+                'credit_card',
+                'mandiri_billpayment',
+                'bca_va',
+                'permata_va',
+                'bni_va',
+                'bca_klikpay',
+                'mandiri_clickpay',
+                'gopay'
+            ]);
+
+        $validator->requirePresence('address_id')
+            ->notBlank('address_id', 'Silahkan pilih alamat yang dikirim')
+            ->add('address_id', 'exists_address', [
+                'rule' => function($value) use($customer_id) {
+                    return $this->Customers->CustomerAddreses->find()
+                        ->where([
+                            'customer_id' => $customer_id,
+                            'id' => $value
+                        ])
+                        ->count() > 0;
+                },
+                'message' => 'Silahkan pilih alamat yang dikirim'
+            ]);
+
+        $error = $validator->errors($this->request->getData());
+        if ($error) {
+            $this->setResponse($this->response->withStatus(406, 'gagal proses checkout'));
+        } else {
+            unset($error);
+            //process checkout
+        }
+
+
+
+        $this->set(compact('data', 'error'));
     }
 
     /**
