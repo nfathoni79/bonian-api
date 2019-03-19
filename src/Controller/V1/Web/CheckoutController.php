@@ -48,6 +48,8 @@ use Cake\Validation\Validator;
 class CheckoutController extends AppController
 {
 
+    protected $customerDetailStatuses = [1, 2, 3];
+
     public function initialize()
     {
         parent::initialize();
@@ -72,6 +74,7 @@ class CheckoutController extends AppController
                     }
 
                     $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
+                    $cart_group_origin[$val['origin_id']]['origin_id'] = $val['origin_id'];
                     $cart_group_origin[$val['origin_id']]['total_weight'] = $val['weight'] * $val['qty'];
                     $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
                         implode(':', $courier_group),
@@ -98,7 +101,7 @@ class CheckoutController extends AppController
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
-                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                    ->where(['CustomerCartDetails.status IN ' => $this->customerDetailStatuses]);
             })
             ->contain([
                 'CustomerCartDetails' => [
@@ -170,10 +173,6 @@ class CheckoutController extends AppController
                     }
                     //$product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $couriers;
                     $row->customer_cart_details[$key]->couriers = $couriers;
-                    if (is_callable($call)) {
-                        call_user_func($call, $key, $row);
-                    }
-
 
                     unset($row->customer_cart_details[$key]->created);
                     unset($row->customer_cart_details[$key]->modified);
@@ -184,6 +183,10 @@ class CheckoutController extends AppController
                     unset($row->customer_cart_details[$key]->customer_cart_id);
                     unset($row->customer_cart_details[$key]->product_option_price_id);
                     unset($row->customer_cart_details[$key]->product_option_stock_id);
+
+                    if (is_callable($call)) {
+                        call_user_func($call, $key, $row);
+                    }
                 }
                 unset($row->id);
                 unset($row->customer_id);
@@ -287,7 +290,7 @@ class CheckoutController extends AppController
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
-                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                    ->where(['CustomerCartDetails.status IN ' => $this->customerDetailStatuses]);
             })
             ->contain([
                 'CustomerCartDetails' => [
@@ -426,7 +429,7 @@ class CheckoutController extends AppController
             }
 
             $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) {
-                //debug($row);
+                debug($row);
             });
 
         }
