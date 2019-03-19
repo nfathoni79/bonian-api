@@ -174,8 +174,8 @@ class CreditCardToken
         $response = $client->get('v2/card/register', [
             'query' => $token
         ]);
-
-        return $response->getBody()->getContents();
+        $content = $response->getBody()->getContents();
+        return json_decode($content, true);
     }
 
     /**

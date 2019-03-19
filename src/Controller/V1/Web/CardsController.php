@@ -64,6 +64,7 @@ class CardsController extends AppController
     {
         $this->request->allowMethod(['post', 'put']);
 
+        $customer_id = $this->Auth->user('id');
 
 
         $credit_Card_validator = new Validator();
@@ -99,7 +100,39 @@ class CardsController extends AppController
             //process saved token
             $token = new CreditCardToken($number, $exp_month, $exp_year);
             $response = $token->register();
-            debug($response);
+            if ($response && $response['status_code'] == 200) {
+                //saved_token_id masked_card
+                $customer_card_entity = $this->CustomerCards->find()
+                    ->where([
+                        'customer_id' => $customer_id,
+                        'masked_card' => $response['masked_card']
+                    ])
+                    ->first();
+
+                $count_card = $this->CustomerCards->find()
+                    ->where([
+                        'customer_id' => $customer_id
+                    ])
+                    ->count();
+
+                if (!$customer_card_entity) {
+                    $customer_card_entity = $this->CustomerCards->newEntity([
+                        'customer_id' => $customer_id,
+                        'masked_card' => $response['masked_card'],
+                        'token' => $response['saved_token_id'],
+                        'is_primary' => $count_card == 0 ? 1 : 0
+                    ]);
+
+                    if(!$this->CustomerCards->save($customer_card_entity)) {
+                        $this->setResponse($this->response->withStatus(406, 'Gagal menyimpan kartu kredit'));
+                    }
+                } else {
+                    
+                    $this->setResponse($this->response->withStatus(406, 'Nomor kartu kredit tersebut sudah terdaftar'));
+                }
+
+            }
+
 
         }
 
@@ -125,7 +158,7 @@ class CardsController extends AppController
 
             if ($cardEntity) {
                 if (!$this->CustomerCards->delete($cardEntity)) {
-                    $this->setResponse($this->response->withStatus(406, 'Failed to delete address'));
+                    $this->setResponse($this->response->withStatus(406, 'Gagal melakukan hapus kartu kredit'));
                 }
             }
 
