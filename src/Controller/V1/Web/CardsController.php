@@ -127,7 +127,7 @@ class CardsController extends AppController
                         $this->setResponse($this->response->withStatus(406, 'Gagal menyimpan kartu kredit'));
                     }
                 } else {
-                    
+
                     $this->setResponse($this->response->withStatus(406, 'Nomor kartu kredit tersebut sudah terdaftar'));
                 }
 

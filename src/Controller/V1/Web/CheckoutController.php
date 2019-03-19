@@ -60,35 +60,41 @@ class CheckoutController extends AppController
 
     }
 
-
-    public function index()
+    protected function groupCartByBranch(\App\Model\Entity\CustomerCart $cart, $product_to_couriers, &$data)
     {
-        //list checkout and default customer address
-        $data = [];
-        $customer_id = $this->Auth->user('id');
+        $cart_group_origin = [];
+        if ($cart['customer_cart_details']) {
+            foreach($cart['customer_cart_details'] as $key => $val) {
+                if (!array_key_exists($val['origin_id'], $cart_group_origin)) {
+                    $courier_group = $product_to_couriers[$val['origin_id']][0];
+                    if (count($product_to_couriers[$val['origin_id']]) > 1) {
+                        $courier_group = call_user_func_array('array_intersect', $product_to_couriers[$val['origin_id']]);
+                    }
 
-        $data['customer_address'] = $this->Customers->CustomerAddreses->find()
-            ->where([
-                'customer_id' => $customer_id
-            ])
-            ->orderDesc('is_primary')
-            ->map(function(\App\Model\Entity\CustomerAddrese $row) {
-                unset($row->customer_id);
-                return $row;
-            })
-            ->first();
+                    $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
+                    $cart_group_origin[$val['origin_id']]['total_weight'] = $val['weight'] * $val['qty'];
+                    $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
+                        implode(':', $courier_group),
+                        $val['origin_district_id'],
+                        $data['customer_address']->subdistrict_id,
+                        $val['weight'] * $val['qty']
+                    );
+                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
 
-        $get_point = $this->Customers->CustomerBalances->find()
-            ->where([
-                'customer_id' => $customer_id
-            ])
-            ->first();
+                } else {
+                    $cart_group_origin[$val['origin_id']]['total_weight'] += $val['weight'] * $val['qty'];
+                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
 
-        $data['point'] = (int) $get_point->get('point');
+                }
 
+            }
+        }
+        return $cart_group_origin;
+    }
 
-        $product_to_couriers = [];
-        $cart = $this->CustomerCarts->find()
+    protected function getCart(callable $call = null)
+    {
+        return $this->CustomerCarts->find()
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
@@ -124,8 +130,8 @@ class CheckoutController extends AppController
                     ],
                 ]
             ])
-            ->where(['CustomerCarts.customer_id' => $customer_id,'CustomerCarts.status' => 1 ])
-            ->map(function (\App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+            ->where(['CustomerCarts.customer_id' => $this->Auth->user('id'),'CustomerCarts.status' => 1 ])
+            ->map(function (\App\Model\Entity\CustomerCart $row) use($call) {
                 $status = [
                     1 => 'available',
                     2 => 'expired',
@@ -162,8 +168,11 @@ class CheckoutController extends AppController
                     foreach($row->customer_cart_details[$key]->product->product_to_courriers as $k => $courier) {
                         array_push($couriers, $courier['courrier']['code']);
                     }
-                    $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $couriers;
+                    //$product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $couriers;
                     $row->customer_cart_details[$key]->couriers = $couriers;
+                    if (is_callable($call)) {
+                        call_user_func($call, $key, $row);
+                    }
 
 
                     unset($row->customer_cart_details[$key]->created);
@@ -184,35 +193,44 @@ class CheckoutController extends AppController
                 return $row;
             })
             ->first();
+    }
+
+
+    public function index()
+    {
+        //list checkout and default customer address
+        $data = [];
+        $customer_id = $this->Auth->user('id');
+
+        $data['customer_address'] = $this->Customers->CustomerAddreses->find()
+            ->where([
+                'customer_id' => $customer_id
+            ])
+            ->orderDesc('is_primary')
+            ->map(function(\App\Model\Entity\CustomerAddrese $row) {
+                unset($row->customer_id);
+                return $row;
+            })
+            ->first();
+
+        $get_point = $this->Customers->CustomerBalances->find()
+            ->where([
+                'customer_id' => $customer_id
+            ])
+            ->first();
+
+        $data['point'] = (int) $get_point->get('point');
+
+
+        $product_to_couriers = [];
+        $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+            $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+        });
+
 
         //grouping by origin_id
-        $cart_group_origin = [];
-        if ($cart['customer_cart_details']) {
-            foreach($cart['customer_cart_details'] as $key => $val) {
-                if (!array_key_exists($val['origin_id'], $cart_group_origin)) {
-                    $courier_group = $product_to_couriers[$val['origin_id']][0];
-                    if (count($product_to_couriers[$val['origin_id']]) > 1) {
-                        $courier_group = call_user_func_array('array_intersect', $product_to_couriers[$val['origin_id']]);
-                    }
+        $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data);
 
-                    $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
-                    $cart_group_origin[$val['origin_id']]['total_weight'] = $val['weight'] * $val['qty'];
-                    $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
-                        implode(':', $courier_group),
-                        $val['origin_district_id'],
-                        $data['customer_address']->subdistrict_id,
-                        $val['weight'] * $val['qty']
-                    );
-                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
-
-                } else {
-                    $cart_group_origin[$val['origin_id']]['total_weight'] += $val['weight'] * $val['qty'];
-                    $cart_group_origin[$val['origin_id']]['data'][] = $val;
-
-                }
-
-            }
-        }
 
         $data['carts'] = $cart_group_origin;
 
@@ -246,6 +264,15 @@ class CheckoutController extends AppController
 
         $validator = new Validator();
 
+        /*$shippingValidation = new Validator();
+        $shippingValidation->requirePresence('code')
+            ->inList('code', ['jne', 'jnt', 'tiki', 'pos'])
+            ->notBlank('code')
+            ->requirePresence('service')
+            ->notBlank('service');
+
+        $validator->addNestedMany('shipping', $shippingValidation);*/
+
         $shippingValidation = new Validator();
         $shippingValidation->requirePresence('code')
             ->inList('code', ['jne', 'jnt', 'tiki', 'pos'])
@@ -253,7 +280,46 @@ class CheckoutController extends AppController
             ->requirePresence('service')
             ->notBlank('service');
 
-        $validator->addNestedMany('shipping', $shippingValidation);
+        $branchShipping = new Validator();
+
+        //set validator from branch database
+        $find_branch = $this->CustomerCarts->find()
+            ->contain(
+                'CustomerCartDetails', function (\Cake\ORM\Query $q) {
+                return $q
+                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+            })
+            ->contain([
+                'CustomerCartDetails' => [
+                    'fields' => [
+                        'id',
+                        'customer_cart_id'
+                    ],
+                    'ProductOptionStocks' => [
+                        'fields' => [
+                            'branch_id'
+                        ]
+                    ],
+                ]
+            ])
+            ->where(['CustomerCarts.customer_id' => $this->Auth->user('id'),'CustomerCarts.status' => 1 ])
+            ->first();
+
+        if ($find_branch) {
+            $list_branches = [];
+            foreach($find_branch['customer_cart_details'] as $key => $val) {
+                if(!in_array($val['product_option_stock']['branch_id'], $list_branches)) {
+                    $branchShipping->requirePresence($val['product_option_stock']['branch_id']);
+                    $branchShipping->addNested($val['product_option_stock']['branch_id'], $shippingValidation);
+                }
+            }
+            unset($list_branches);
+        }
+        //set validator from branch database
+
+        $validator->addNested('shipping', $branchShipping);
+
+
 
         $validator->requirePresence('payment_method')
             ->inList('payment_method', [
@@ -358,6 +424,10 @@ class CheckoutController extends AppController
                     $payment = new Gopay('http://php.net');
                     break;
             }
+
+            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) {
+                //debug($row);
+            });
 
         }
 
