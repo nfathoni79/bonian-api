@@ -152,17 +152,17 @@ class CustomersTable extends Table
                 'message' => 'Passwords do not match.'
             ]);
 
-//        $validator
-//            ->scalar('first_name')
-//            ->maxLength('first_name', 40)
-//            ->requirePresence('first_name', 'create')
-//            ->allowEmptyString('first_name', false);
-//
-//        $validator
-//            ->scalar('last_name')
-//            ->maxLength('last_name', 30)
-//            ->requirePresence('last_name', 'create')
-//            ->allowEmptyString('last_name', false);
+        $validator
+            ->scalar('first_name')
+            ->maxLength('first_name', 40)
+            ->requirePresence('first_name', 'create')
+            ->allowEmptyString('first_name', false);
+
+        $validator
+            ->scalar('last_name')
+            ->maxLength('last_name', 30)
+            ->requirePresence('last_name', 'create')
+            ->allowEmptyString('last_name', false);
 
         $validator
             ->scalar('phone')
