@@ -67,7 +67,7 @@ class CheckoutController extends AppController
 
     }
 
-    protected function groupCartByBranch(\App\Model\Entity\CustomerCart $cart, $product_to_couriers, \App\Model\Entity\CustomerAddrese $address)
+    protected function groupCartByBranch($cart, $product_to_couriers, \App\Model\Entity\CustomerAddrese $address)
     {
         $cart_group_origin = [];
         if ($cart['customer_cart_details']) {
@@ -100,7 +100,7 @@ class CheckoutController extends AppController
         return $cart_group_origin;
     }
 
-    protected function getCart(callable $call = null)
+    protected function getCart(callable $call = null, callable $entity = null)
     {
         return $this->CustomerCarts->find()
             ->contain(
@@ -139,7 +139,11 @@ class CheckoutController extends AppController
                 ]
             ])
             ->where(['CustomerCarts.customer_id' => $this->Auth->user('id'),'CustomerCarts.status' => 1 ])
-            ->map(function (\App\Model\Entity\CustomerCart $row) use($call) {
+            ->map(function (\App\Model\Entity\CustomerCart $row) use($call, $entity) {
+                if (is_callable($entity)) {
+                    $newEntity = clone $row;
+                    call_user_func($entity, $newEntity);
+                }
                 $status = [
                     1 => 'available',
                     2 => 'expired',
@@ -623,129 +627,167 @@ class CheckoutController extends AppController
 
 
             $product_to_couriers = [];
+            /**
+             * @var \App\Model\Entity\CustomerCart $cartEntity
+             */
+            $cartEntity = null;
             $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
                 $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+            }, function(\App\Model\Entity\CustomerCart $row) use (&$cartEntity) {
+                $cartEntity = $row;
             });
             //grouping by origin_id
             $cart = $this->groupCartByBranch($cart, $product_to_couriers, $this->getAddress($address_id));
 
+
             //$trx = new Transaction(date('ymds') . Security::randomString(4));
 
+            if ($cart) {
+                $this->Orders->getConnection()->begin();
 
-            $this->Orders->getConnection()->begin();
-
-            $invoice = date('ymds') . Security::randomString(4);
-            $addresses = $this->getAddress($address_id);
-            $gross_total = 0;
-            $use_point = (int) $this->request->getData('use_point');
+                $invoice = date('ymds') . Security::randomString(4);
+                $addresses = $this->getAddress($address_id);
+                $gross_total = 0;
+                $use_point = (int)$this->request->getData('use_point');
 
 
-            $order_detail_entities = [];
-            $order_detail_product_entities = [];
-            foreach($cart as $origin_id => $item) {
-                $subtotal = 0;
-                foreach($item['data'] as $val) {
-                    //$trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
-                    $subtotal += $val['price'] * $val['qty'];
-                    $gross_total += $val['price'] * $val['qty'];
-                    //debug($val);
-                    $order_detail_product_entities[] = $this
-                        ->Orders
-                        ->OrderDetails
-                        ->OrderDetailProducts
-                        ->newEntity([
-                            'product_id' => $val['product_id'],
-                            'qty' => $val['qty'],
-                            'price' => $val['price'],
-                            'total' => $val['price'] * $val['qty'],
-                            'in_flashsale' => $val['in_flashsale'],
-                            'in_groupsale' => $val['in_groupsale'],
-                            'product_option_stock_id' => $val['stock_id'],
-                            'product_option_price_id' => $val['price_id'],
-                        ]);
-                }
+                $order_detail_entities = [];
+                $order_detail_product_entities = [];
+                foreach ($cart as $origin_id => $item) {
+                    $subtotal = 0;
+                    foreach ($item['data'] as $val) {
+                        //$trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                        $subtotal += $val['price'] * $val['qty'];
+                        $gross_total += $val['price'] * $val['qty'];
+                        //debug($val);
+                        $order_detail_product_entities[] = $this
+                            ->Orders
+                            ->OrderDetails
+                            ->OrderDetailProducts
+                            ->newEntity([
+                                'product_id' => $val['product_id'],
+                                'qty' => $val['qty'],
+                                'price' => $val['price'],
+                                'total' => $val['price'] * $val['qty'],
+                                'in_flashsale' => $val['in_flashsale'],
+                                'in_groupsale' => $val['in_groupsale'],
+                                'product_option_stock_id' => $val['stock_id'],
+                                'product_option_price_id' => $val['price_id'],
+                            ]);
+                    }
 
-                //selected shipping
 
-                foreach($shipping as $branch => $val) {
-                    if ($origin_id == $branch) {
-                        foreach($item['shipping_options'] as $shipping_option) {
-                            if ($shipping_option['code'] == $val['code'] && strtolower($shipping_option['service']) == strtolower($val['service'])) {
-                                //$trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
-                                $courierEntity = $this->Courriers->find()
-                                    ->where([
-                                        'code' => $val['code']
-                                    ])
-                                    ->first();
-                                $gross_total += $shipping_option['cost'];
-                                $order_detail_entities[] = $this->Orders->OrderDetails->newEntity([
-                                    'branch_id' => $origin_id,
-                                    'courrier_id' => $courierEntity->get('id'),
-                                    'courrier_code' => $shipping_option['service'],
-                                    'total' => $subtotal + $shipping_option['cost'],
-                                    'shipping_cost' => $shipping_option['cost'],
-                                    'order_status_id' => 1,
-                                    'awb' => ''
-                                ]);
+                    //selected shipping
+
+                    foreach ($shipping as $branch => $val) {
+                        if ($origin_id == $branch) {
+                            foreach ($item['shipping_options'] as $shipping_option) {
+                                if ($shipping_option['code'] == $val['code'] && strtolower($shipping_option['service']) == strtolower($val['service'])) {
+                                    //$trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
+                                    $courierEntity = $this->Courriers->find()
+                                        ->where([
+                                            'code' => $val['code']
+                                        ])
+                                        ->first();
+
+                                    $branchEntity = $this->Orders->OrderDetails->Branches->find()
+                                        ->where([
+                                            'id' => $origin_id
+                                        ])
+                                        ->first();
+
+
+                                    $gross_total += $shipping_option['cost'];
+                                    $order_detail_entities[] = $this->Orders->OrderDetails->newEntity([
+                                        'branch_id' => $origin_id,
+                                        'courrier_id' => $courierEntity->get('id'),
+                                        'province_id' => $branchEntity->get('provice_id'), //TODO fix later
+                                        'city_id' => $branchEntity->get('city_id'),
+                                        'subdistrict_id' => $branchEntity->get('subdistrict_id'),
+                                        'shipping_code' => $shipping_option['code'],
+                                        'shipping_service' => $shipping_option['service'],
+                                        'shipping_weight' => $item['total_weight'],
+                                        'total' => $subtotal + $shipping_option['cost'],
+                                        'shipping_cost' => $shipping_option['cost'],
+                                        'order_status_id' => 1,
+                                        'awb' => ''
+                                    ]);
+                                }
                             }
                         }
                     }
                 }
-            }
 
 
-            $total = $gross_total - $use_point;
+                $total = $gross_total - $use_point;
 
-            $orderEntity = $this->Orders->newEntity([
-                'invoice' => $invoice,
-                'customer_id' => $customer_id,
-                'province_id' => $addresses->get('province_id'),
-                'city_id' => $addresses->get('city_id'),
-                'subdistrict_id' => $addresses->get('subdistrict_id'),
-                'address' => $addresses->get('address'),
-                'use_point' => $use_point,
-                'gross_total' => $gross_total,
-                'total' => $total,
-            ]);
+                //check voucher claim
+                $customerVoucherEntity = $this->CustomerVouchers->find()
+                    ->where([
+                        'customer_id' => $customer_id,
+                        'status' => 1,
+                    ])
+                    ->orderDesc('id')
+                    ->first();
 
-            if ($this->Orders->save($orderEntity)) {
-                
-                foreach($order_detail_entities as $detailEntity) {
-                    $detailEntity = $this
-                        ->Orders
-                        ->OrderDetails
-                        ->patchEntity($detailEntity, [
-                            'order_id' => $orderEntity->get('id')
-                        ],
-                            ['validate' => false]
-                        );
-                    if ($this->Orders->OrderDetails->save($detailEntity)) {
-                        foreach($order_detail_product_entities as $detailProductEntity) {
-                            $detailProductEntity = $this
-                                ->Orders
-                                ->OrderDetails
-                                ->OrderDetailProducts
-                                ->patchEntity($detailProductEntity, [
-                                    'order_detail_id' => $detailEntity->get('id')
-                                ],
-                                    ['validate' => false]
-                                );
 
-                            $this
-                                ->Orders
-                                ->OrderDetails
-                                ->OrderDetailProducts
-                                ->save($detailProductEntity);
+                $orderEntity = $this->Orders->newEntity([
+                    'invoice' => $invoice,
+                    'customer_id' => $customer_id,
+                    'province_id' => $addresses->get('province_id'),
+                    'city_id' => $addresses->get('city_id'),
+                    'subdistrict_id' => $addresses->get('subdistrict_id'),
+                    'address' => $addresses->get('address'),
+                    'use_point' => $use_point,
+                    'gross_total' => $gross_total,
+                    'total' => $total,
+                    'voucher_id' => $customerVoucherEntity ? $customerVoucherEntity->get('voucher_id') : 0
+                ]);
+
+                if ($this->Orders->save($orderEntity)) {
+                    $customerVoucherEntity->set('status', 2);
+                    $this->CustomerVouchers->save($customerVoucherEntity);
+                    foreach ($order_detail_entities as $detailEntity) {
+                        $detailEntity = $this
+                            ->Orders
+                            ->OrderDetails
+                            ->patchEntity($detailEntity, [
+                                'order_id' => $orderEntity->get('id')
+                            ],
+                                ['validate' => false]
+                            );
+                        if ($this->Orders->OrderDetails->save($detailEntity)) {
+                            foreach ($order_detail_product_entities as $detailProductEntity) {
+                                $detailProductEntity = $this
+                                    ->Orders
+                                    ->OrderDetails
+                                    ->OrderDetailProducts
+                                    ->patchEntity($detailProductEntity, [
+                                        'order_detail_id' => $detailEntity->get('id')
+                                    ],
+                                        ['validate' => false]
+                                    );
+
+                                $this
+                                    ->Orders
+                                    ->OrderDetails
+                                    ->OrderDetailProducts
+                                    ->save($detailProductEntity);
+                            }
                         }
+
                     }
 
+
+                    $cartEntity->set('status', 2);
+                    $this->CustomerCarts->save($cartEntity);
                 }
 
+                $this->Orders->getConnection()->commit();
+
+            } else {
+                $this->setResponse($this->response->withStatus(404, 'Keranjang belanja anda kosong'));
             }
-
-
-
-            $this->Orders->getConnection()->commit();
 
 
 

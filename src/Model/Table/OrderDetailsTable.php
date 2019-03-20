@@ -62,19 +62,15 @@ class OrderDetailsTable extends Table
             'joinType' => 'INNER'
         ]);
         $this->belongsTo('Subdistricts', [
-            'foreignKey' => 'origin_subdistrict_id',
-            'joinType' => 'INNER'
-        ]);
-        $this->belongsTo('Subdistricts', [
-            'foreignKey' => 'destination_subdistrict_id',
+            'foreignKey' => 'subdistrict_id',
             'joinType' => 'INNER'
         ]);
         $this->belongsTo('Cities', [
-            'foreignKey' => 'origin_city_id',
+            'foreignKey' => 'city_id',
             'joinType' => 'INNER'
         ]);
-        $this->belongsTo('Cities', [
-            'foreignKey' => 'destination_city_id',
+        $this->belongsTo('Provinces', [
+            'foreignKey' => 'province_id',
             'joinType' => 'INNER'
         ]);
         $this->belongsTo('OrderStatuses', [
@@ -110,11 +106,7 @@ class OrderDetailsTable extends Table
             ->requirePresence('awb', 'create')
             ->allowEmptyString('awb', false);*/
 
-        $validator
-            ->scalar('courrier_code')
-            ->maxLength('courrier_code', 5)
-            ->requirePresence('courrier_code', 'create')
-            ->allowEmptyString('courrier_code', false);
+
 
         /*$validator
             ->numeric('product_price')
@@ -146,10 +138,9 @@ class OrderDetailsTable extends Table
         $rules->add($rules->existsIn(['order_id'], 'Orders'));
         $rules->add($rules->existsIn(['branch_id'], 'Branches'));
         $rules->add($rules->existsIn(['courrier_id'], 'Courriers'));
-        $rules->add($rules->existsIn(['origin_subdistrict_id'], 'Subdistricts'));
-        $rules->add($rules->existsIn(['destination_subdistrict_id'], 'Subdistricts'));
-        $rules->add($rules->existsIn(['origin_city_id'], 'Cities'));
-        $rules->add($rules->existsIn(['destination_city_id'], 'Cities'));
+        $rules->add($rules->existsIn(['province_id'], 'Provinces'));
+        $rules->add($rules->existsIn(['city_id'], 'Cities'));
+        $rules->add($rules->existsIn(['subdistrict_id'], 'Subdistricts'));
         $rules->add($rules->existsIn(['order_status_id'], 'OrderStatuses'));
 
         return $rules;
