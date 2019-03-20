@@ -62,6 +62,14 @@ class Transaction
     }
 
     /**
+     * @return mixed
+     */
+    public function getOrderId()
+    {
+        return $this->transaction_details['order_id'];
+    }
+
+    /**
      * @return integer
      */
     public function getAmount()

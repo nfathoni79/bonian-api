@@ -62,7 +62,7 @@ class CheckoutController extends AppController
 
     }
 
-    protected function groupCartByBranch(\App\Model\Entity\CustomerCart $cart, $product_to_couriers, &$data)
+    protected function groupCartByBranch(\App\Model\Entity\CustomerCart $cart, $product_to_couriers, \App\Model\Entity\CustomerAddrese $address)
     {
         $cart_group_origin = [];
         if ($cart['customer_cart_details']) {
@@ -79,7 +79,7 @@ class CheckoutController extends AppController
                     $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
                         implode(':', $courier_group),
                         $val['origin_district_id'],
-                        $data['customer_address']->subdistrict_id,
+                        $address->subdistrict_id,
                         $val['weight'] * $val['qty']
                     );
                     $cart_group_origin[$val['origin_id']]['data'][] = $val;
@@ -198,14 +198,10 @@ class CheckoutController extends AppController
             ->first();
     }
 
-
-    public function index()
+    protected function getAddress()
     {
-        //list checkout and default customer address
-        $data = [];
         $customer_id = $this->Auth->user('id');
-
-        $data['customer_address'] = $this->Customers->CustomerAddreses->find()
+        return $this->Customers->CustomerAddreses->find()
             ->where([
                 'customer_id' => $customer_id
             ])
@@ -215,6 +211,16 @@ class CheckoutController extends AppController
                 return $row;
             })
             ->first();
+    }
+
+
+    public function index()
+    {
+        //list checkout and default customer address
+        $data = [];
+        $customer_id = $this->Auth->user('id');
+
+        $data['customer_address'] = $this->getAddress();
 
         $get_point = $this->Customers->CustomerBalances->find()
             ->where([
@@ -232,7 +238,7 @@ class CheckoutController extends AppController
 
 
         //grouping by origin_id
-        $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data);
+        $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
 
 
         $data['carts'] = $cart_group_origin;
@@ -372,6 +378,7 @@ class CheckoutController extends AppController
         } else {
             unset($error);
             //process checkout
+            $shipping = $this->request->getData('shipping');
             $payment_method = $this->request->getData('payment_method');
             switch ($payment_method) {
                 case 'credit_card':
@@ -428,9 +435,77 @@ class CheckoutController extends AppController
                     break;
             }
 
-            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) {
-                debug($row);
+            $product_to_couriers = [];
+            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+                $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
             });
+            //grouping by origin_id
+            $cart = $this->groupCartByBranch($cart, $product_to_couriers, $this->getAddress());
+
+            $trx = new Transaction(date('ymds') . Security::randomString(4));
+
+
+            foreach($cart as $origin_id => $item) {
+                foreach($item['data'] as $val) {
+                    $trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                }
+
+                //selected shipping
+                foreach($shipping as $branch => $val) {
+                    if ($origin_id == $branch) {
+                        foreach($item['shipping_options'] as $shipping_option) {
+                            if ($shipping_option['code'] == $val['code'] && strtolower($shipping_option['service']) == strtolower($val['service'])) {
+                                $trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+
+            $request = new Request($payment);
+            $request->addTransaction($trx);
+
+            //get customer
+            try {
+                $customerEntity = $this->Customers->get($this->Auth->user('id'));
+                $request->setCustomer(
+                    $customerEntity->get('email'),
+                    $customerEntity->get('first_name'),
+                    $customerEntity->get('last_name'),
+                    $customerEntity->get('phone')
+                );
+            } catch(\Exception $e) {
+
+            }
+
+            //process charge
+            try {
+                $charge = $this->MidTrans->charge($request);
+                /*
+                 * status_code 200 is success and using credit card
+                 * status_code 201 is pending and using gopay, virtual_account, clickpay
+                 */
+                if ($charge && isset($charge['status_code'])) {
+                    switch ($charge['status_code']) {
+                        case 200:
+
+                            break;
+                        case 201:
+                            //process pending need response to frontend
+                            break;
+                    }
+                }
+            } catch(\Exception $e) {
+
+            }
+
+
+
+
+
+
 
         }
 
