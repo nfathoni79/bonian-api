@@ -52,8 +52,6 @@ class RegistersController extends Controller
 
         $this->SendAuth->register('register', $this->request->getData('phone'));
         $validator = new Validator();
-//        $this->GenerationsTree->save('R2JVYDV9FN','WYD4KUOB1U');
-//        exit;
         $validator
             ->requirePresence('auth_code')
             ->notEmpty('auth_code', 'This field is required')
@@ -69,7 +67,7 @@ class RegistersController extends Controller
         if (empty($errors)) {
             $success = false;
             $register = $this->Customers->newEntity();
-            $register = $this->Customers->patchEntity($register, $this->request->getData(),['fields' => ['email','username','password','cpassword','phone']]);
+            $register = $this->Customers->patchEntity($register, $this->request->getData(),['fields' => ['first_name', 'last_name', 'email','username','password','cpassword','phone']]);
             $register->set('reffcode', strtoupper($this->reffcode('10')));
             $register->set('customer_group_id', 1);
             $register->set('customer_status_id', 1);
