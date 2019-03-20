@@ -14,6 +14,7 @@
  */
 namespace App\Controller\V1\Web;
 
+use App\Lib\MidTrans\CreditCardToken;
 use App\Lib\MidTrans\Payment\BcaKlikPay;
 use App\Lib\MidTrans\Payment\BcaVirtualAccount;
 use App\Lib\MidTrans\Payment\BniVirtualAccount;
@@ -41,6 +42,8 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\CustomerCardsTable $CustomerCards
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
+ * @property \App\Model\Table\OrdersTable $Orders
+ * @property \App\Model\Table\CourriersTable $Courriers
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -57,6 +60,8 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCards');
         $this->loadModel('CustomerCarts');
         $this->loadModel('CustomerVouchers');
+        $this->loadModel('Orders');
+        $this->loadModel('Courriers');
 
         $this->loadComponent('RajaOngkir');
 
@@ -198,19 +203,31 @@ class CheckoutController extends AppController
             ->first();
     }
 
-    protected function getAddress()
+    /**
+     * @return \App\Model\Entity\CustomerAddrese
+     */
+    protected function getAddress($address_id = null)
     {
         $customer_id = $this->Auth->user('id');
-        return $this->Customers->CustomerAddreses->find()
+        $address =  $this->Customers->CustomerAddreses->find()
             ->where([
                 'customer_id' => $customer_id
-            ])
-            ->orderDesc('is_primary')
-            ->map(function(\App\Model\Entity\CustomerAddrese $row) {
-                unset($row->customer_id);
-                return $row;
-            })
-            ->first();
+            ]);
+
+        if ($address_id) {
+            $address->where([
+                'id' => $address_id
+            ]);
+        }
+
+        $address = $address->orderDesc('is_primary')
+        ->map(function(\App\Model\Entity\CustomerAddrese $row) {
+            unset($row->customer_id);
+            return $row;
+        })
+        ->first();
+
+        return $address;
     }
 
 
@@ -247,7 +264,211 @@ class CheckoutController extends AppController
 
     }
 
+    /**
+     * process payment here after process success
+     */
+    public function payment()
+    {
+        $this->request->allowMethod('post');
+        $customer_id = $this->Auth->user('id');
 
+        $validator = new Validator();
+        $validator->requirePresence('payment_method')
+            ->inList('payment_method', [
+                'credit_card',
+                'mandiri_billpayment',
+                'bca_va',
+                'permata_va',
+                'bni_va',
+                'bca_klikpay',
+                'mandiri_clickpay',
+                'gopay'
+            ]);
+
+        if ($payment_method = $this->request->getData('payment_method') == 'credit_card') {
+            $validator->requirePresence('card_id')
+                ->notBlank('card_id')
+                ->add('card_id', 'check_card', [
+                    'rule' => function($value) use($customer_id) {
+                        return $this->CustomerCards->find()
+                                ->where([
+                                    'customer_id' => $customer_id,
+                                    'id' => $value
+                                ])
+                                ->count() > 0;
+                    },
+                    'message' => 'Silahkan masukan credit credit card'
+                ])
+                ->requirePresence('cvv')
+                ->notBlank('cvv')
+                ->numeric('cvv')
+                ->maxLength('cvv', 3)
+                ->minLength('cvv', 3);
+        }
+
+        $error = $validator->errors($this->request->getData());
+        if ($error) {
+            $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+        } else {
+            unset($error);
+
+
+            //get customer
+            try {
+                $customerEntity = $this->Customers->get($this->Auth->user('id'));
+            } catch(\Exception $e) {
+
+            }
+            $payment_method = $this->request->getData('payment_method');
+
+            switch ($payment_method) {
+                case 'credit_card':
+                    //for credit card
+
+                    //request new token for gross_amount
+
+                    $customer_card_entity = $this->CustomerCards->find()
+                        ->where([
+                            'customer_id' => $customer_id,
+                            'id' => $this->request->getData('card_id')
+                        ])
+                        ->first();
+
+                    if ($customer_card_entity) {
+
+                        $credit_card_token = new CreditCardToken();
+                        $token = $credit_card_token->setToken($customer_card_entity->get('token'))
+                            ->setCvv($this->request->getData('cvv'))
+                            ->setSecure(true)
+                            ->request($trx->getAmount());
+                        if ($token->status_code == 200) {
+
+                            if ($token->redirect_url) {
+                                //return $this->redirect($token->redirect_url);
+                                //debug($token);
+                                //exit;
+                            }
+
+                            $payment = new CreditCard();
+                            $payment->setToken($token->token_id)
+                                ->saveToken(true)
+                                ->setAuthentication(true)
+                                ->setCustomer(
+                                    $customerEntity->get('email'),
+                                    $customerEntity->get('first_name'),
+                                    $customerEntity->get('last_name'),
+                                    $customerEntity->get('phone')
+                                )
+                                ->setBillingAddress()
+                                ->setShippingFromBilling();
+                        }
+
+                        /*$credit_card_token = new CreditCardToken();
+                        $token = $credit_card_token->setToken($customer_card_entity->get('token'))
+                            ->setCvv($this->request->getData('cvv'))
+                            ->setSecure(true)
+                            ->request($trx->getAmount());
+                        debug($trx);
+                        debug($token);exit;
+
+
+                        /*$payment = new CreditCard();
+                        $payment->setToken('521111-1117-44f69605-249d-4c9b-91a8-48a5cf89038f')
+                            ->saveToken(true)
+                            ->setCustomer(
+                                $customerEntity->get('email'),
+                                $customerEntity->get('first_name'),
+                                $customerEntity->get('last_name'),
+                                $customerEntity->get('phone')
+                            )
+                            ->setBillingAddress()
+                            ->setShippingFromBilling();*/
+                    }
+
+
+                    break;
+
+                case 'bca_va':
+                    //for bca
+                    $payment = (new BcaVirtualAccount(1111111))
+                        ->setSubCompanyCode(1111);
+                    break;
+
+                case 'mandiri_billpayment':
+                    $payment = (new MandiriBillPayment());
+                    break;
+
+                case 'permata_va':
+                    //for permata
+                    $payment = (new PermataVirtualAccount())
+                        ->setRecipientName('Ridwan');
+                    break;
+
+                case 'bni_va':
+                    $payment = new BniVirtualAccount('111111');
+                    break;
+
+                case 'bca_klikpay':
+                    $payment = new BcaKlikPay();
+                    break;
+
+                case 'mandiri_clickpay':
+                    $token = (new \App\Lib\MidTrans\CreditCardToken())
+                        ->setCardNumber('4111 1111 1111 1111')
+                        ->request(10000);
+                    if ($token->status_code == 200) {
+                        $payment = new MandiriClickPay($token->token_id, '54321', '000000');
+                    }
+                    break;
+
+                case 'gopay':
+                    $payment = new Gopay('http://php.net');
+                    break;
+            }
+
+
+            $request = new Request($payment);
+            $request->addTransaction($trx);
+
+
+
+            $request->setCustomer(
+                $customerEntity->get('email'),
+                $customerEntity->get('first_name'),
+                $customerEntity->get('last_name'),
+                $customerEntity->get('phone')
+            );
+
+            //process charge
+            try {
+                $charge = $this->MidTrans->charge($request);
+                /*
+                 * status_code 200 is success and using credit card
+                 * status_code 201 is pending and using gopay, virtual_account, clickpay
+                 */
+
+                if ($charge && isset($charge['status_code'])) {
+                    switch ($charge['status_code']) {
+                        case 200:
+
+                            break;
+                        case 201:
+                            //process pending need response to frontend
+                            break;
+                        case 402:
+                            //No MID/TID for this transaction
+                            break;
+                    }
+                }
+                debug($charge);exit;
+            } catch(\Exception $e) {
+
+            }
+        }
+
+        $this->set(compact('error'));
+
+    }
 
     /**
      * process checkout json input params
@@ -281,6 +502,20 @@ class CheckoutController extends AppController
             ->notBlank('service');
 
         $validator->addNestedMany('shipping', $shippingValidation);*/
+
+        $validator->add('use_point', 'valid_point', [
+            'rule' => function($value) use($customer_id) {
+                $currentPoint = $this->Customers->CustomerBalances->find()
+                    ->where([
+                        'customer_id' => $customer_id,
+                    ])
+                    ->first();
+                if ($currentPoint) {
+                    return $value <= $currentPoint->get('point') && $value > 0;
+                }
+            },
+            'message' => 'Point yang di input tidak valid.'
+        ]);
 
         $shippingValidation = new Validator();
         $shippingValidation->requirePresence('code')
@@ -330,7 +565,7 @@ class CheckoutController extends AppController
 
 
 
-        $validator->requirePresence('payment_method')
+        /*$validator->requirePresence('payment_method')
             ->inList('payment_method', [
                 'credit_card',
                 'mandiri_billpayment',
@@ -355,8 +590,13 @@ class CheckoutController extends AppController
                                 ->count() > 0;
                     },
                     'message' => 'Silahkan masukan credit credit card'
-                ]);
-        }
+                ])
+                ->requirePresence('cvv')
+                ->notBlank('cvv')
+                ->numeric('cvv')
+                ->maxLength('cvv', 3)
+                ->minLength('cvv', 3);
+        }*/
 
         $validator->requirePresence('address_id')
             ->notBlank('address_id', 'Silahkan pilih alamat yang dikirim')
@@ -379,131 +619,133 @@ class CheckoutController extends AppController
             unset($error);
             //process checkout
             $shipping = $this->request->getData('shipping');
-            $payment_method = $this->request->getData('payment_method');
-            switch ($payment_method) {
-                case 'credit_card':
-                    //for credit card
-                    $payment = new CreditCard();
-                    $payment->setToken('441111lSmrlWhaoZtyTjOAscGBrc1118')
-                        ->saveToken(true)
-                        ->setCustomer(
-                            'iwaninfo@gmail.com',
-                            'Ridwan',
-                            'Rumi',
-                            '08112823746'
-                        )
-                        ->setBillingAddress()
-                        ->setShippingFromBilling();
+            $address_id = $this->request->getData('address_id');
 
-                    break;
-
-                case 'bca_va':
-                    //for bca
-                    $payment = (new BcaVirtualAccount(1111111))
-                        ->setSubCompanyCode(1111);
-                    break;
-
-                case 'mandiri_billpayment':
-                    $payment = (new MandiriBillPayment());
-                    break;
-
-                case 'permata_va':
-                    //for permata
-                    $payment = (new PermataVirtualAccount())
-                        ->setRecipientName('Ridwan');
-                    break;
-
-                case 'bni_va':
-                    $payment = new BniVirtualAccount('111111');
-                    break;
-
-                case 'bca_klikpay':
-                    $payment = new BcaKlikPay();
-                    break;
-
-                case 'mandiri_clickpay':
-                    $token = (new \App\Lib\MidTrans\CreditCardToken())
-                        ->setCardNumber('4111 1111 1111 1111')
-                        ->request(10000);
-                    if ($token->status_code == 200) {
-                        $payment = new MandiriClickPay($token->token_id, '54321', '000000');
-                    }
-                    break;
-
-                case 'gopay':
-                    $payment = new Gopay('http://php.net');
-                    break;
-            }
 
             $product_to_couriers = [];
             $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
                 $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
             });
             //grouping by origin_id
-            $cart = $this->groupCartByBranch($cart, $product_to_couriers, $this->getAddress());
+            $cart = $this->groupCartByBranch($cart, $product_to_couriers, $this->getAddress($address_id));
 
-            $trx = new Transaction(date('ymds') . Security::randomString(4));
+            //$trx = new Transaction(date('ymds') . Security::randomString(4));
 
 
+            $this->Orders->getConnection()->begin();
+
+            $invoice = date('ymds') . Security::randomString(4);
+            $addresses = $this->getAddress($address_id);
+            $gross_total = 0;
+            $use_point = (int) $this->request->getData('use_point');
+
+
+            $order_detail_entities = [];
+            $order_detail_product_entities = [];
             foreach($cart as $origin_id => $item) {
+                $subtotal = 0;
                 foreach($item['data'] as $val) {
-                    $trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                    //$trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                    $subtotal += $val['price'] * $val['qty'];
+                    $gross_total += $val['price'] * $val['qty'];
+                    //debug($val);
+                    $order_detail_product_entities[] = $this
+                        ->Orders
+                        ->OrderDetails
+                        ->OrderDetailProducts
+                        ->newEntity([
+                            'product_id' => $val['product_id'],
+                            'qty' => $val['qty'],
+                            'price' => $val['price'],
+                            'total' => $val['price'] * $val['qty'],
+                            'in_flashsale' => $val['in_flashsale'],
+                            'in_groupsale' => $val['in_groupsale'],
+                            'product_option_stock_id' => $val['stock_id'],
+                            'product_option_price_id' => $val['price_id'],
+                        ]);
                 }
 
                 //selected shipping
+
                 foreach($shipping as $branch => $val) {
                     if ($origin_id == $branch) {
                         foreach($item['shipping_options'] as $shipping_option) {
                             if ($shipping_option['code'] == $val['code'] && strtolower($shipping_option['service']) == strtolower($val['service'])) {
-                                $trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
+                                //$trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
+                                $courierEntity = $this->Courriers->find()
+                                    ->where([
+                                        'code' => $val['code']
+                                    ])
+                                    ->first();
+                                $gross_total += $shipping_option['cost'];
+                                $order_detail_entities[] = $this->Orders->OrderDetails->newEntity([
+                                    'branch_id' => $origin_id,
+                                    'courrier_id' => $courierEntity->get('id'),
+                                    'courrier_code' => $shipping_option['service'],
+                                    'total' => $subtotal + $shipping_option['cost'],
+                                    'shipping_cost' => $shipping_option['cost'],
+                                    'order_status_id' => 1,
+                                    'awb' => ''
+                                ]);
                             }
                         }
                     }
                 }
-
             }
 
 
-            $request = new Request($payment);
-            $request->addTransaction($trx);
+            $total = $gross_total - $use_point;
 
-            //get customer
-            try {
-                $customerEntity = $this->Customers->get($this->Auth->user('id'));
-                $request->setCustomer(
-                    $customerEntity->get('email'),
-                    $customerEntity->get('first_name'),
-                    $customerEntity->get('last_name'),
-                    $customerEntity->get('phone')
-                );
-            } catch(\Exception $e) {
+            $orderEntity = $this->Orders->newEntity([
+                'invoice' => $invoice,
+                'customer_id' => $customer_id,
+                'province_id' => $addresses->get('province_id'),
+                'city_id' => $addresses->get('city_id'),
+                'subdistrict_id' => $addresses->get('subdistrict_id'),
+                'address' => $addresses->get('address'),
+                'use_point' => $use_point,
+                'gross_total' => $gross_total,
+                'total' => $total,
+            ]);
 
-            }
+            if ($this->Orders->save($orderEntity)) {
+                
+                foreach($order_detail_entities as $detailEntity) {
+                    $detailEntity = $this
+                        ->Orders
+                        ->OrderDetails
+                        ->patchEntity($detailEntity, [
+                            'order_id' => $orderEntity->get('id')
+                        ],
+                            ['validate' => false]
+                        );
+                    if ($this->Orders->OrderDetails->save($detailEntity)) {
+                        foreach($order_detail_product_entities as $detailProductEntity) {
+                            $detailProductEntity = $this
+                                ->Orders
+                                ->OrderDetails
+                                ->OrderDetailProducts
+                                ->patchEntity($detailProductEntity, [
+                                    'order_detail_id' => $detailEntity->get('id')
+                                ],
+                                    ['validate' => false]
+                                );
 
-            //process charge
-            try {
-                $charge = $this->MidTrans->charge($request);
-                /*
-                 * status_code 200 is success and using credit card
-                 * status_code 201 is pending and using gopay, virtual_account, clickpay
-                 */
-                if ($charge && isset($charge['status_code'])) {
-                    switch ($charge['status_code']) {
-                        case 200:
-
-                            break;
-                        case 201:
-                            //process pending need response to frontend
-                            break;
+                            $this
+                                ->Orders
+                                ->OrderDetails
+                                ->OrderDetailProducts
+                                ->save($detailProductEntity);
+                        }
                     }
+
                 }
-            } catch(\Exception $e) {
 
             }
 
 
 
-
+            $this->Orders->getConnection()->commit();
 
 
 
@@ -619,7 +861,7 @@ class CheckoutController extends AppController
     /**
      * payment process
      */
-    public function payment()
+    public function paymentx()
     {
 
         $this->request->allowMethod(['post', 'put']);

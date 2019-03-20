@@ -13,8 +13,6 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\BranchesTable|\Cake\ORM\Association\BelongsTo $Branches
  * @property \App\Model\Table\CourriersTable|\Cake\ORM\Association\BelongsTo $Courriers
  * @property \App\Model\Table\SubdistrictsTable|\Cake\ORM\Association\BelongsTo $Subdistricts
- * @property \App\Model\Table\SubdistrictsTable|\Cake\ORM\Association\BelongsTo $Subdistricts
- * @property \App\Model\Table\CitiesTable|\Cake\ORM\Association\BelongsTo $Cities
  * @property \App\Model\Table\CitiesTable|\Cake\ORM\Association\BelongsTo $Cities
  * @property \App\Model\Table\OrderStatusesTable|\Cake\ORM\Association\BelongsTo $OrderStatuses
  * @property \App\Model\Table\ChatsTable|\Cake\ORM\Association\HasMany $Chats
@@ -106,11 +104,11 @@ class OrderDetailsTable extends Table
             ->integer('id')
             ->allowEmptyString('id', 'create');
 
-        $validator
+        /*$validator
             ->scalar('awb')
             ->maxLength('awb', 50)
             ->requirePresence('awb', 'create')
-            ->allowEmptyString('awb', false);
+            ->allowEmptyString('awb', false);*/
 
         $validator
             ->scalar('courrier_code')
@@ -118,10 +116,10 @@ class OrderDetailsTable extends Table
             ->requirePresence('courrier_code', 'create')
             ->allowEmptyString('courrier_code', false);
 
-        $validator
+        /*$validator
             ->numeric('product_price')
             ->requirePresence('product_price', 'create')
-            ->allowEmptyString('product_price', false);
+            ->allowEmptyString('product_price', false);*/
 
         $validator
             ->numeric('shipping_cost')

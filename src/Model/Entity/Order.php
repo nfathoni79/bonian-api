@@ -9,9 +9,14 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string $invoice
  * @property int $customer_id
+ * @property int $province_id
+ * @property int $city_id
+ * @property int $subdistrict_id
  * @property string $address
  * @property int $voucher_id
  * @property int $product_promotion_id
+ * @property int $use_point
+ * @property float $gross_total
  * @property float $total
  * @property \Cake\I18n\FrozenTime $created
  *
@@ -35,9 +40,14 @@ class Order extends Entity
     protected $_accessible = [
         'invoice' => true,
         'customer_id' => true,
+        'province_id' => true,
+        'city_id' => true,
+        'subdistrict_id' => true,
         'address' => true,
         'voucher_id' => true,
         'product_promotion_id' => true,
+        'use_point' => true,
+        'gross_total' => true,
         'total' => true,
         'created' => true,
         'customer' => true,

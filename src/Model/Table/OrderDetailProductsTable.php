@@ -55,6 +55,14 @@ class OrderDetailProductsTable extends Table
             'foreignKey' => 'product_option_value_id',
             'joinType' => 'INNER'
         ]);
+        $this->belongsTo('ProductOptionPrices', [
+            'foreignKey' => 'product_option_price_id',
+            'joinType' => 'INNER'
+        ]);
+        $this->belongsTo('ProductOptionStocks', [
+            'foreignKey' => 'product_option_stock_id',
+            'joinType' => 'INNER'
+        ]);
     }
 
     /**
@@ -98,7 +106,9 @@ class OrderDetailProductsTable extends Table
     {
         $rules->add($rules->existsIn(['order_detail_id'], 'OrderDetails'));
         $rules->add($rules->existsIn(['product_id'], 'Products'));
-        $rules->add($rules->existsIn(['product_option_value_id'], 'OptionValues'));
+        //$rules->add($rules->existsIn(['product_option_value_id'], 'OptionValues'));
+        $rules->add($rules->existsIn(['product_option_price_id'], 'ProductOptionPrices'));
+        $rules->add($rules->existsIn(['product_option_stock_id'], 'ProductOptionStocks'));
 
         return $rules;
     }

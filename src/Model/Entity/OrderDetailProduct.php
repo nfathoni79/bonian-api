@@ -13,6 +13,10 @@ use Cake\ORM\Entity;
  * @property int $qty
  * @property float $price
  * @property float $total
+ * @property int $product_option_price_id
+ * @property int $product_option_stock_id
+ * @property bool $in_flashsale
+ * @property bool $in_groupsale
  * @property \Cake\I18n\FrozenTime $created
  *
  * @property \App\Model\Entity\OrderDetail $order_detail
@@ -38,6 +42,10 @@ class OrderDetailProduct extends Entity
         'qty' => true,
         'price' => true,
         'total' => true,
+        'product_option_price_id' => true,
+        'product_option_stock_id' => true,
+        'in_flashsale' => true,
+        'in_groupsale' => true,
         'created' => true,
         'order_detail' => true,
         'product' => true,

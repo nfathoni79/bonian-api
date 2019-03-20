@@ -46,6 +46,12 @@ class CreditCard extends PaymentRequest
         return $this;
     }
 
+    public function setAuthentication($enable)
+    {
+        $this->credit_card['authentication'] = $enable ? true : false;
+        return $this;
+    }
+
     public function setCustomer($email, $fist_name, $last_name, $phone)
     {
         $this->customer_details = [

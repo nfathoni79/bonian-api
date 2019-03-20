@@ -56,6 +56,18 @@ class OrdersTable extends Table
             'foreignKey' => 'product_promotion_id',
             'joinType' => 'INNER'
         ]);
+        $this->belongsTo('Provinces', [
+            'foreignKey' => 'province_id',
+            'joinType' => 'INNER'
+        ]);
+        $this->belongsTo('Cities', [
+            'foreignKey' => 'city_id',
+            'joinType' => 'INNER'
+        ]);
+        $this->belongsTo('Subdistricts', [
+            'foreignKey' => 'subdistrict_id',
+            'joinType' => 'INNER'
+        ]);
         $this->hasMany('OrderDetails', [
             'foreignKey' => 'order_id'
         ]);
@@ -104,6 +116,9 @@ class OrdersTable extends Table
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
         $rules->add($rules->existsIn(['voucher_id'], 'Vouchers'));
         $rules->add($rules->existsIn(['product_promotion_id'], 'ProductPromotions'));
+        $rules->add($rules->existsIn(['province_id'], 'Provinces'));
+        $rules->add($rules->existsIn(['city_id'], 'Cities'));
+        $rules->add($rules->existsIn(['subdistrict_id'], 'Subdistricts'));
 
         return $rules;
     }
