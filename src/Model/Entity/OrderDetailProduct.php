@@ -13,6 +13,7 @@ use Cake\ORM\Entity;
  * @property int $qty
  * @property float $price
  * @property float $total
+ * @property string $comment
  * @property int $product_option_price_id
  * @property int $product_option_stock_id
  * @property bool $in_flashsale
@@ -42,6 +43,7 @@ class OrderDetailProduct extends Entity
         'qty' => true,
         'price' => true,
         'total' => true,
+        'comment' => true,
         'product_option_price_id' => true,
         'product_option_stock_id' => true,
         'in_flashsale' => true,

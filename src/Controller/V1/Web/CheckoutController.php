@@ -51,7 +51,11 @@ use Cake\Validation\Validator;
 class CheckoutController extends AppController
 {
 
-    protected $customerDetailStatuses = [1, 2, 3];
+    /**
+     * available status = 1
+     * @var array
+     */
+    protected $customerDetailStatuses = [1];
 
     public function initialize()
     {
@@ -569,7 +573,7 @@ class CheckoutController extends AppController
 
 
 
-        /*$validator->requirePresence('payment_method')
+        $validator->requirePresence('payment_method')
             ->inList('payment_method', [
                 'credit_card',
                 'mandiri_billpayment',
@@ -595,12 +599,14 @@ class CheckoutController extends AppController
                     },
                     'message' => 'Silahkan masukan credit credit card'
                 ])
-                ->requirePresence('cvv')
+                ->requirePresence('token')
+                ->notBlank('token');
+                /*->requirePresence('cvv')
                 ->notBlank('cvv')
                 ->numeric('cvv')
                 ->maxLength('cvv', 3)
-                ->minLength('cvv', 3);
-        }*/
+                ->minLength('cvv', 3);*/
+        }
 
         $validator->requirePresence('address_id')
             ->notBlank('address_id', 'Silahkan pilih alamat yang dikirim')
@@ -631,8 +637,15 @@ class CheckoutController extends AppController
              * @var \App\Model\Entity\CustomerCart $cartEntity
              */
             $cartEntity = null;
-            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+            $cartDetailEntities = [];
+            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers, &$cartDetailEntities) {
                 $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+                /**
+                 * @var \App\Model\Entity\CustomerCartDetail $customer_cart_details
+                 */
+                $customer_cart_details =  $row->customer_cart_details[$key];
+                $customer_cart_details->set('id', $customer_cart_details->cartid);
+                $cartDetailEntities[$key] = $customer_cart_details;
             }, function(\App\Model\Entity\CustomerCart $row) use (&$cartEntity) {
                 $cartEntity = $row;
             });
@@ -640,15 +653,16 @@ class CheckoutController extends AppController
             $cart = $this->groupCartByBranch($cart, $product_to_couriers, $this->getAddress($address_id));
 
 
-            //$trx = new Transaction(date('ymds') . Security::randomString(4));
-
             if ($cart) {
                 $this->Orders->getConnection()->begin();
 
-                $invoice = date('ymds') . Security::randomString(4);
+
+                $invoice = strtoupper(date('ymds') . Security::randomString(4));
                 $addresses = $this->getAddress($address_id);
                 $gross_total = 0;
                 $use_point = (int)$this->request->getData('use_point');
+
+                $trx = new Transaction($invoice);
 
 
                 $order_detail_entities = [];
@@ -656,7 +670,7 @@ class CheckoutController extends AppController
                 foreach ($cart as $origin_id => $item) {
                     $subtotal = 0;
                     foreach ($item['data'] as $val) {
-                        //$trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                        $trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
                         $subtotal += $val['price'] * $val['qty'];
                         $gross_total += $val['price'] * $val['qty'];
                         //debug($val);
@@ -673,6 +687,7 @@ class CheckoutController extends AppController
                                 'in_groupsale' => $val['in_groupsale'],
                                 'product_option_stock_id' => $val['stock_id'],
                                 'product_option_price_id' => $val['price_id'],
+                                'comment' => $val['comment']
                             ]);
                     }
 
@@ -683,7 +698,7 @@ class CheckoutController extends AppController
                         if ($origin_id == $branch) {
                             foreach ($item['shipping_options'] as $shipping_option) {
                                 if ($shipping_option['code'] == $val['code'] && strtolower($shipping_option['service']) == strtolower($val['service'])) {
-                                    //$trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
+                                    $trx->addItem($origin_id, $shipping_option['cost'], 1, $shipping_option['code'] . '-' . $shipping_option['service']);
                                     $courierEntity = $this->Courriers->find()
                                         ->where([
                                             'code' => $val['code']
@@ -721,6 +736,10 @@ class CheckoutController extends AppController
 
                 $total = $gross_total - $use_point;
 
+                if ($use_point > 0) {
+                    $trx->addItem('point', -$use_point, 1, 'Using Point Customer');
+                }
+
                 //check voucher claim
                 $customerVoucherEntity = $this->CustomerVouchers->find()
                     ->where([
@@ -729,6 +748,7 @@ class CheckoutController extends AppController
                     ])
                     ->orderDesc('id')
                     ->first();
+
 
 
                 $orderEntity = $this->Orders->newEntity([
@@ -741,49 +761,206 @@ class CheckoutController extends AppController
                     'use_point' => $use_point,
                     'gross_total' => $gross_total,
                     'total' => $total,
-                    'voucher_id' => $customerVoucherEntity ? $customerVoucherEntity->get('voucher_id') : 0
+                    'voucher_id' => $customerVoucherEntity ? $customerVoucherEntity->get('voucher_id') : null
                 ]);
 
-                if ($this->Orders->save($orderEntity)) {
-                    $customerVoucherEntity->set('status', 2);
-                    $this->CustomerVouchers->save($customerVoucherEntity);
-                    foreach ($order_detail_entities as $detailEntity) {
-                        $detailEntity = $this
-                            ->Orders
-                            ->OrderDetails
-                            ->patchEntity($detailEntity, [
-                                'order_id' => $orderEntity->get('id')
-                            ],
-                                ['validate' => false]
-                            );
-                        if ($this->Orders->OrderDetails->save($detailEntity)) {
-                            foreach ($order_detail_product_entities as $detailProductEntity) {
-                                $detailProductEntity = $this
-                                    ->Orders
-                                    ->OrderDetails
-                                    ->OrderDetailProducts
-                                    ->patchEntity($detailProductEntity, [
-                                        'order_detail_id' => $detailEntity->get('id')
-                                    ],
-                                        ['validate' => false]
-                                    );
-
-                                $this
-                                    ->Orders
-                                    ->OrderDetails
-                                    ->OrderDetailProducts
-                                    ->save($detailProductEntity);
-                            }
-                        }
-
-                    }
 
 
-                    $cartEntity->set('status', 2);
-                    $this->CustomerCarts->save($cartEntity);
+                //get customer
+                $customerEntity = null;
+                try {
+                    $customerEntity = $this->Customers->get($this->Auth->user('id'));
+                } catch(\Exception $e) {
+
                 }
 
-                $this->Orders->getConnection()->commit();
+                $payment_method = $this->request->getData('payment_method');
+
+                switch ($payment_method) {
+                    case 'credit_card':
+                        //for credit card
+
+                        //request new token for gross_amount
+
+                        $customer_card_entity = $this->CustomerCards->find()
+                            ->where([
+                                'customer_id' => $customer_id,
+                                'id' => $this->request->getData('card_id')
+                            ])
+                            ->first();
+
+                        if ($customer_card_entity) {
+
+                            $payment = new CreditCard();
+                            $payment->setToken($this->request->getData('token'))
+                                ->saveToken(true)
+                                ->setAuthentication(true)
+                                ->setCustomer(
+                                    $customerEntity->get('email'),
+                                    $customerEntity->get('first_name'),
+                                    $customerEntity->get('last_name'),
+                                    $customerEntity->get('phone')
+                                )
+                                ->setBillingAddress()
+                                ->setShippingFromBilling();
+                        }
+
+
+                        break;
+
+                    case 'bca_va':
+                        //for bca
+                        $payment = (new BcaVirtualAccount(1111111))
+                            ->setSubCompanyCode(1111);
+                        break;
+
+                    case 'mandiri_billpayment':
+                        $payment = (new MandiriBillPayment());
+                        break;
+
+                    case 'permata_va':
+                        //for permata
+                        $payment = (new PermataVirtualAccount())
+                            ->setRecipientName('Ridwan');
+                        break;
+
+                    case 'bni_va':
+                        $payment = new BniVirtualAccount('111111');
+                        break;
+
+                    case 'bca_klikpay':
+                        $payment = new BcaKlikPay();
+                        break;
+
+                    case 'mandiri_clickpay':
+                        $token = (new \App\Lib\MidTrans\CreditCardToken())
+                            ->setCardNumber('4111 1111 1111 1111')
+                            ->request($trx->getAmount());
+                        if ($token->status_code == 200) {
+                            $payment = new MandiriClickPay($token->token_id, '54321', '000000');
+                        }
+                        break;
+
+                    case 'gopay':
+                        $payment = new Gopay('http://php.net');
+                        break;
+                }
+
+
+                $request = new Request($payment);
+                $request->addTransaction($trx);
+
+
+
+                $request->setCustomer(
+                    $customerEntity->get('email'),
+                    $customerEntity->get('first_name'),
+                    $customerEntity->get('last_name'),
+                    $customerEntity->get('phone')
+                );
+
+                $process_save_order = true;
+                $process_payment_charge = true;
+                try {
+                    if ($this->Orders->save($orderEntity)) {
+                        if ($customerVoucherEntity instanceof \App\Model\Entity\CustomerVoucher) {
+                            $customerVoucherEntity->set('status', 2);
+                            $this->CustomerVouchers->save($customerVoucherEntity);
+                        }
+                        foreach ($order_detail_entities as $detailEntity) {
+                            $detailEntity = $this
+                                ->Orders
+                                ->OrderDetails
+                                ->patchEntity($detailEntity, [
+                                    'order_id' => $orderEntity->get('id')
+                                ],
+                                    ['validate' => false]
+                                );
+                            if ($this->Orders->OrderDetails->save($detailEntity)) {
+                                foreach ($order_detail_product_entities as $detailProductEntity) {
+                                    $detailProductEntity = $this
+                                        ->Orders
+                                        ->OrderDetails
+                                        ->OrderDetailProducts
+                                        ->patchEntity($detailProductEntity, [
+                                            'order_detail_id' => $detailEntity->get('id')
+                                        ],
+                                            ['validate' => false]
+                                        );
+
+                                    if (!$this
+                                        ->Orders
+                                        ->OrderDetails
+                                        ->OrderDetailProducts
+                                        ->save($detailProductEntity)) {
+                                        $process_save_order = false;
+                                    }
+                                }
+                            } else {
+                                $process_save_order = false;
+                            }
+
+                        }
+
+
+                        $cartEntity->set('status', 3);
+                        if ($this->CustomerCarts->save($cartEntity)) {
+                            if (is_array($cartDetailEntities)) {
+                                /**
+                                 * @var \App\Model\Entity\CustomerCartDetail[] $cartDetailEntities
+                                 */
+                                foreach($cartDetailEntities as $cartDetailEntity) {
+                                    $cartDetailEntity->set('status', 4);
+                                    $this->CustomerCarts->CustomerCartDetails->save($cartDetailEntity);
+                                }
+                            }
+                        }
+                    } else {
+                        $process_save_order = false;
+                    }
+                } catch(\Exception $e) {
+                    $process_save_order = false;
+                }
+
+
+                if ($process_save_order) {
+                    //process charge
+                    try {
+                        $charge = $this->MidTrans->charge($request);
+                        /*
+                         * status_code 200 is success and using credit card
+                         * status_code 201 is pending and using gopay, virtual_account, clickpay
+                         */
+
+                        if ($charge && isset($charge['status_code'])) {
+                            switch ($charge['status_code']) {
+                                case 200:
+                                    $data['payment'] = $charge;
+                                    break;
+                                case 201:
+                                    //process pending need response to frontend
+                                    $data['payment'] = $charge;
+                                    break;
+                                default:
+                                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                                    $process_payment_charge = false;
+                                    break;
+                            }
+
+
+                        }
+
+                    } catch(\Exception $e) {
+                        $this->Orders->getConnection()->rollback();
+                        $process_payment_charge = false;
+                    }
+                }
+
+                if ($process_save_order && $process_payment_charge) {
+                    $this->Orders->getConnection()->commit();
+                } else {
+                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                }
 
             } else {
                 $this->setResponse($this->response->withStatus(404, 'Keranjang belanja anda kosong'));
