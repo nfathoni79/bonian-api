@@ -17,6 +17,7 @@ class CreditCardTokenResponse
     public $validation_messages = null;
     public $redirect_url = null;
     public $token_id = null;
+    public $bank = null;
     /**
      * The 3DS status indicator 05
      * @var null

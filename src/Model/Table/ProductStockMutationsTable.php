@@ -5,6 +5,7 @@ use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use Cake\ORM\TableRegistry;
 
 /**
  * ProductStockMutations Model
@@ -105,5 +106,44 @@ class ProductStockMutationsTable extends Table
         $rules->add($rules->existsIn(['product_stock_mutation_type_id'], 'ProductStockMutationTypes'));
 
         return $rules;
+    }
+
+    public function saving($productOptionStockId, $transactionType, $amount, $description) {
+//        $amount = bcmul(sprintf('%.8f', $amount),'1',0);
+
+        $productStock = TableRegistry::get('ProductOptionStocks');
+        $getStock = $productStock->find()
+            ->where(['id' => $productOptionStockId])
+            ->first();
+        if($getStock){
+            $stock = $getStock->get('stock');
+            $balance = bcadd($stock,$amount);
+
+            if($balance >= 0){
+
+                $data = $this->newEntity();
+                $data->product_id = $getStock->get('product_id');
+                $data->branch_id = $getStock->get('branch_id');
+                $data->product_option_stock_id = $getStock->get('id');
+                $data->product_stock_mutation_type_id = $transactionType;
+                $data->amount = $amount;
+                $data->balance = $balance;
+                $data->description = $description;
+                if($this->save($data)){
+                    $productStock->query()
+                        ->update()
+                        ->set(['stock' => $balance])
+                        ->where(['id' => $getStock->get('id')])
+                        ->execute();
+                    return true;
+                }else{
+                    return false;
+                }
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
     }
 }

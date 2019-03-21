@@ -67,7 +67,8 @@ class IpnController extends AppController
                     if ($this->Transactions->save($transactionEntity)) {
                         //$content['status_code'] == 200
                         if ($content['status_code'] == 200) {
-
+                            $orderEntity->set('payment_status', 2);
+                            $this->Orders->save($orderEntity);
                         }
                     }
                 }

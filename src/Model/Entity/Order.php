@@ -18,6 +18,7 @@ use Cake\ORM\Entity;
  * @property int $use_point
  * @property float $gross_total
  * @property float $total
+ * @property int $payment_status
  * @property \Cake\I18n\FrozenTime $created
  *
  * @property \App\Model\Entity\Customer $customer
@@ -49,6 +50,7 @@ class Order extends Entity
         'use_point' => true,
         'gross_total' => true,
         'total' => true,
+        'payment_status' => true,
         'created' => true,
         'customer' => true,
         'voucher' => true,

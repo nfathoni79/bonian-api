@@ -33,10 +33,12 @@ class Request
      * Request constructor.
      * @param PaymentRequest $payment
      */
-    public function __construct(PaymentRequest $payment)
+    public function __construct(PaymentRequest $payment = null)
     {
-        foreach(get_object_vars($payment) as $key => $val) {
-            $this->{$key} = $val;
+        if ($payment instanceof PaymentRequest) {
+            foreach(get_object_vars($payment) as $key => $val) {
+                $this->{$key} = $val;
+            }
         }
         return $this;
     }
@@ -44,6 +46,12 @@ class Request
     public function getPaymentType()
     {
         return $this->payment_type;
+    }
+
+    public function setPaymentRequest(PaymentRequest $payment)
+    {
+        $this->__construct($payment);
+        return $this;
     }
 
     /**

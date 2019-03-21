@@ -44,6 +44,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\CourriersTable $Courriers
+ * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -66,6 +67,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerVouchers');
         $this->loadModel('Orders');
         $this->loadModel('Courriers');
+        $this->loadModel('Products');
 
         $this->loadComponent('RajaOngkir');
 
@@ -272,210 +274,82 @@ class CheckoutController extends AppController
 
     }
 
+
     /**
-     * process payment here after process success
+     * this method using credit card to generate token base on amount
      */
-    public function payment()
+    public function makePayment()
     {
         $this->request->allowMethod('post');
-        $customer_id = $this->Auth->user('id');
 
         $validator = new Validator();
-        $validator->requirePresence('payment_method')
-            ->inList('payment_method', [
-                'credit_card',
-                'mandiri_billpayment',
-                'bca_va',
-                'permata_va',
-                'bni_va',
-                'bca_klikpay',
-                'mandiri_clickpay',
-                'gopay'
-            ]);
 
-        if ($payment_method = $this->request->getData('payment_method') == 'credit_card') {
-            $validator->requirePresence('card_id')
-                ->notBlank('card_id')
-                ->add('card_id', 'check_card', [
-                    'rule' => function($value) use($customer_id) {
-                        return $this->CustomerCards->find()
-                                ->where([
-                                    'customer_id' => $customer_id,
-                                    'id' => $value
-                                ])
-                                ->count() > 0;
-                    },
-                    'message' => 'Silahkan masukan credit credit card'
-                ])
-                ->requirePresence('cvv')
-                ->notBlank('cvv')
-                ->numeric('cvv')
-                ->maxLength('cvv', 3)
-                ->minLength('cvv', 3);
-        }
+        $validator->requirePresence('payload')
+            ->notBlank('payload')
+            ->requirePresence('token')
+            ->notBlank('token');
+
 
         $error = $validator->errors($this->request->getData());
-        if ($error) {
-            $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
-        } else {
+        if (!$error) {
             unset($error);
+            $payload = $this->request->getData('payload');
+            /**
+             * @var \App\Lib\MidTrans\Request $request
+             */
+            $request = unserialize(Security::decrypt(base64_decode($payload), Configure::read('Encrypt.salt')));
 
+            if ($request instanceof \App\Lib\MidTrans\Request) {
+                //get customer
+                $customerEntity = null;
+                try {
+                    $customerEntity = $this->Customers->get($this->Auth->user('id'));
+                } catch(\Exception $e) {
 
-            //get customer
-            try {
-                $customerEntity = $this->Customers->get($this->Auth->user('id'));
-            } catch(\Exception $e) {
+                }
 
-            }
-            $payment_method = $this->request->getData('payment_method');
+                $payment = new CreditCard();
+                $payment->setToken($this->request->getData('token'))
+                    ->saveToken(true)
+                    //->setAuthentication(true)
+                    ->setCustomer(
+                        $customerEntity->get('email'),
+                        $customerEntity->get('first_name'),
+                        $customerEntity->get('last_name'),
+                        $customerEntity->get('phone')
+                    )
+                    ->setBillingAddress()
+                    ->setShippingFromBilling();
 
-            switch ($payment_method) {
-                case 'credit_card':
-                    //for credit card
+                $request->setPaymentRequest($payment);
 
-                    //request new token for gross_amount
-
-                    $customer_card_entity = $this->CustomerCards->find()
-                        ->where([
-                            'customer_id' => $customer_id,
-                            'id' => $this->request->getData('card_id')
-                        ])
-                        ->first();
-
-                    if ($customer_card_entity) {
-
-                        $credit_card_token = new CreditCardToken();
-                        $token = $credit_card_token->setToken($customer_card_entity->get('token'))
-                            ->setCvv($this->request->getData('cvv'))
-                            ->setSecure(true)
-                            ->request($trx->getAmount());
-                        if ($token->status_code == 200) {
-
-                            if ($token->redirect_url) {
-                                //return $this->redirect($token->redirect_url);
-                                //debug($token);
-                                //exit;
-                            }
-
-                            $payment = new CreditCard();
-                            $payment->setToken($token->token_id)
-                                ->saveToken(true)
-                                ->setAuthentication(true)
-                                ->setCustomer(
-                                    $customerEntity->get('email'),
-                                    $customerEntity->get('first_name'),
-                                    $customerEntity->get('last_name'),
-                                    $customerEntity->get('phone')
-                                )
-                                ->setBillingAddress()
-                                ->setShippingFromBilling();
-                        }
-
-                        /*$credit_card_token = new CreditCardToken();
-                        $token = $credit_card_token->setToken($customer_card_entity->get('token'))
-                            ->setCvv($this->request->getData('cvv'))
-                            ->setSecure(true)
-                            ->request($trx->getAmount());
-                        debug($trx);
-                        debug($token);exit;
-
-
-                        /*$payment = new CreditCard();
-                        $payment->setToken('521111-1117-44f69605-249d-4c9b-91a8-48a5cf89038f')
-                            ->saveToken(true)
-                            ->setCustomer(
-                                $customerEntity->get('email'),
-                                $customerEntity->get('first_name'),
-                                $customerEntity->get('last_name'),
-                                $customerEntity->get('phone')
-                            )
-                            ->setBillingAddress()
-                            ->setShippingFromBilling();*/
-                    }
-
-
-                    break;
-
-                case 'bca_va':
-                    //for bca
-                    $payment = (new BcaVirtualAccount(1111111))
-                        ->setSubCompanyCode(1111);
-                    break;
-
-                case 'mandiri_billpayment':
-                    $payment = (new MandiriBillPayment());
-                    break;
-
-                case 'permata_va':
-                    //for permata
-                    $payment = (new PermataVirtualAccount())
-                        ->setRecipientName('Ridwan');
-                    break;
-
-                case 'bni_va':
-                    $payment = new BniVirtualAccount('111111');
-                    break;
-
-                case 'bca_klikpay':
-                    $payment = new BcaKlikPay();
-                    break;
-
-                case 'mandiri_clickpay':
-                    $token = (new \App\Lib\MidTrans\CreditCardToken())
-                        ->setCardNumber('4111 1111 1111 1111')
-                        ->request(10000);
-                    if ($token->status_code == 200) {
-                        $payment = new MandiriClickPay($token->token_id, '54321', '000000');
-                    }
-                    break;
-
-                case 'gopay':
-                    $payment = new Gopay('http://php.net');
-                    break;
-            }
-
-
-            $request = new Request($payment);
-            $request->addTransaction($trx);
-
-
-
-            $request->setCustomer(
-                $customerEntity->get('email'),
-                $customerEntity->get('first_name'),
-                $customerEntity->get('last_name'),
-                $customerEntity->get('phone')
-            );
-
-            //process charge
-            try {
                 $charge = $this->MidTrans->charge($request);
-                /*
-                 * status_code 200 is success and using credit card
-                 * status_code 201 is pending and using gopay, virtual_account, clickpay
-                 */
-
+                //debug($request);
+                //debug($charge);
                 if ($charge && isset($charge['status_code'])) {
                     switch ($charge['status_code']) {
                         case 200:
 
                             break;
                         case 201:
-                            //process pending need response to frontend
+
                             break;
-                        case 402:
-                            //No MID/TID for this transaction
+                        default:
+                            $this->setResponse($this->response->withStatus(406, $charge['status_message']));
                             break;
                     }
                 }
-                debug($charge);exit;
-            } catch(\Exception $e) {
-
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Invalid payload'));
             }
+
+
+
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'gagal proses payment'));
         }
 
         $this->set(compact('error'));
-
     }
 
     /**
@@ -586,7 +460,7 @@ class CheckoutController extends AppController
             ]);
 
         if ($payment_method = $this->request->getData('payment_method') == 'credit_card') {
-            $validator->requirePresence('card_id')
+            $validator
                 ->notBlank('card_id')
                 ->add('card_id', 'check_card', [
                     'rule' => function($value) use($customer_id) {
@@ -598,14 +472,31 @@ class CheckoutController extends AppController
                                 ->count() > 0;
                     },
                     'message' => 'Silahkan masukan credit credit card'
-                ])
-                ->requirePresence('token')
-                ->notBlank('token');
-                /*->requirePresence('cvv')
+                ]);
+
+            if (!$this->request->getData('card_id')) {
+
+                $validator->requirePresence('card_number')
+                    ->notBlank('card_number')
+                    ->creditCard('card_number')
+                    ->requirePresence('card_exp_month')
+                    ->notBlank('card_exp_month')
+                    ->minLength('card_exp_month', 2)
+                    ->maxLength('card_exp_month', 2)
+                    ->numeric('card_exp_month')
+                    ->requirePresence('card_exp_year')
+                    ->notBlank('card_exp_year')
+                    ->minLength('card_exp_year', 4)
+                    ->maxLength('card_exp_year', 4)
+                    ->numeric('card_exp_year');
+            }
+
+            $validator
+                ->requirePresence('cvv')
                 ->notBlank('cvv')
                 ->numeric('cvv')
                 ->maxLength('cvv', 3)
-                ->minLength('cvv', 3);*/
+                ->minLength('cvv', 3);
         }
 
         $validator->requirePresence('address_id')
@@ -776,11 +667,17 @@ class CheckoutController extends AppController
 
                 $payment_method = $this->request->getData('payment_method');
 
+                $data['payment_method'] = $payment_method;
+                $data['payment_amount'] = $trx->getAmount();
+
+                $payment = null;
+
+
                 switch ($payment_method) {
                     case 'credit_card':
                         //for credit card
 
-                        //request new token for gross_amount
+                        //request new token for gross_amount from saved card
 
                         $customer_card_entity = $this->CustomerCards->find()
                             ->where([
@@ -791,6 +688,7 @@ class CheckoutController extends AppController
 
                         if ($customer_card_entity) {
 
+                            /*
                             $payment = new CreditCard();
                             $payment->setToken($this->request->getData('token'))
                                 ->saveToken(true)
@@ -803,7 +701,36 @@ class CheckoutController extends AppController
                                 )
                                 ->setBillingAddress()
                                 ->setShippingFromBilling();
+                            */
+
+                            /**
+                             * if credit card generate token base on amount first
+                             *
+                             */
+
+                            $credit_card_token = new CreditCardToken();
+                            $token = $credit_card_token->setToken($customer_card_entity->get('token'))
+                                ->setCvv($this->request->getData('cvv'))
+                                ->setSecure(true)
+                                ->request($trx->getAmount());
+                        } else {
+
+                            $credit_card_token = new CreditCardToken(
+                                $this->request->getData('card_number'),
+                                $this->request->getData('card_exp_month'),
+                                $this->request->getData('card_exp_year'),
+                                $this->request->getData('cvv')
+                            );
+
+                            $token = $credit_card_token->setSecure(true)
+                                ->request($trx->getAmount());
                         }
+
+                        $data[$payment_method] = array_filter([
+                            'redirect_url' => $token->redirect_url,
+                            'token' => $token->token_id,
+                            'bank' => $token->bank
+                        ]);
 
 
                         break;
@@ -821,7 +748,7 @@ class CheckoutController extends AppController
                     case 'permata_va':
                         //for permata
                         $payment = (new PermataVirtualAccount())
-                            ->setRecipientName('Ridwan');
+                            ->setRecipientName($customerEntity->get('first_name'));
                         break;
 
                     case 'bni_va':
@@ -843,6 +770,10 @@ class CheckoutController extends AppController
 
                     case 'gopay':
                         $payment = new Gopay('http://php.net');
+                        break;
+
+                    default:
+                        $payment = null;
                         break;
                 }
 
@@ -888,11 +819,18 @@ class CheckoutController extends AppController
                                             ['validate' => false]
                                         );
 
-                                    if (!$this
+                                    if ($this
                                         ->Orders
                                         ->OrderDetails
                                         ->OrderDetailProducts
                                         ->save($detailProductEntity)) {
+                                        $this->Products->ProductStockMutations->saving(
+                                            $detailProductEntity->get('product_option_stock_id'),
+                                            3,
+                                            -$detailProductEntity->get('qty'),
+                                            ''
+                                        );
+                                    } else {
                                         $process_save_order = false;
                                     }
                                 }
@@ -915,6 +853,20 @@ class CheckoutController extends AppController
                                 }
                             }
                         }
+
+                        //process mutation point here
+                        if ($this->request->getData('use_point') > 0) {
+                            $this
+                                ->Customers
+                                ->CustomerMutationPoints
+                                ->saving(
+                                    $customer_id,
+                                    1,
+                                    - intval($this->request->getData('use_point')),
+                                    'penggunaan point untuk belanja'
+                                );
+                        }
+
                     } else {
                         $process_save_order = false;
                     }
@@ -924,36 +876,45 @@ class CheckoutController extends AppController
 
 
                 if ($process_save_order) {
-                    //process charge
-                    try {
-                        $charge = $this->MidTrans->charge($request);
-                        /*
-                         * status_code 200 is success and using credit card
-                         * status_code 201 is pending and using gopay, virtual_account, clickpay
-                         */
 
-                        if ($charge && isset($charge['status_code'])) {
-                            switch ($charge['status_code']) {
-                                case 200:
-                                    $data['payment'] = $charge;
-                                    break;
-                                case 201:
-                                    //process pending need response to frontend
-                                    $data['payment'] = $charge;
-                                    break;
-                                default:
-                                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
-                                    $process_payment_charge = false;
-                                    break;
+                    if ($payment_method == 'credit_card') {
+                        $data['payload'] = base64_encode(Security::encrypt(serialize($request), Configure::read('Encrypt.salt')));
+                    } else {
+                        //process charge exception credit card
+                        try {
+                            $charge = $this->MidTrans->charge($request);
+                            /*
+                             * status_code 200 is success and using credit card
+                             * status_code 201 is pending and using gopay, virtual_account, clickpay
+                             */
+
+                            if ($charge && isset($charge['status_code'])) {
+                                switch ($charge['status_code']) {
+                                    case 200:
+                                        $data['payment_status'] = 'success';
+                                        $data['payment'] = $charge;
+                                        break;
+                                    case 201:
+                                        //process pending need response to frontend
+                                        $data['payment_status'] = 'pending';
+                                        $data['payment'] = $charge;
+                                        break;
+                                    default:
+                                        $data['payment_status'] = 'failed';
+                                        $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                                        $process_payment_charge = false;
+                                        break;
+                                }
+
+
                             }
 
-
+                        } catch(\Exception $e) {
+                            $this->Orders->getConnection()->rollback();
+                            $process_payment_charge = false;
                         }
-
-                    } catch(\Exception $e) {
-                        $this->Orders->getConnection()->rollback();
-                        $process_payment_charge = false;
                     }
+
                 }
 
                 if ($process_save_order && $process_payment_charge) {
@@ -1027,6 +988,9 @@ class CheckoutController extends AppController
 
                     $data = [
                         'code_voucher' => $code_voucher,
+                        'type' => $find->get('type'),
+                        'description' => $find->get('type') == 1 ? 'discount by percent' : 'discount by value',
+                        'value' => $find->get('value'),
                         'expired' => $find->get('date_end')
                     ];
 
