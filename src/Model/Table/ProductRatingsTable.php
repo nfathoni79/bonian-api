@@ -48,6 +48,9 @@ class ProductRatingsTable extends Table
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id'
         ]);
+        $this->belongsTo('OrderDetailProducts', [
+            'foreignKey' => 'order_detail_product_id'
+        ]);
     }
 
     /**
@@ -93,7 +96,7 @@ class ProductRatingsTable extends Table
 
     public function afterSave(\Cake\Event\Event $event,  \App\Model\Entity\ProductRating $entity, \ArrayObject $options)
     {
-        if ($entity->isNew()) {
+        if (!$entity->isNew()) {
             $product_id = $entity->get('product_id');
 
             $product_ratings = $this->find();
@@ -103,7 +106,8 @@ class ProductRatingsTable extends Table
                     'total' => $product_ratings->func()->count('*')
                 ])
                 ->where([
-                    'product_id' => $product_id
+                    'product_id' => $product_id,
+                    'status' => 1
                 ])
                 ->first();
             if ($product_ratings) {
