@@ -38,8 +38,8 @@ class ProductRatingsController extends AppController
             ->requirePresence('order_detail_product_id')
             ->notBlank('order_detail_product_id');
 
-        $errors = $validator->errors($this->request->getData());
-        if (empty($errors)) {
+        $error = $validator->errors($this->request->getData());
+        if (empty($error)) {
 
             $findProductRating = $this->ProductRatings->find()
                 ->where([
@@ -84,7 +84,7 @@ class ProductRatingsController extends AppController
                     //save logic
                 } else {
                     $this->setResponse($this->response->withStatus(406, 'Failed to add rating'));
-                    $errors = $productRating->getErrors();
+                    $error = $productRating->getErrors();
                 }
 
             }else{
@@ -92,7 +92,7 @@ class ProductRatingsController extends AppController
             }
 
         }
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
 
 
 

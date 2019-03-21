@@ -64,8 +64,8 @@ class ProfileController extends AppController
             ->requirePresence('gender')
             ->inList('gender',['m','f'])
             ->notBlank('gender', 'Gender field is required');
-        $errors = $validator->errors($this->request->getData());
-        if (empty($errors)) {
+        $error = $validator->errors($this->request->getData());
+        if (empty($error)) {
 
             $entity = $this->Customers->get($customerId);
             $explodeName = explode(' ', $this->request->getData('name'));
@@ -82,10 +82,10 @@ class ProfileController extends AppController
 
         }else {
             $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
-            $errors = $errors;
+
         }
 
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
 
 
     }
@@ -104,8 +104,8 @@ class ProfileController extends AppController
                 ]
             ]);
 
-        $errors = $validator->errors($this->request->getData());
-        if (empty($errors)) {
+        $error = $validator->errors($this->request->getData());
+        if (empty($error)) {
             $http = new Client();
             $data = new FormData();
             $data->add('customer_id', $this->Auth->user('id'));
@@ -120,7 +120,7 @@ class ProfileController extends AppController
                 $this->setResponse($this->response->withStatus(406, 'Unable to update data profile'));
             }
         }
-        $this->set(compact('errors'));
+        $this->set(compact('error'));
     }
 
 
@@ -294,14 +294,13 @@ class ProfileController extends AppController
                     'message' => 'Refferal tidak tersedia',
                 ]);
 
-            $errors = $validator->errors($this->request->getData());
-            if (empty($errors)) {
+            $error = $validator->errors($this->request->getData());
+            if (empty($error)) {
                 $this->GenerationsTree->save($getReffCode, $this->request->getData('refferal'));
             }else{
                 $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
-                $errors = $errors;
             }
-            $this->set(compact('errors'));
+            $this->set(compact('error'));
         }else{
             $this->setResponse($this->response->withStatus(406, 'Refferal is already registered'));
         }
