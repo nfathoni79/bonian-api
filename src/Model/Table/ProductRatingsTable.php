@@ -88,8 +88,9 @@ class ProductRatingsTable extends Table
     {
         $rules->add($rules->existsIn(['product_id'], 'Products'));
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
+        $rules->add($rules->existsIn(['order_detail_product_id'], 'OrderDetailProducts'));
 
-        $rules->add($rules->isUnique(['product_id', 'customer_id'], 'Anda sudah pernah melakukan review'));
+//        $rules->add($rules->isUnique(['order_detail_product_id', 'product_id', 'customer_id'], 'Anda sudah pernah melakukan review'));
 
         return $rules;
     }
