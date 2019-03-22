@@ -352,6 +352,9 @@ class CheckoutController extends AppController
         $this->set(compact('error'));
     }
 
+
+
+
     /**
      * process checkout json input params
      *
@@ -565,7 +568,7 @@ class CheckoutController extends AppController
                         $subtotal += $val['price'] * $val['qty'];
                         $gross_total += $val['price'] * $val['qty'];
                         //debug($val);
-                        $order_detail_product_entities[] = $this
+                        $order_detail_product_entities[$origin_id][] = $this
                             ->Orders
                             ->OrderDetails
                             ->OrderDetailProducts
@@ -604,7 +607,7 @@ class CheckoutController extends AppController
 
 
                                     $gross_total += $shipping_option['cost'];
-                                    $order_detail_entities[] = $this->Orders->OrderDetails->newEntity([
+                                    $order_detail_entities[$origin_id] = $this->Orders->OrderDetails->newEntity([
                                         'branch_id' => $origin_id,
                                         'courrier_id' => $courierEntity->get('id'),
                                         'province_id' => $branchEntity->get('provice_id'), //TODO fix later
@@ -798,7 +801,7 @@ class CheckoutController extends AppController
                             $customerVoucherEntity->set('status', 2);
                             $this->CustomerVouchers->save($customerVoucherEntity);
                         }
-                        foreach ($order_detail_entities as $detailEntity) {
+                        foreach ($order_detail_entities as $origin_id => $detailEntity) {
                             $detailEntity = $this
                                 ->Orders
                                 ->OrderDetails
@@ -808,7 +811,7 @@ class CheckoutController extends AppController
                                     ['validate' => false]
                                 );
                             if ($this->Orders->OrderDetails->save($detailEntity)) {
-                                foreach ($order_detail_product_entities as $detailProductEntity) {
+                                foreach ($order_detail_product_entities[$origin_id] as $detailProductEntity) {
                                     $detailProductEntity = $this
                                         ->Orders
                                         ->OrderDetails
