@@ -50,11 +50,11 @@ class OrdersTable extends Table
         ]);
         $this->belongsTo('Vouchers', [
             'foreignKey' => 'voucher_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
         ]);
         $this->belongsTo('ProductPromotions', [
             'foreignKey' => 'product_promotion_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
         ]);
         $this->belongsTo('Provinces', [
             'foreignKey' => 'province_id',
@@ -69,6 +69,9 @@ class OrdersTable extends Table
             'joinType' => 'INNER'
         ]);
         $this->hasMany('OrderDetails', [
+            'foreignKey' => 'order_id'
+        ]);
+        $this->hasMany('Transactions', [
             'foreignKey' => 'order_id'
         ]);
     }
