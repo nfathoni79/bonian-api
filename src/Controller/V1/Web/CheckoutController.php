@@ -259,9 +259,16 @@ class CheckoutController extends AppController
 
 
         $product_to_couriers = [];
+        $total = 0;
         $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
             $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+        }, function(\App\Model\Entity\CustomerCart $row) use (&$total) {
+            foreach($row['customer_cart_details'] as $val) {
+                $total += (float) $val['price'] * intval($val['qty']);
+            }
         });
+
+        $data['total'] = $total;
 
 
         //grouping by origin_id
@@ -297,7 +304,12 @@ class CheckoutController extends AppController
             /**
              * @var \App\Lib\MidTrans\Request $request
              */
-            $request = unserialize(Security::decrypt(base64_decode($payload), Configure::read('Encrypt.salt')));
+            $request = unserialize(
+                Security::decrypt(
+                    base64_decode($payload),
+                    Configure::read('Encrypt.salt') . $this->request->getData('token')
+                )
+            );
 
             if ($request instanceof \App\Lib\MidTrans\Request) {
                 //get customer
@@ -446,7 +458,8 @@ class CheckoutController extends AppController
         }
         //set validator from branch database
 
-        $validator->addNested('shipping', $branchShipping);
+        $validator->addNested('shipping', $branchShipping)
+            ->requirePresence('shipping');
 
 
 
@@ -881,7 +894,7 @@ class CheckoutController extends AppController
                 if ($process_save_order) {
 
                     if ($payment_method == 'credit_card') {
-                        $data['payload'] = base64_encode(Security::encrypt(serialize($request), Configure::read('Encrypt.salt')));
+                        $data['payload'] = base64_encode(Security::encrypt(serialize($request), Configure::read('Encrypt.salt') . $token->token_id));
                     } else {
                         //process charge exception credit card
                         try {
