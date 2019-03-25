@@ -166,6 +166,7 @@ class OrdersController extends AppController
                             'slug' => $product['product']['slug'],
                             'model' => $product['product']['model'],
                             'code' => $product['product']['code'],
+                            'sku' => $product['product_option_price']['sku'],
                             'qty' => $product['qty'],
                             'price' => $product['price'],
                             'total' => $product['total'],
