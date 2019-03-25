@@ -123,7 +123,13 @@ class OrdersController extends AppController
                     'OrderDetailProducts' => [
                         'Products' => [
                             'ProductImages'
-                        ]
+                        ],
+                        'ProductOptionPrices' => [
+                            'ProductOptionValueLists' => [
+                                'Options',
+                                'OptionValues'
+                            ],
+                        ],
                     ]
                 ]
 
@@ -148,6 +154,12 @@ class OrdersController extends AppController
                         'products' => []
                     ];
                     foreach($val->order_detail_products as $k => $product) {
+
+                        $variant = [];
+                        foreach($product['product_option_price']['product_option_value_lists'] as $list){
+                            $variant[] = $list['option']['name'] .' : '. $list['option_value']['name'];
+                        }
+
                         $row->details[$key]['products'][$k] = [
                             'product_id' => $product['product_id'],
                             'name' => $product['product']['name'],
@@ -161,6 +173,7 @@ class OrdersController extends AppController
                             'rating' => $product['product']['rating'],
                             'rating_count' => $product['product']['rating_count'],
                             'view' => $product['product']['view'],
+                            'variant' => implode(', ', $variant),
                             'images' => Hash::extract($product['product']['product_images'], '{n}.name')
                         ];
 
