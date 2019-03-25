@@ -17,6 +17,7 @@ namespace App\Controller\V1\Web;
 use App\Lib\MidTrans\CreditCardToken;
 use Cake\I18n\Time;
 use Cake\Validation\Validator;
+use Cake\Utility\Hash;
 
 /**
  * Customers controller
@@ -85,6 +86,92 @@ class OrdersController extends AppController
 
                 return $row;
             });
+
+        $this->set(compact('data'));
+    }
+
+    public function view($id)
+    {
+        $data = $this->Orders->find()
+            ->contain([
+                'Transactions' => [
+                    'fields' => [
+                        'order_id',
+                        'transaction_time',
+                        'transaction_status',
+                        'fraud_status',
+                        'gross_amount',
+                        'currency',
+                        'payment_type',
+                        'va_number',
+                        'masked_card',
+                        'card_type',
+                    ]
+                ],
+                'Vouchers' => [
+                    'fields' => [
+                        'id',
+                        'code_voucher'
+                    ]
+                ],
+                'Provinces',
+                'Cities',
+                'Subdistricts',
+                'OrderDetails' => [
+                    'Branches',
+                    'OrderStatuses',
+                    'OrderDetailProducts' => [
+                        'Products' => [
+                            'ProductImages'
+                        ]
+                    ]
+                ]
+
+            ])
+            ->where([
+                'Orders.customer_id' => $this->Auth->user('id'),
+                'Orders.id' => $id
+            ])
+            ->map(function(\App\Model\Entity\Order $row) {
+                $row->details = [];
+                foreach($row->order_details as $key => $val) {
+                    $row->details[$key] = [
+                        'awb' => $val['awb'],
+                        'shipping_code' => $val['shipping_code'],
+                        'shipping_service' => $val['shipping_service'],
+                        'shipping_weight' => $val['shipping_weight'],
+                        'shipping_cost' => $val['shipping_cost'],
+                        'total' => $val['total'],
+                        'status' => $val['order_status']['name'],
+                        'origin_name' => $val['branch']['name'],
+                        'origin_address' => $val['branch']['address'],
+                        'products' => []
+                    ];
+                    foreach($val->order_detail_products as $k => $product) {
+                        $row->details[$key]['products'][$k] = [
+                            'product_id' => $product['product_id'],
+                            'name' => $product['product']['name'],
+                            'slug' => $product['product']['slug'],
+                            'model' => $product['product']['model'],
+                            'code' => $product['product']['code'],
+                            'qty' => $product['qty'],
+                            'price' => $product['price'],
+                            'total' => $product['total'],
+                            'comment' => $product['comment'],
+                            'rating' => $product['product']['rating'],
+                            'rating_count' => $product['product']['rating_count'],
+                            'view' => $product['product']['view'],
+                            'images' => Hash::extract($product['product']['product_images'], '{n}.name')
+                        ];
+
+                    }
+                }
+
+                unset($row->order_details);
+
+                return $row;
+            })
+            ->first();
 
         $this->set(compact('data'));
     }
