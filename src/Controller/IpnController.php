@@ -38,6 +38,18 @@ class IpnController extends AppController
             $content = json_decode($content, true);
 
             if ($content && isset($content['status_code'])) {
+
+                switch($content['payment_type']) {
+                    case 'bank_transfer':
+                        if (isset($content['va_numbers'])) {
+                            foreach($content['va_numbers'] as $va) {
+                                $content['va_number'] = $va['va_number'];
+                                $content['bank'] = $va['bank'];
+                            }
+                        }
+                        break;
+                }
+
                 $orderEntity = $this->Orders->find()
                     ->where([
                         'invoice' => $content['order_id']
