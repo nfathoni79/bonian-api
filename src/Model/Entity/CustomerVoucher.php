@@ -11,7 +11,6 @@ use Cake\ORM\Entity;
  * @property int|null $voucher_id
  * @property int|null $status
  * @property \Cake\I18n\FrozenTime $created
- *
  * @property \App\Model\Entity\Customer $customer
  * @property \App\Model\Entity\Voucher $voucher
  */

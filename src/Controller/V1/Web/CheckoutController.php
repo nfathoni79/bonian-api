@@ -268,6 +268,42 @@ class CheckoutController extends AppController
             }
         });
 
+        $data['gross_total'] = $total;
+
+        //check if customer using voucher
+        /**
+         * @var \App\Model\Entity\CustomerVoucher $voucherEntity
+         */
+        $voucherEntity = $this->CustomerVouchers->find()
+            ->where([
+                'CustomerVouchers.customer_id' => $customer_id,
+                'CustomerVouchers.status' => 1
+            ])
+            ->contain([
+                'Vouchers'
+            ])
+            ->orderDesc('CustomerVouchers.id')
+            ->first();
+
+        if ($voucherEntity) {
+            switch($voucherEntity->voucher->type) {
+                case '1':
+                    $discount = $voucherEntity->voucher->value / 100 * $total;
+                    $data['discount'] = $discount;
+                    $total = $total - $discount;
+                    break;
+                case '2':
+                    $discount = $voucherEntity->voucher->value;
+                    $data['discount'] = $discount;
+                    $total = $total - $discount;
+                    break;
+            }
+
+            $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
+
+
+        }
+
         $data['total'] = $total;
 
 
@@ -648,13 +684,41 @@ class CheckoutController extends AppController
                 }
 
                 //check voucher claim
+                /**
+                 * @var \App\Model\Entity\CustomerVoucher $customerVoucherEntity
+                 */
                 $customerVoucherEntity = $this->CustomerVouchers->find()
                     ->where([
-                        'customer_id' => $customer_id,
-                        'status' => 1,
+                        'CustomerVouchers.customer_id' => $customer_id,
+                        'CustomerVouchers.status' => 1
                     ])
-                    ->orderDesc('id')
+                    ->contain([
+                        'Vouchers'
+                    ])
+                    ->orderDesc('CustomerVouchers.id')
                     ->first();
+
+                if ($customerVoucherEntity) {
+                    $discount = 0;
+                    switch($customerVoucherEntity->voucher->type) {
+                        case '1':
+                            $discount = $customerVoucherEntity->voucher->value / 100 * $total;
+                            $total = $total - $discount;
+                            break;
+                        case '2':
+                            $discount = $customerVoucherEntity->voucher->value;
+                            $total = $total - $discount;
+                            break;
+                    }
+
+                    $trx->addItem(
+                        'vocher' . $customerVoucherEntity->get('id'),
+                        -$discount,
+                        1,
+                        'Using voucher ' . $customerVoucherEntity->voucher->code_voucher
+                    );
+
+                }
 
 
 
@@ -992,6 +1056,7 @@ class CheckoutController extends AppController
                             'status' => 1
                         ])
                         ->first();
+                    $error = false;
 
                     if (!$exists) {
                         $customer_voucher_entity = $this->CustomerVouchers->newEntity([
@@ -999,16 +1064,25 @@ class CheckoutController extends AppController
                             'voucher_id' => $find->get('id'),
                             'status' => 1
                         ]);
-                        $this->CustomerVouchers->save($customer_voucher_entity);
+                        if(!$this->CustomerVouchers->save($customer_voucher_entity)) {
+                            $error_message = array_values($customer_voucher_entity->getError('voucher_id'));
+                            $error_message = count($error_message) > 0 ? $error_message[0] : 'Vocher tidak ditemukan / terjadi kesalahan sistem';
+                            $this->setResponse($this->response->withStatus(406,  $error_message));
+                            $error = true;
+                        }
+
                     }
 
-                    $data = [
-                        'code_voucher' => $code_voucher,
-                        'type' => $find->get('type'),
-                        'description' => $find->get('type') == 1 ? 'discount by percent' : 'discount by value',
-                        'value' => $find->get('value'),
-                        'expired' => $find->get('date_end')
-                    ];
+                    if (!$error) {
+                        $data = [
+                            'code_voucher' => $code_voucher,
+                            'type' => $find->get('type'),
+                            'description' => $find->get('type') == 1 ? 'discount by percent' : 'discount by value',
+                            'value' => $find->get('value'),
+                            'expired' => $find->get('date_end')
+                        ];
+                    }
+
 
                 } else {
                     $this->setResponse($this->response->withStatus(406, 'Voucher melebihi batas limit'));
