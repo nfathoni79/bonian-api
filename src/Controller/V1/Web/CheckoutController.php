@@ -600,7 +600,7 @@ class CheckoutController extends AppController
                 $this->Orders->getConnection()->begin();
 
 
-                $invoice = strtoupper(date('ymds') . Security::randomString(4));
+                $invoice = strtoupper(date('ymdHs') . Security::randomString(4));
                 $addresses = $this->getAddress($address_id);
                 $gross_total = 0;
                 $use_point = (int)$this->request->getData('use_point');
