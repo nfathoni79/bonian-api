@@ -51,4 +51,15 @@ class CategoriesController extends Controller
         $this->set(compact('categories'));
     }
 
+    public function view($parent_id = null)
+    {
+        $categories = $this->ProductCategories->find()
+            ->select(['id','parent_id','name', 'slug','path'])
+            ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($parent_id) {
+                return !$parent_id ?$exp->isNull('parent_id') : $exp->eq('parent_id', $parent_id);
+            });
+
+        $this->set(compact('categories'));
+    }
+
 }
