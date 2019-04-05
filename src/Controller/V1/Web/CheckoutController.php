@@ -144,7 +144,7 @@ class CheckoutController extends AppController
                     ],
                 ]
             ])
-            ->where(['CustomerCarts.customer_id' => $this->Auth->user('id'),'CustomerCarts.status' => 1 ])
+            ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(),'CustomerCarts.status' => 1 ])
             ->map(function (\App\Model\Entity\CustomerCart $row) use($call, $entity) {
                 if (is_callable($entity)) {
                     $newEntity = clone $row;
@@ -218,7 +218,7 @@ class CheckoutController extends AppController
      */
     protected function getAddress($address_id = null)
     {
-        $customer_id = $this->Auth->user('id');
+        $customer_id = $this->Authenticate->getId();
         $address =  $this->Customers->CustomerAddreses->find()
             ->where([
                 'customer_id' => $customer_id
@@ -245,7 +245,7 @@ class CheckoutController extends AppController
     {
         //list checkout and default customer address
         $data = [];
-        $customer_id = $this->Auth->user('id');
+        $customer_id = $this->Authenticate->getId();
 
         $data['customer_address'] = $this->getAddress();
 
@@ -351,7 +351,7 @@ class CheckoutController extends AppController
                 //get customer
                 $customerEntity = null;
                 try {
-                    $customerEntity = $this->Customers->get($this->Auth->user('id'));
+                    $customerEntity = $this->Customers->get($this->Authenticate->getId());
                 } catch(\Exception $e) {
 
                 }
@@ -423,7 +423,7 @@ class CheckoutController extends AppController
         $this->request->allowMethod('post');
         //debug($this->request->getData());
 
-        $customer_id = $this->Auth->user('id');
+        $customer_id = $this->Authenticate->getId();
 
         $validator = new Validator();
 
@@ -479,7 +479,7 @@ class CheckoutController extends AppController
                     ],
                 ]
             ])
-            ->where(['CustomerCarts.customer_id' => $this->Auth->user('id'),'CustomerCarts.status' => 1 ])
+            ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(),'CustomerCarts.status' => 1 ])
             ->first();
 
         if ($find_branch) {
@@ -740,7 +740,7 @@ class CheckoutController extends AppController
                 //get customer
                 $customerEntity = null;
                 try {
-                    $customerEntity = $this->Customers->get($this->Auth->user('id'));
+                    $customerEntity = $this->Customers->get($this->Authenticate->getId());
                 } catch(\Exception $e) {
 
                 }
@@ -1022,7 +1022,7 @@ class CheckoutController extends AppController
     public function applyVoucher()
     {
         $this->request->allowMethod('post');
-        $customer_id = $this->Auth->user('id');
+        $customer_id = $this->Authenticate->getId();
         $code_voucher = $this->request->getData('code_voucher');
         if ($code_voucher) {
             $find = $this->CustomerVouchers->Vouchers->find()

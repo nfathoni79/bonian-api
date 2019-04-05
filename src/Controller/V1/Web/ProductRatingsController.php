@@ -44,7 +44,7 @@ class ProductRatingsController extends AppController
             $findProductRating = $this->ProductRatings->find()
                 ->where([
                     'ProductRatings.order_detail_product_id' => $this->request->getData('order_detail_product_id'),
-                    'ProductRatings.customer_id' => $this->Auth->user('id'),
+                    'ProductRatings.customer_id' => $this->Authenticate->getId(),
                     'ProductRatings.status' => 0,
                 ])
                 ->first();

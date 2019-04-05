@@ -47,7 +47,7 @@ class CartController extends AppController
 
     public function add(){
         $this->request->allowMethod(['post', 'put']);
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
 
         if($this->request->getData('qty') <= 0){
             $this->setResponse($this->response->withStatus(406, 'Failed to add cart'));
@@ -220,7 +220,7 @@ class CartController extends AppController
 
     public function view(){
         $this->request->allowMethod(['get']);
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
 
         $cart = $this->CustomerCarts->find()
             ->contain(
@@ -315,7 +315,7 @@ class CartController extends AppController
     public function delete(){
         $this->request->allowMethod(['post', 'put']);
 
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
         $find =  $this->CustomerCartDetails->find()
             ->contain(['CustomerCarts'])
             ->where([
@@ -344,7 +344,7 @@ class CartController extends AppController
     public function moveWishlist(){
         $this->request->allowMethod(['post', 'put']);
 
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
         $find =  $this->CustomerCartDetails->find()
             ->contain(['CustomerCarts'])
             ->where([

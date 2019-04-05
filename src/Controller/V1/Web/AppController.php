@@ -30,19 +30,25 @@ class AppController extends Controller
 {
 
     /**
+     * @var \App\Lib\Token\Authenticate
+     */
+    public $Authenticate;
+
+    /**
      * Initialization hook method.
      *
      * Use this method to add common initialization code like loading components.
      *
      * e.g. `$this->loadComponent('Security');`
-     *
+     * @throws \Exception
      * @return void
      */
     public function initialize()
     {
         parent::initialize();
+        $this->Authenticate = $this->request->getAttribute('authorization');
 
-        $this->loadComponent('Auth', [
+        /*$this->loadComponent('Auth', [
             'loginAction' => false,
             'loginRedirect' => false,
             'authorize' => 'Ajax',
@@ -58,7 +64,7 @@ class AppController extends Controller
                 'className' => 'Session',
                 'key' => 'Auth.Customers',
             ],
-        ]);
+        ]);*/
 
         /*
          * Enable the following component for recommended CakePHP security settings.

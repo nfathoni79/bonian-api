@@ -59,7 +59,7 @@ class WishlistsController extends AppController
                 ]
             ])
             ->where([
-                'customer_id' => $this->Auth->user('id')
+                'customer_id' => $this->Authenticate->getId()
             ])
             ->map(function (\App\Model\Entity\CustomerWish $row) {
                 unset($row->customer_id);
@@ -84,7 +84,7 @@ class WishlistsController extends AppController
         //process add address here
 
         $entity = $this->CustomerWishes->newEntity();
-        $entity->set('customer_id', $this->Auth->user('id'));
+        $entity->set('customer_id', $this->Authenticate->getId());
 
         $this->CustomerWishes->patchEntity($entity, $this->request->getData(), [
             'fields' => [

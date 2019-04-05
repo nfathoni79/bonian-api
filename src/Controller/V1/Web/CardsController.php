@@ -47,7 +47,7 @@ class CardsController extends AppController
 
             ])
             ->where([
-                'customer_id' => $this->Auth->user('id')
+                'customer_id' => $this->Authenticate->getId()
             ])
             ->map(function (\App\Model\Entity\CustomerCard $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
@@ -64,7 +64,7 @@ class CardsController extends AppController
     {
         $this->request->allowMethod(['post', 'put']);
 
-        $customer_id = $this->Auth->user('id');
+        $customer_id = $this->Authenticate->getId();
 
 
         $credit_Card_validator = new Validator();
@@ -151,7 +151,7 @@ class CardsController extends AppController
         if ($card_id = $this->request->getData('card_id')) {
             $cardEntity = $this->CustomerCards->find()
                 ->where([
-                    'customer_id' => $this->Auth->user('id'),
+                    'customer_id' => $this->Authenticate->getId(),
                     'id' => $card_id
                 ])
                 ->first();

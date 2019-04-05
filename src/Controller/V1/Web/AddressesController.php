@@ -47,7 +47,7 @@ class AddressesController extends AppController
                 'Subdistricts',
             ])
             ->where([
-                'customer_id' => $this->Auth->user('id')
+                'customer_id' => $this->Authenticate->getId()
             ])
             ->map(function (\App\Model\Entity\CustomerAddrese $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
@@ -89,7 +89,7 @@ class AddressesController extends AppController
             ]
         ]);
 
-        $entity->set('customer_id', $this->Auth->user('id'));
+        $entity->set('customer_id', $this->Authenticate->getId());
 
         if ($this->Customers->CustomerAddreses->save($entity)) {
             //success
@@ -124,7 +124,7 @@ class AddressesController extends AppController
         if ($address_id = $this->request->getData('address_id')) {
             $addressEntity = $this->Customers->CustomerAddreses->find()
                 ->where([
-                    'customer_id' => $this->Auth->user('id'),
+                    'customer_id' => $this->Authenticate->getId(),
                     'id' => $address_id
                 ])
                 ->first();
@@ -147,7 +147,7 @@ class AddressesController extends AppController
         if ($address_id) {
             $data = $this->Customers->CustomerAddreses->find()
                 ->where([
-                    'customer_id' => $this->Auth->user('id'),
+                    'customer_id' => $this->Authenticate->getId(),
                     'CustomerAddreses.id' => $address_id
                 ])
                 ->contain([
@@ -177,7 +177,7 @@ class AddressesController extends AppController
         if ($address_id) {
             $address = $this->Customers->CustomerAddreses->find()
                 ->where([
-                    'customer_id' => $this->Auth->user('id'),
+                    'customer_id' => $this->Authenticate->getId(),
                     'CustomerAddreses.id' => $address_id
                 ])
                 ->first();

@@ -70,7 +70,7 @@ class OrdersController extends AppController
 
             ])
             ->where([
-                'Orders.customer_id' => $this->Auth->user('id')
+                'Orders.customer_id' => $this->Authenticate->getId()
             ]);
 
 
@@ -135,7 +135,7 @@ class OrdersController extends AppController
 
             ])
             ->where([
-                'Orders.customer_id' => $this->Auth->user('id'),
+                'Orders.customer_id' => $this->Authenticate->getId(),
                 'Orders.id' => $id
             ])
             ->map(function(\App\Model\Entity\Order $row) {

@@ -22,6 +22,10 @@ use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
 use Cake\Routing\Route\DashedRoute;
 
+use App\Middleware\CorsMiddleware;
+use App\Middleware\RestfulMiddleware;
+use App\Middleware\AuthorizationMiddleware;
+
 /**
  * The default class to use for all routes
  *
@@ -104,6 +108,22 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     // All routes here will be prefixed with `/admin`
     // And have the prefix => admin route element added.
     $routes->prefix('web', function(RouteBuilder $routes) {
+
+        $routes->registerMiddleware('cors', new CorsMiddleware());
+        $routes->registerMiddleware('restful', new RestfulMiddleware());
+        $routes->registerMiddleware('authorization', new AuthorizationMiddleware());
+
+
+        /**
+         * Apply a middleware to the current route scope.
+         * Requires middleware to be registered via `Application::routes()` with `registerMiddleware()`
+         */
+        $routes->applyMiddleware('cors');
+        $routes->applyMiddleware('restful');
+        $routes->applyMiddleware('authorization');
+
+        $routes->post('/login', ['controller' => 'Login', 'action' => 'index', 'disableAuthorization' => true]);
+
         $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
         $routes->connect('/:controller');
         $routes->connect('/:controller/:action');

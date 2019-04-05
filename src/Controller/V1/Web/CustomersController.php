@@ -43,7 +43,7 @@ class CustomersController extends AppController
                 'point',
             ])
             ->where([
-                'customer_id' => $this->Auth->user('id')
+                'customer_id' => $this->Authenticate->getId()
             ])
             ->first();
 
@@ -77,7 +77,7 @@ class CustomersController extends AppController
                 ]
             ])
             ->where([
-                'Customers.id' => $this->Auth->user('id')
+                'Customers.id' => $this->Authenticate->getId()
             ])
             ->map(function (\App\Model\Entity\Customer $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;

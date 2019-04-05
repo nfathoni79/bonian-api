@@ -49,7 +49,7 @@ class ProfileController extends AppController
     }
 
     public function edit(){
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
         $this->request->allowMethod('post');
 
         $validator = new Validator();
@@ -108,7 +108,7 @@ class ProfileController extends AppController
         if (empty($error)) {
             $http = new Client();
             $data = new FormData();
-            $data->add('customer_id', $this->Auth->user('id'));
+            $data->add('customer_id', $this->Authenticate->getId());
             $file = $data->addFile('avatar', fopen($this->request->getData('avatar.tmp_name'), 'r'));
             $file->filename($this->request->getData('avatar.name'));
 
@@ -153,7 +153,7 @@ class ProfileController extends AppController
                     ]
                 ]
             ])
-            ->where(['Customers.id' => $this->Auth->user('id')])
+            ->where(['Customers.id' => $this->Authenticate->getId()])
             ->map(function (\App\Model\Entity\Customer $row) {
                 $row->name = $row->first_name .' '. $row->last_name;
                 $row->account_type = $row->customer_group->name;
@@ -194,7 +194,7 @@ class ProfileController extends AppController
             ])
             ->contain(['CustomerNotificationTypes'])
             ->where([
-                'CustomerNotifications.customer_id' => $this->Auth->user('id')
+                'CustomerNotifications.customer_id' => $this->Authenticate->getId()
             ]);
 
 
@@ -225,7 +225,7 @@ class ProfileController extends AppController
             ])
             ->contain(['CustomerMutationPointTypes'])
             ->where([
-                'CustomerMutationPoints.customer_id' => $this->Auth->user('id')
+                'CustomerMutationPoints.customer_id' => $this->Authenticate->getId()
             ]);
 
 
@@ -262,7 +262,7 @@ class ProfileController extends AppController
             ])
             ->contain(['CustomerMutationAmountTypes'])
             ->where([
-                'CustomerMutationAmounts.customer_id' => $this->Auth->user('id')
+                'CustomerMutationAmounts.customer_id' => $this->Authenticate->getId()
             ]);
 
 
@@ -279,7 +279,7 @@ class ProfileController extends AppController
 
         $this->request->allowMethod('post');
 
-        $customerId = $this->Auth->user('id');
+        $customerId = $this->Authenticate->getId();
         if($this->Customers->checkRefferal($customerId)){
             $getReffCode = $this->Customers->getRefferalCode($customerId);
             $validator = new Validator();
