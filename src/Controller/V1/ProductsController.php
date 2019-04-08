@@ -9,16 +9,20 @@ use Cake\I18n\Time;
  *
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
+ * @property \App\Model\Table\OrderDetailProductsTable $OrderDetailProducts
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ProductsController extends Controller
 {
+
+    protected $is_new_rules = -30; //in days
 
     public function initialize()
     {
         parent::initialize();
         $this->loadModel('Products');
         $this->loadModel('ProductDealDetails');
+        $this->loadModel('OrderDetailProducts');
     }
 
     /**
@@ -203,7 +207,7 @@ class ProductsController extends Controller
                 'created'
             ])
             ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
-                return $exp->gte('created', (Time::now())->addDays(-180)->format('Y-m-d H:i:s'));
+                return $exp->gte('created', (Time::now())->addDays($this->is_new_rules)->format('Y-m-d H:i:s'));
             })
             ->where([
                 'product_status_id' => 1
@@ -220,6 +224,7 @@ class ProductsController extends Controller
             ->limit(10)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
                 unset($row->product_images);
                 return $row;
@@ -260,11 +265,66 @@ class ProductsController extends Controller
             ->limit(10)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
                 unset($row->product_images);
                 return $row;
             });
 
+        $this->set(compact('data'));
+    }
+
+    public function bestSellers()
+    {
+        $data = $this->OrderDetailProducts->find();
+
+        $data = $data
+            ->select([
+                'total_count' => $data->func()->count('OrderDetailProducts.product_id')
+            ])
+            ->leftJoinWith('Products')
+            ->leftJoinWith('OrderDetails')
+            ->leftJoinWith('OrderDetails.Orders')
+            ->where([
+                'Orders.payment_status' => 2,
+                'Products.product_status_id' => 1
+            ])
+            ->contain([
+                'Products' => [
+                    'fields' => [
+                        'Products.id',
+                        'Products.name',
+                        'Products.slug',
+                        'Products.price',
+                        'Products.price_sale',
+                        'Products.point',
+                        'Products.rating',
+                        'Products.created'
+                    ],
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC']
+                    ]
+                ]
+            ])
+            ->enableAutoFields(true)
+            ->group([
+                'OrderDetailProducts.product_id'
+            ])
+            ->orderDesc('total_count')
+            ->limit(10)
+            ->map(function(\App\Model\Entity\OrderDetailProduct $row) {
+                $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
+                unset($row->product->product_images);
+                $row->product->is_new = (Time::parse($row->product->created))->gte((Time::now())->addDay($this->is_new_rules));
+                $new_rows = clone $row;
+                unset($row);
+                return $new_rows->product;
+            });
         $this->set(compact('data'));
     }
 
