@@ -203,7 +203,7 @@ class ProductsController extends Controller
                 'created'
             ])
             ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
-                return $exp->gte('created', (Time::now())->addDays(-60)->format('Y-m-d H:i:s'));
+                return $exp->gte('created', (Time::now())->addDays(-180)->format('Y-m-d H:i:s'));
             })
             ->where([
                 'product_status_id' => 1
