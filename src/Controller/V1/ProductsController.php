@@ -241,9 +241,9 @@ class ProductsController extends Controller
                 'rating',
                 'created'
             ])
-            ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+            /*->where(function(\Cake\Database\Expression\QueryExpression $exp) {
                 return $exp->gte('created', (Time::now())->addDays(-20)->format('Y-m-d H:i:s'));
-            })
+            })*/
             ->where([
                 'product_status_id' => 1
             ])
