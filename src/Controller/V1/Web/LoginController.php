@@ -51,6 +51,8 @@ class LoginController extends AppController
         $user = $this->Customers->find()
             ->select([
                 'id',
+                'first_name',
+                'last_name',
                 'email',
                 'password',
                 'customer_status_id',
