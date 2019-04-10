@@ -146,7 +146,7 @@ class CustomersTable extends Table
             ->allowEmpty('cpassword', function ($context) {
                 return !isset($context['data']['password']);
             })
-            ->equalToField('cpassword', 'password', 'Confirmation password does not match with your password')
+            ->equalToField('cpassword', 'password', 'Konfirmasi password tidak sama')
             ->add('cpassword', 'compareWith', [
                 'rule' => ['compareWith', 'password'],
                 'message' => 'Passwords do not match.'
@@ -155,7 +155,7 @@ class CustomersTable extends Table
         $validator
             ->scalar('first_name')
             ->maxLength('first_name', 40)
-            ->requirePresence('first_name', 'create')
+            ->requirePresence('first_name', 'create', 'Nama depan tidak boleh kosong')
             ->allowEmptyString('first_name', false);
 
         $validator
