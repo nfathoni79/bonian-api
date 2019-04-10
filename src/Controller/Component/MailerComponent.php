@@ -71,13 +71,15 @@ class MailerComponent extends Component
             }
         }
         $this->Email = new Email($this->_defaultConfig['transport']);
-        $this->Email->setFrom(['noreply@zolaku.com' => 'Zolaku'])
+        $email = $this->Email->setFrom(['noreply@zolaku.com' => 'Zolaku'])
             ->setTo($destination)
             ->setViewVars($this->params)
-            ->setLayout('default')
+            //->setLayout('default') //deprecated
             ->setTemplate($template)
             ->setEmailFormat('html')
             ->setSubject($subject);
+
+        $email->viewBuilder()->setLayout('default');
         if (!$send_later) {
             if ($this->Email->send()) {
                 $this->Email = null; //set null if success
