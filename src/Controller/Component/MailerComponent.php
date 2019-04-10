@@ -75,11 +75,12 @@ class MailerComponent extends Component
             ->setTo($destination)
             ->setViewVars($this->params)
             //->setLayout('default') //deprecated
-            ->setTemplate($template)
+            //->setTemplate($template)
             ->setEmailFormat('html')
             ->setSubject($subject);
 
-        $email->viewBuilder()->setLayout('default');
+        $email->viewBuilder()->setLayout('default')
+            ->setTemplate($template);
         if (!$send_later) {
             if ($this->Email->send()) {
                 $this->Email = null; //set null if success
