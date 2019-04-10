@@ -130,14 +130,14 @@ class CustomersTable extends Table
         $validator
             ->email('email')
             ->requirePresence('email', 'create')
-            ->notEmpty('email')
-            ->add('email', 'unique', ['rule' => 'validateUnique', 'provider' => 'table', 'message' => 'Email address already exist']);
+            ->notBlank('email', 'Email tidak boleh kosong')
+            ->add('email', 'unique', ['rule' => 'validateUnique', 'provider' => 'table', 'message' => 'Email sudah terdaftar']);
 
         $validator
             ->requirePresence('password', 'create')
-            ->notEmpty('password', 'You must enter a password', 'create')
+            ->notBlank('password', 'Password harus diisi', 'create')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password min 6 char at least one uppercase letter, one lowercase letter and one number');
+            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password harus mengandung min. 1 huruf besar dan 1 huruf kecil karakter');
 
 
         $validator
