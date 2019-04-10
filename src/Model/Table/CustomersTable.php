@@ -124,17 +124,17 @@ class CustomersTable extends Table
         $validator
             ->scalar('username')
             ->maxLength('username', 30)
-            ->requirePresence('username', 'create')
+            ->requirePresence('username', 'create', 'Username harus diisi')
             ->allowEmptyString('username', false);
 
         $validator
             ->email('email')
-            ->requirePresence('email', 'create')
+            ->requirePresence('email', 'create', 'Email harus diisi')
             ->notBlank('email', 'Email tidak boleh kosong')
             ->add('email', 'unique', ['rule' => 'validateUnique', 'provider' => 'table', 'message' => 'Email sudah terdaftar']);
 
         $validator
-            ->requirePresence('password', 'create')
+            ->requirePresence('password', 'create', 'Password harus diisi')
             ->notBlank('password', 'Password harus diisi', 'create')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
             ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password harus mengandung min. 1 huruf besar dan 1 huruf kecil karakter');
@@ -229,9 +229,10 @@ class CustomersTable extends Table
      */
     public function buildRules(RulesChecker $rules)
     {
-        $rules->add($rules->isUnique(['email']));
-        $rules->add($rules->isUnique(['username']));
+        $rules->add($rules->isUnique(['email'], 'Email sudah terdaftar'));
+        $rules->add($rules->isUnique(['username'], 'Username sudah terdaftar'));
         $rules->add($rules->isUnique(['reffcode']));
+        $rules->add($rules->isUnique(['phone'], 'Nomor telepon sudah terdaftar'));
 //        $rules->add($rules->existsIn(['refferal_customer_id'], 'RefferalCustomers'));
         $rules->add($rules->existsIn(['customer_group_id'], 'CustomerGroups'));
         $rules->add($rules->existsIn(['customer_status_id'], 'CustomerStatuses'));
