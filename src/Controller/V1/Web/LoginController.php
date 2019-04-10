@@ -12,6 +12,7 @@ use Cake\Auth\DefaultPasswordHasher;
 use Cake\Utility\Security;
 use Cake\I18n\Time;
 use Cake\Core\Configure;
+use Cake\Validation\Validator;
 
 /**
  * Class LoginController
@@ -46,83 +47,118 @@ class LoginController extends AppController
         $username = $this->request->getData('email');
         $password = $this->request->getData('password');
 
-        //debug($this->request->getAttribute('authorization'));exit;
 
-        $user = $this->Customers->find()
-            ->select([
-                'id',
-                'first_name',
-                'last_name',
-                'email',
-                'password',
-                'customer_status_id',
-                'is_verified',
+        $validator = new Validator();
+        $validator->requirePresence('email')
+            ->notBlank('email', 'Email atau nomor telepon tidak boleh kosong')
+            ->add('email', 'exists', [
+                'rule' => function($value) {
+                    return $this->Customers->find()
+                        ->where([
+                            'OR' => [
+                                'email' => $value,
+                                'phone' => $value,
+                            ]
+                        ])->count() > 0;
+                },
+                'message' => 'Email atau nomor telepon tidak terdaftar'
             ])
-            ->where([
-                'OR' => [
-                    'email' => $username,
-                ]
-            ])->first();
+            ->notBlank('password', 'Tidak boleh kosong');
 
 
-        if ($user) {
-            //$this->Auth->setUser($user);
-            if ($user->get('customer_status_id') == '1') {
-                if ((new DefaultPasswordHasher())->check($password, $user->get('password'))) {
+        $error = $validator->errors($this->request->getData());
 
-                    $key = Security::randomString();
+        if (empty($error)) {
+            $user = $this->Customers->find()
+                ->select([
+                    'id',
+                    'first_name',
+                    'last_name',
+                    'email',
+                    'password',
+                    'customer_status_id',
+                    'is_verified',
+                ])
+                ->where([
+                    'OR' => [
+                        'email' => $username,
+                        'phone' => $username,
+                    ]
+                ])->first();
+
+            $message = '';
+            switch($user->get('customer_status_id')) {
+                case '2':
+                    $message = 'Status email anda di blok, silahkan hubungi customer service';
+                break;
+                case '3':
+                    $message = 'Status email anda pending, silahkan konfirmasi email';
+                break;
+            }
+
+            $validator->add('email', 'status', [
+                'rule' => function($value) use ($user) {
+                    return in_array($user->get('customer_status_id'), [1]);
+                },
+                'message' => $message
+            ]);
+
+
+
+            $validator->add('password', 'valid_password', [
+                'rule' => function($password) use ($user) {
+                    return (new DefaultPasswordHasher())->check($password, $user->get('password'));
+                },
+                'message' => 'Password anda salah'
+            ]);
+
+            $error = $validator->errors($this->request->getData());
+
+            if (empty($error)) {
+                $key = Security::randomString();
+                $token = base64_encode(Security::encrypt(json_encode([
+                    'id' => $user->get('id'),
+                    'email' => $user->get('email'),
+                    'token' => $key
+                ]), Configure::read('Encrypt.salt')));
+
+
+
+                $find = $this->CustomerAuthenticates->find()
+                    ->where([
+                        'customer_id' => $user->get('id')
+                    ])->first();
+
+                if (false && $find) {
                     $token = base64_encode(Security::encrypt(json_encode([
                         'id' => $user->get('id'),
                         'email' => $user->get('email'),
-                        'token' => $key
+                        'token' => $find->get('token')
                     ]), Configure::read('Encrypt.salt')));
-
-                    $find = $this->CustomerAuthenticates->find()
-                        ->where([
-                            'customer_id' => $user->get('id')
-                        ])->first();
-
-                    if ($find) {
-                        //$find->set('token', $key);
-                        //$find->set('expired', (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s'));
-                        $token = base64_encode(Security::encrypt(json_encode([
-                            'id' => $user->get('id'),
-                            'email' => $user->get('email'),
-                            'token' => $find->get('token')
-                        ]), Configure::read('Encrypt.salt')));
-                    } else {
-                        $find = $this->CustomerAuthenticates->newEntity([
-                            'customer_id' => $user->get('id'),
-                            'token' => $key,
-                            'expired' => (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s')
-                        ]);
-                    }
-
-                    $this->CustomerAuthenticates->save($find);
-
-                    $data = [
-                        'email' => $user->get('email'),
-                        'first_name' => $user->get('first_name'),
-                        'last_name' => $user->get('last_name'),
-                        'customer_status_id' => $user->get('customer_status_id'),
-                        'token' => $token
-                    ];
-
-                    $this->set(compact('data'));
                 } else {
-                    $this->setResponse($this->response->withStatus(406, 'Invalid password'));
+                    $find = $this->CustomerAuthenticates->newEntity([
+                        'customer_id' => $user->get('id'),
+                        'token' => $key,
+                        'expired' => (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s')
+                    ]);
                 }
-            } else {
-                $this->setResponse($this->response->withStatus(406, 'User is not active'));
+
+                $this->CustomerAuthenticates->save($find);
+
+                $data = [
+                    'email' => $user->get('email'),
+                    'first_name' => $user->get('first_name'),
+                    'last_name' => $user->get('last_name'),
+                    'customer_status_id' => $user->get('customer_status_id'),
+                    'token' => $token
+                ];
             }
-
-
-
-        } else {
-            //Username or password is incorrect
-            $this->setResponse($this->response->withStatus(406, 'Username or password is incorrect'));
         }
 
+        if ($error) {
+            $this->setResponse($this->response->withStatus(406, 'Gagal login'));
+        }
 
+        $this->set(compact('data', 'error'));
     }
 }

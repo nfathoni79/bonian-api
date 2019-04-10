@@ -58,11 +58,23 @@ class JsonView extends View
             $content['paging'] = $paging;
         }
 
-        $content['result'] = $this->viewVars;
+        $results = [];
+
+        foreach($this->getVars() as $key => $val) {
+            if ($val == 'error') {
+                $content['error'] = $this->get($val);
+                continue;
+            }
+            $results[$val] = $this->get($val);
+        }
+
+        $content['result'] = $results;
+
 
         $this->Blocks->set('content', $this->renderLayout(json_encode($content), $this->layout));
 
 //        $this->hasRendered = true;
+
 
         return $this->Blocks->get('content');
     }
