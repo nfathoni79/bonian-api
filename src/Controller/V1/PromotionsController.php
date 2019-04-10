@@ -25,6 +25,11 @@ class PromotionsController extends Controller
 
     public function index($slug = null)
     {
+        if($this->request->getQuery('limit')){
+            $limit = $this->request->getQuery('limit');
+        }else{
+            $limit = 10;
+        }
         $find = $this->Vouchers->find()
             ->contain([
                 'VoucherDetails' => [
@@ -51,8 +56,8 @@ class PromotionsController extends Controller
                                 ],
                             ],
 
-                            'queryBuilder' => function (Query $q) {
-                                return $q->limit(10); // Full conditions for filtering
+                            'queryBuilder' => function (Query $q) use($limit) {
+                                return $q->limit($limit); // Full conditions for filtering
                             },
                         ]
                     ]
