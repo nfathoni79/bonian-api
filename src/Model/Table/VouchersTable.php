@@ -40,6 +40,9 @@ class VouchersTable extends Table
         $this->hasMany('Orders', [
             'foreignKey' => 'voucher_id'
         ]);
+        $this->hasMany('VoucherDetails', [
+            'foreignKey' => 'voucher_id'
+        ]);
     }
 
     /**
