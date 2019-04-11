@@ -65,6 +65,11 @@ class CustomersTable extends Table
         $this->belongsTo('CustomerStatuses', [
             'foreignKey' => 'customer_status_id'
         ]);
+        $this->belongsTo('ReferralCustomer', [
+            'className' => 'Customers',
+            'joinType' => 'LEFT',
+            'foreignKey' => 'refferal_customer_id'
+        ]);
         $this->hasMany('ChatDetails', [
             'foreignKey' => 'customer_id'
         ]);

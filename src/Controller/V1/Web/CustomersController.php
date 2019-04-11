@@ -65,6 +65,7 @@ class CustomersController extends AppController
                 'last_name',
                 'phone',
                 'dob',
+                'gender',
                 'is_verified',
                 'platforrm',
                 'created',
@@ -74,11 +75,13 @@ class CustomersController extends AppController
                     'Provinces',
                     'Cities',
                     'Subdistricts',
-                ]
+                ],
+                'ReferralCustomer'
             ])
             ->where([
                 'Customers.id' => $this->Authenticate->getId()
             ])
+            ->enableAutoFields(true)
             ->map(function (\App\Model\Entity\Customer $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 foreach($row->customer_addreses as $key => &$val) {

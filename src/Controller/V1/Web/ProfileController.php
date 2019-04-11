@@ -133,6 +133,7 @@ class ProfileController extends AppController
                 'email',
                 'username',
                 'phone',
+                'dob',
                 'gender',
                 'first_name',
                 'last_name',
@@ -151,13 +152,15 @@ class ProfileController extends AppController
                         'balance',
                         'point',
                     ]
-                ]
+                ],
+                'ReferralCustomer'
             ])
             ->where(['Customers.id' => $this->Authenticate->getId()])
+            ->enableAutoFields(true)
             ->map(function (\App\Model\Entity\Customer $row) {
                 $row->name = $row->first_name .' '. $row->last_name;
                 $row->account_type = $row->customer_group->name;
-                $row->is_verified = ($row->is_verified != '1') ? 'Not Verified' : 'Verified';
+                $row->is_verified_text = ($row->is_verified != '1') ? 'Not Verified' : 'Verified';
                 $row->wallet_balance = $row->customer_balances[0]->balance;
                 $row->point_balance =  $row->customer_balances[0]->point;
                 $row->gender = ($row->gender == 'm') ? 'Male' : 'Female';
@@ -165,8 +168,6 @@ class ProfileController extends AppController
                 unset($row->customer_balances);
                 unset($row->customer_group);
                 unset($row->customer_group_id);
-                unset($row->first_name);
-                unset($row->last_name);
                 unset($row->id);
                 return $row;
             })
