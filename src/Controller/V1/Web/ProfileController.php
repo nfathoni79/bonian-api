@@ -55,15 +55,15 @@ class ProfileController extends AppController
         $validator = new Validator();
         $validator
             ->requirePresence('name')
-            ->notBlank('name', 'name field is required');
+            ->notBlank('name', 'Nama harus diisi');
         $validator
             ->requirePresence('dob')
             ->date('dob')
-            ->notBlank('dob', 'DOB field is required');
+            ->notBlank('dob', 'Tanggal lahir harus diisi');
         $validator
             ->requirePresence('gender')
-            ->inList('gender',['m','f'])
-            ->notBlank('gender', 'Gender field is required');
+            ->inList('gender',['M','F'])
+            ->notBlank('gender', 'Jenis kelamin harus diisi');
         $error = $validator->errors($this->request->getData());
         if (empty($error)) {
 
@@ -81,7 +81,7 @@ class ProfileController extends AppController
             }
 
         }else {
-            $this->setResponse($this->response->withStatus(406, 'Failed to registers'));
+            $this->setResponse($this->response->withStatus(406, 'Failed to edit profile'));
 
         }
 
@@ -163,7 +163,9 @@ class ProfileController extends AppController
                 $row->is_verified_text = ($row->is_verified != '1') ? 'Not Verified' : 'Verified';
                 $row->wallet_balance = $row->customer_balances[0]->balance;
                 $row->point_balance =  $row->customer_balances[0]->point;
-                $row->gender = ($row->gender == 'm') ? 'Male' : 'Female';
+                $row->gender_name = ($row->gender == 'm') ? 'Male' : 'Female';
+                $row->dob = $row->dob instanceof \Cake\I18n\FrozenDate  ? $row->dob->format('Y-m-d') : $row->dob;
+
 
                 unset($row->customer_balances);
                 unset($row->customer_group);
