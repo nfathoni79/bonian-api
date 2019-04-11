@@ -21,6 +21,7 @@ class PromotionsController extends Controller
         $this->loadModel('Vouchers');
         $this->loadModel('VoucherDetails');
         $this->loadModel('ProductDealDetails');
+        $this->loadModel('ProductToCategories');
     }
 
     public function index($slug = null)
@@ -33,9 +34,28 @@ class PromotionsController extends Controller
         $find = $this->Vouchers->find()
             ->contain([
                 'VoucherDetails' => [
-                    'ProductCategories' => [
-                        'ProductToCategories' => [
-                            'Products' => [
+                    'ProductCategories'  
+                ]
+            ])
+            ->where(['Vouchers.slug' => $slug, 'Vouchers.status' => '1', 'Vouchers.type' => '2' , ])
+            ->map(function (\App\Model\Entity\Voucher $row) use($limit) {
+                foreach($row->voucher_details as $k => $vals){
+                    unset($vals->id);
+                    unset($vals->voucher_id);
+                    unset($vals->product_category_id);
+                    unset($vals->created); 
+                    unset($vals->product_category->parent_id);
+                    unset($vals->product_category->lft);
+                    unset($vals->product_category->rght);
+                    unset($vals->product_category->slug);
+                    unset($vals->product_category->description);
+                    unset($vals->product_category->path);
+                    unset($vals->product_category->counter_view);
+					
+					
+                    $query = $this->ProductToCategories->find()
+						->contain([
+							'Products' => [
                                 'fields' => [
                                     'id',
                                     'name',
@@ -54,38 +74,12 @@ class PromotionsController extends Controller
                                         'product_id',
                                     ]
                                 ],
-                            ],
-
-                            'queryBuilder' => function (Query $q) use($limit) {
-                                return $q->limit($limit); // Full conditions for filtering
-                            },
-                        ]
-                    ]
-                ]
-            ])
-            ->where(['Vouchers.slug' => $slug, 'Vouchers.status' => '1', 'Vouchers.type' => '2' , ])
-            ->map(function (\App\Model\Entity\Voucher $row) {
-                foreach($row->voucher_details as $k => $vals){
-                    unset($vals->id);
-                    unset($vals->voucher_id);
-                    unset($vals->product_category_id);
-                    unset($vals->created);
-                    unset($vals->product_category->id);
-                    unset($vals->product_category->parent_id);
-                    unset($vals->product_category->lft);
-                    unset($vals->product_category->rght);
-                    unset($vals->product_category->slug);
-                    unset($vals->product_category->description);
-                    unset($vals->product_category->path);
-                    unset($vals->product_category->counter_view);
-
-                    foreach($vals->product_category->product_to_categories as $kk => $val){
-
-                        unset($val->id);
-                        unset($val->product_id);
-                        unset($val->product_category_id);
-
-                        $row->voucher_details[$k]->product_category->product_to_categories[$kk]->product->images = Hash::extract($row->voucher_details[$k]->product_category->product_to_categories[$kk]->product->product_images, '{n}.name');
+							]
+						])
+						->where(['product_category_id' => $vals->product_category->id])->limit($limit)->toArray();
+					$vals->product_category->products = 	$query; 
+                    foreach($vals->product_category->products as $kk => $val){  
+                        $val->product->images = Hash::extract( $val->product->product_images, '{n}.name');
                         unset($val->product->product_images);
                     }
                 }
@@ -120,8 +114,8 @@ class PromotionsController extends Controller
         $data = $find;
 
         $this->set(compact('data'));
-//        debug($find);
-//        exit;
+       // print_r($find);
+       // exit;
     }
 
 }
