@@ -10,6 +10,8 @@ use App\Lib\MidTrans\Transaction;
 
 /**
  * Class TestController
+ * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
+ * @property \App\Model\Table\CustomerMutationAmountsTable $CustomerMutationAmounts
  * @property \App\Controller\Component\MidTransComponent $MidTrans
  * @package App\Controller
  */
@@ -23,9 +25,17 @@ class TestController extends AppController
         $this->client_key = $config['clientKey'];
         $this->server_key = $config['serverKey'];
         $this->loadComponent('MidTrans');
+
+        $this->loadModel('CustomerMutationPoints');
+        $this->loadModel('CustomerMutationAmounts');
     }
 
+    public function mutasi(){
 
+//
+//        $this->CustomerMutationAmounts->saving('14','1', '-500','Test mutation'); //mutation amount
+        $this->CustomerMutationPoints->saving('14','1', '-10','Test mutation'); //mutation point
+    }
     public function oke()
     {
         /*
