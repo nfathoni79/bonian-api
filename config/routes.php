@@ -71,7 +71,7 @@ Router::scope('/', function (RouteBuilder $routes) {
     /**
      * ...and connect the rest of 'Pages' controller's URLs.
      */
-    $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+//    $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
     /**
      * Connect catchall routes for all controllers.
@@ -145,6 +145,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->connect('/products/best-sellers', ['controller' => 'Products', 'action' => 'bestSellers']);
     $routes->connect('/products/:slug', ['controller' => 'Products', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/promotions/:slug', ['controller' => 'Promotions', 'action' => 'index'])->setPass(['slug']);
+    $routes->connect('/pages/:slug', ['controller' => 'Pages', 'action' => 'index'])->setPass(['slug']);
 
 
     $routes->fallbacks(DashedRoute::class);

@@ -23,6 +23,7 @@ use Cake\View\Exception\MissingTemplateException;
 /**
  * Static content controller
  *
+ * @property \App\Model\Table\PagesTable $Pages
  * This controller will render views from Template/Pages/
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -30,57 +31,18 @@ use Cake\View\Exception\MissingTemplateException;
 class PagesController extends Controller
 {
 
-    /**
-     * Displays a view
-     *
-     * @param array ...$path Path segments.
-     * @return \Cake\Http\Response|null
-     * @throws \Cake\Http\Exception\ForbiddenException When a directory traversal attempt.
-     * @throws \Cake\Http\Exception\NotFoundException When the view file could not
-     *   be found or \Cake\View\Exception\MissingTemplateException in debug mode.
-     */
-    public function home(){
+    public function initialize()
+    {
+        parent::initialize();
+        $this->loadModel('Pages');
+    }
 
-//        public $paginate = [
-//            'sortWhiteList' => [
-//                'transaction_id', 'amount'
-//            ]
-//        ];
-//        $this->request->allowMethod('get');
-//
-//        $currency = $this->request->getQuery('currency');
-//
-//
-//        $transactions = $this->TransactionMutations->find()
-//            ->select([
-//                'TransactionMutations.transaction_id',
-//                'TransactionMutations.amount',
-//                'TransactionMutations.balance',
-//                'TransactionMutations.currency',
-//                'Transactions.transaction_type_id',
-//                'Transactions.txid',
-//                'Transactions.gross',
-//                'Transactions.fee',
-//                'Transactions.tax',
-//                'Transactions.description',
-//                'TransactionTypes.name'
-//            ])
-//            ->contain(['Transactions.TransactionTypes'])
-//            ->where([
-//                'TransactionMutations.client_id' => $this->Authenticate->getId()
-//            ]);
-//
-//        if ($currency && strlen($currency) == 3) {
-//            $transactions->where([
-//                'currency' => $currency
-//            ]);
-//        }
-//
-//        $transactions
-//            ->orderDesc('TransactionMutations.id');
-//
-//        $data = $this->paginate($transactions);
-//
-//        $this->set(compact('data'));
+    public function index($slug = null){
+        $find = $this->Pages->find()
+            ->where(['enable' => 1, 'slug' => $slug])
+            ->first();
+
+        $data = $find;
+        $this->set(compact('data'));
     }
 }
