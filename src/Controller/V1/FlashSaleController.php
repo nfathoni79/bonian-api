@@ -128,8 +128,8 @@ class FlashSaleController extends Controller
                     unset($row->id);
                 }
 
-                $row->set('start', $row->end->timestamp);
-                $row->set('end', $row->end->timestamp);
+                //$row->set('start', $row->end->timestamp);
+                //$row->set('end', $row->end->timestamp);
                 return $row;
             })
             ->first();
