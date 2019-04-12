@@ -49,6 +49,7 @@ class AddressesController extends AppController
             ->where([
                 'customer_id' => $this->Authenticate->getId()
             ])
+            ->orderDesc('is_primary')
             ->map(function (\App\Model\Entity\CustomerAddrese $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
                 $row->modified = $row->modified instanceof \Cake\I18n\FrozenTime  ? $row->modified->timestamp : 0;
