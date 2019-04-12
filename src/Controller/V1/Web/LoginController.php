@@ -46,6 +46,14 @@ class LoginController extends AppController
 
         $username = $this->request->getData('email');
         $password = $this->request->getData('password');
+        $bid = $this->request->getHeader('bid');
+
+
+        if(count($bid) > 0) {
+            $bid = $bid[0];
+        } else {
+            $bid = null;
+        }
 
 
         $validator = new Validator();
@@ -127,18 +135,28 @@ class LoginController extends AppController
                 $find = $this->CustomerAuthenticates->find()
                     ->where([
                         'customer_id' => $user->get('id')
-                    ])->first();
+                    ]);
 
-                if (false && $find) {
-                    $token = base64_encode(Security::encrypt(json_encode([
+                if ($bid) {
+                    $find->where([
+                        'bid' => $bid
+                    ]);
+                }
+
+                $find = $find->first();
+
+                if ($find) {
+                    /*$token = base64_encode(Security::encrypt(json_encode([
                         'id' => $user->get('id'),
                         'email' => $user->get('email'),
                         'token' => $find->get('token')
-                    ]), Configure::read('Encrypt.salt')));
+                    ]), Configure::read('Encrypt.salt')));*/
+
                 } else {
                     $find = $this->CustomerAuthenticates->newEntity([
                         'customer_id' => $user->get('id'),
                         'token' => $key,
+                        'bid' => $bid,
                         'expired' => (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s')
                     ]);
                 }

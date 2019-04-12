@@ -19,6 +19,7 @@ use Cake\I18n\Time;
  * Customers controller
  *
  * @property \App\Model\Table\CustomersTable $Customers
+ * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class CustomersController extends AppController
@@ -28,6 +29,30 @@ class CustomersController extends AppController
     {
         parent::initialize();
         $this->loadModel('Customers');
+        $this->loadModel('CustomerAuthenticates');
+    }
+
+    public function saveBrowser()
+    {
+        $this->request->allowMethod('post');
+        $auth = $this->CustomerAuthenticates->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'token' => $this->Authenticate->getToken()
+            ])
+            ->first();
+
+
+
+        if ($auth) {
+            $this->CustomerAuthenticates->patchEntity($auth, $this->request->getData(), [
+                'fields' => [
+                    'browser',
+                    'ip'
+                ]
+            ]);
+            $this->CustomerAuthenticates->save($auth);
+        }
     }
 
     /**
