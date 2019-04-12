@@ -88,7 +88,7 @@ class IpLocationsTable extends Table
 
         $validator
             ->scalar('organisation')
-            ->maxLength('organisation', 30)
+            ->maxLength('organisation', 150)
             ->allowEmptyString('organisation');
 
         return $validator;
