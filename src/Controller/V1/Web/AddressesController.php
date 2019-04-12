@@ -15,6 +15,8 @@
 namespace App\Controller\V1\Web;
 
 use Cake\I18n\Time;
+use Cake\Validation\Validator;
+
 /**
  * Customers controller
  *
@@ -58,6 +60,74 @@ class AddressesController extends AppController
             });
 
         $this->set(compact('data'));
+    }
+
+    public function setPrimary($address_id)
+    {
+        $this->request->allowMethod(['post', 'put']);
+
+        $this->Customers->CustomerAddreses->query()
+            ->update()
+            ->set([
+                'is_primary' => 0
+            ])
+            ->where([
+                'customer_id' => $this->Authenticate->getId()
+            ])
+            ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($address_id) {
+                return $exp->notEq('CustomerAddreses.id', $address_id);
+            });
+
+        $this->Customers->CustomerAddreses->query()
+            ->update()
+            ->set([
+                'is_primary' => 1
+            ])
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'CustomerAddreses.id' => $address_id
+            ]);
+
+    }
+
+    public function setCoordinate($address_id)
+    {
+        $this->request->allowMethod(['post', 'put']);
+
+        $addressEntity = $this->Customers->CustomerAddreses->find()
+            ->where([
+                'CustomerAddreses.id' => $address_id,
+                'customer_id' => $this->Authenticate->getId()
+            ])
+            ->first();
+
+        if (!empty($addressEntity)) {
+            $validator = new Validator();
+            $validator->requirePresence('latitude')
+                ->numeric('latitude', 'format latitude salah')
+                ->requirePresence('longitude')
+                ->numeric('longitude','Format longitude salah');
+
+            $error = $validator->errors($this->request->getData());
+            if (empty($error)) {
+                $this->Customers->CustomerAddreses->patchEntity($addressEntity, $this->request->getData(), [
+                    'fields' => [
+                        'latitude',
+                        'longitude',
+                    ]
+                ]);
+                if (!$this->Customers->CustomerAddreses->save($addressEntity)) {
+                    $this->setResponse($this->response->withStatus(406, 'Gagal update latitude dan longitude'));
+                    $error = $addressEntity->getErrors();
+                }
+            }
+        } else {
+            $this->setResponse($this->response->withStatus(404, 'Address id tidak ditemukan'));
+        }
+
+
+
+        $this->set(compact('error'));
     }
 
     /**
