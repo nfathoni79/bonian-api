@@ -146,11 +146,11 @@ class LoginController extends AppController
                 $find = $find->first();
 
                 if ($find) {
-                    /*$token = base64_encode(Security::encrypt(json_encode([
+                    $token = base64_encode(Security::encrypt(json_encode([
                         'id' => $user->get('id'),
                         'email' => $user->get('email'),
                         'token' => $find->get('token')
-                    ]), Configure::read('Encrypt.salt')));*/
+                    ]), Configure::read('Encrypt.salt')));
 
                 } else {
                     $find = $this->CustomerAuthenticates->newEntity([
