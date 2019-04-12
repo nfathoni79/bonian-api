@@ -33,7 +33,7 @@ class PointRedeemController extends Controller
                 'value',
             ])
             ->where(['Vouchers.status' => '1', 'Vouchers.type' => '1' , ])
-            ->first();
+            ->all();
 
 
         $data = $find;
