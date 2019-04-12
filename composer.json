@@ -9,6 +9,7 @@
         "cakephp/cakephp": "3.7.*",
         "cakephp/migrations": "^2.0.0",
         "cakephp/plugin-installer": "^1.0",
+        "donatj/phpuseragentparser": "^0.13.0",
         "guzzlehttp/guzzle": "^6.3",
         "imagine/imagine": "^1.2",
         "josegonzalez/cakephp-upload": "^4.0",

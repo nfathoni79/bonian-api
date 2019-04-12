@@ -34,6 +34,36 @@ class CustomersController extends AppController
         $this->loadModel('IpLocations');
     }
 
+
+    public function loginHistory()
+    {
+        $data = $this->CustomerAuthenticates->find()
+            ->select([
+                'browser',
+                'ip',
+                'IpLocations.city',
+                'IpLocations.country_name',
+                'IpLocations.country_code',
+                'IpLocations.latitude',
+                'IpLocations.longitude',
+                'IpLocations.asn',
+                'IpLocations.organisation',
+            ])
+            ->where([
+                'customer_id' => $this->Authenticate->getId()
+            ])
+            ->leftJoin(['IpLocations' => 'ip_locations'], [
+                'IpLocations.ip = CustomerAuthenticates.ip'
+            ])
+            ->map(function($row) {
+                $ua = parse_user_agent($row->browser);
+                $row->device = $ua;
+                return $row;
+            });
+
+        $this->set(compact('data'));
+    }
+
     public function saveBrowser()
     {
         $this->request->allowMethod('post');
