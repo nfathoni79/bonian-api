@@ -41,6 +41,7 @@ class CustomersController extends AppController
             ->select([
                 'browser',
                 'ip',
+                'modified',
                 'IpLocations.city',
                 'IpLocations.country_name',
                 'IpLocations.country_code',
