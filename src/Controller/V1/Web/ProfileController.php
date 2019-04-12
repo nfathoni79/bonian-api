@@ -233,9 +233,9 @@ class ProfileController extends AppController
 
 
         $notifications
-            ->orderDesc('CustomerMutationPoints.id')->limit(300);
+            ->orderDesc('CustomerMutationPoints.id');
 
-        $data = $this->paginate($notifications);
+        $data = $this->paginate($notifications,['limit' => 300]);
 
         $this->set(compact('data'));
     }
@@ -267,7 +267,7 @@ class ProfileController extends AppController
         $notifications
             ->orderDesc('CustomerMutationAmounts.id')->limit(300);
 
-        $data = $this->paginate($notifications);
+        $data = $this->paginate($notifications,['limit' => 300]);
 
         $this->set(compact('data'));
     }
