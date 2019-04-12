@@ -221,7 +221,7 @@ class ProfileController extends AppController
             ->select([
                 'kategori' => 'CustomerMutationPointTypes.name',
                 'tipe' => 'CustomerMutationPointTypes.type',
-                'desctiption' => 'CustomerMutationPoints.description',
+                'description' => 'CustomerMutationPoints.description',
                 'amount' => 'CustomerMutationPoints.amount',
                 'balance' => 'CustomerMutationPoints.balance',
                 'created' => 'CustomerMutationPoints.created'
@@ -240,11 +240,6 @@ class ProfileController extends AppController
         $this->set(compact('data'));
     }
 
-//    public function test(){
-//
-//        $this->CustomerMutationAmounts->saving('14','1', '-500','Test mutation'); //mutation amount
-//        $this->CustomerMutationPoints->saving('14','1', '-100','Test mutation'); //mutation point
-//    }
 
     public function wallet(){
 
