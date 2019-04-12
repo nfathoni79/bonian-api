@@ -71,6 +71,12 @@ class CustomerAddresesTable extends Table
             ->allowEmptyString('id', 'create');
 
         $validator
+            ->notBlank('postal_code', 'Kodepos tidak boleh kosong')
+            ->numeric('postal_code', 'Kodepos harus anga')
+            ->maxLength('postal_code',  5,'Kodepos harus 5 digit')
+            ->minLength('postal_code', 5, 'Kodepos harus 5 digit');
+
+        $validator
             ->scalar('address')
             ->maxLength('address', 255)
             ->requirePresence('address', 'create')

@@ -85,6 +85,7 @@ class AddressesController extends AppController
                 'recipient_phone',
                 'latitude',
                 'longitude',
+                'postal_code',
                 'address',
             ]
         ]);
@@ -194,6 +195,7 @@ class AddressesController extends AppController
                         'recipient_phone',
                         'latitude',
                         'longitude',
+                        'postal_code',
                         'address',
                     ]
                 ]);

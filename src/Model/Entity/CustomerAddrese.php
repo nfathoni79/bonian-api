@@ -17,6 +17,7 @@ use Cake\ORM\Entity;
  * @property string $recipient_phone
  * @property float $latitude
  * @property float $longitude
+ * @property int|null $postal_code
  * @property string $address
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
@@ -49,6 +50,7 @@ class CustomerAddrese extends Entity
         'recipient_phone' => true,
         'latitude' => true,
         'longitude' => true,
+        'postal_code' => true,
         'address' => true,
         'created' => true,
         'modified' => true,
