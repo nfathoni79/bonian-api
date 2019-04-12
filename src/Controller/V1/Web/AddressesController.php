@@ -310,7 +310,12 @@ class AddressesController extends AppController
      */
     public function getCity($province_id = null)
     {
-        $city = $this->Cities->find('list');
+        $city = $this->Cities->find('list', [
+            'keyField' => 'id',
+            'valueField' => function (\App\Model\Entity\City $city) {
+                return $city->get('type') . ' ' . $city->get('name');
+            }
+        ]);
 
         if ($province_id) {
             $city->where([
