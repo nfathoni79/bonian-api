@@ -87,8 +87,12 @@ class CustomerAddresesTable extends Table
             ->notBlank('province_id');
 
         $validator
-            ->requirePresence('city_id')
+            ->requirePresence('city_id', 'created')
             ->notBlank('city_id');
+
+        $validator
+            ->requirePresence('subdistrict_id', 'created')
+            ->notBlank('subdistrict_id');
 
         $validator
             ->requirePresence('title')
@@ -97,6 +101,10 @@ class CustomerAddresesTable extends Table
         $validator
             ->requirePresence('recipient_name')
             ->notBlank('recipient_name');
+
+        $validator
+            ->requirePresence('recipient_phone', 'created')
+            ->notBlank('recipient_phone');
 
         return $validator;
     }
