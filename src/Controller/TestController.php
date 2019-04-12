@@ -34,7 +34,7 @@ class TestController extends AppController
 
 //
 //        $this->CustomerMutationAmounts->saving('14','1', '-500','Test mutation'); //mutation amount
-        $this->CustomerMutationPoints->saving('14','1', '-10','Test mutation'); //mutation point
+        // $this->CustomerMutationPoints->saving('14','1', '-10','Test mutation'); //mutation point
     }
     public function oke()
     {
