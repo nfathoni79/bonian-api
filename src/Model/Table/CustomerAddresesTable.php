@@ -79,32 +79,32 @@ class CustomerAddresesTable extends Table
         $validator
             ->scalar('address')
             ->maxLength('address', 255)
-            ->requirePresence('address', 'create')
+            ->requirePresence('address', 'create', 'Tidak boleh kosong')
             ->allowEmptyString('address', false);
 
         $validator
-            ->requirePresence('province_id')
-            ->notBlank('province_id');
+            ->requirePresence('province_id', 'created', 'Tidak boleh kosong')
+            ->notBlank('province_id', 'Tidak boleh kosong');
 
         $validator
-            ->requirePresence('city_id', 'created')
-            ->notBlank('city_id');
+            ->requirePresence('city_id', 'created', 'Tidak boleh kosong')
+            ->notBlank('city_id', 'Tidak boleh kosong');
 
         $validator
-            ->requirePresence('subdistrict_id', 'created')
-            ->notBlank('subdistrict_id');
+            ->requirePresence('subdistrict_id', 'created', 'Tidak boleh kosong')
+            ->notBlank('subdistrict_id', 'Tidak boleh kosong');
 
         $validator
-            ->requirePresence('title')
-            ->notBlank('title');
+            ->requirePresence('title', 'Tidak boleh kosong')
+            ->notBlank('title', 'Tidak boleh kosong');
 
         $validator
-            ->requirePresence('recipient_name')
-            ->notBlank('recipient_name');
+            ->requirePresence('recipient_name', 'Tidak boleh kosong')
+            ->notBlank('recipient_name', 'Tidak boleh kosong');
 
         $validator
-            ->requirePresence('recipient_phone', 'created')
-            ->notBlank('recipient_phone');
+            ->requirePresence('recipient_phone', 'created', 'Tidak boleh kosong')
+            ->notBlank('recipient_phone', 'Tidak boleh kosong');
 
         return $validator;
     }
