@@ -20,6 +20,7 @@ use Cake\I18n\Time;
  *
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
+ * @property \App\Model\Table\IpLocationsTable $IpLocations
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class CustomersController extends AppController
@@ -30,6 +31,7 @@ class CustomersController extends AppController
         parent::initialize();
         $this->loadModel('Customers');
         $this->loadModel('CustomerAuthenticates');
+        $this->loadModel('IpLocations');
     }
 
     public function saveBrowser()
@@ -51,7 +53,17 @@ class CustomersController extends AppController
                     'ip'
                 ]
             ]);
-            $this->CustomerAuthenticates->save($auth);
+            if ($this->CustomerAuthenticates->save($auth)) {
+                if (!in_array($auth->get('ip'), ['::1', '127.0.0.1'])) {
+                    $ip = json_decode(file_get_contents(
+                        'https://api.ipdata.co/'.$auth->get('ip').'?api-key=d3941e87e91ccde61c9a9d0a488f3ceee2cead61fabfaa2de8087e64'
+                    ), true);
+                    if ($ip && isset($ip['ip'])) {
+                        $entity = $this->IpLocations->newEntity($ip);
+                        $this->IpLocations->save($entity);
+                    }
+                }
+            }
         }
     }
 
