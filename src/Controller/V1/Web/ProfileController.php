@@ -235,7 +235,7 @@ class ProfileController extends AppController
         $notifications
             ->orderDesc('CustomerMutationPoints.id');
 
-        $data = $this->paginate($notifications);
+        $data = $this->paginate($notifications,['limit' => 300]);
 
         $this->set(compact('data'));
     }
@@ -253,7 +253,7 @@ class ProfileController extends AppController
             ->select([
                 'kategori' => 'CustomerMutationAmountTypes.name',
                 'tipe' => 'CustomerMutationAmountTypes.type',
-                'desctiption' => 'CustomerMutationAmounts.description',
+                'description' => 'CustomerMutationAmounts.description',
                 'amount' => 'CustomerMutationAmounts.amount',
                 'balance' => 'CustomerMutationAmounts.balance',
                 'created' => 'CustomerMutationAmounts.created'
@@ -265,9 +265,9 @@ class ProfileController extends AppController
 
 
         $notifications
-            ->orderDesc('CustomerMutationAmounts.id');
+            ->orderDesc('CustomerMutationAmounts.id')->limit(300);
 
-        $data = $this->paginate($notifications);
+        $data = $this->paginate($notifications,['limit' => 300]);
 
         $this->set(compact('data'));
     }
