@@ -74,9 +74,7 @@ class AddressesController extends AppController
             ->where([
                 'customer_id' => $this->Authenticate->getId()
             ])
-            ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($address_id) {
-                return $exp->notEq('CustomerAddreses.id', $address_id);
-            });
+            ->execute();
 
         $this->Customers->CustomerAddreses->query()
             ->update()
@@ -86,7 +84,9 @@ class AddressesController extends AppController
             ->where([
                 'customer_id' => $this->Authenticate->getId(),
                 'CustomerAddreses.id' => $address_id
-            ]);
+            ])->execute();
+
+
 
     }
 
