@@ -44,6 +44,10 @@ class AuthorizationMiddleware
                     /**
                      * @var \Cake\I18n\FrozenTime $expired;
                      */
+
+                    $find->set('modified', (Time::now())->format('Y-m-d H:i:s'));
+                    $authTable->save($find);
+
                     $expired = $find->get('expired');
                     if ($expired->lt(Time::now())) {
                         throw new ExpiredTokenException();

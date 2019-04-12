@@ -55,6 +55,8 @@ class CustomersController extends AppController
             ->leftJoin(['IpLocations' => 'ip_locations'], [
                 'IpLocations.ip = CustomerAuthenticates.ip'
             ])
+            ->orderDesc('CustomerAuthenticates.modified')
+            ->limit(30)
             ->map(function($row) {
                 $ua = parse_user_agent($row->browser);
                 $row->device = $ua;
