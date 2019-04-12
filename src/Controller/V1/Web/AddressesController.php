@@ -271,6 +271,7 @@ class AddressesController extends AppController
                     ]
                 ]);
                 if (!$this->Customers->CustomerAddreses->save($address)) {
+                    $error = $address->getErrors();
                     $this->setResponse($this->response->withStatus(406, 'Fail to save address'));
                 } else {
                     if ($address->get('is_primary') == 1) {
@@ -284,7 +285,8 @@ class AddressesController extends AppController
                             ])
                             ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($address) {
                                 return $exp->notEq('CustomerAddreses.id', $address->get('id'));
-                            });
+                            })
+                            ->execute();
                     }
                 }
             } else {
@@ -294,6 +296,8 @@ class AddressesController extends AppController
         } else {
             $this->setResponse($this->response->withStatus(406, 'Invalid address_id'));
         }
+
+        $this->set(compact('error'));
     }
 
     /**
