@@ -15,6 +15,7 @@
 namespace App\Controller\V1\Web;
 
 use Cake\I18n\Time;
+use Cake\I18n\FrozenTime;
 
 /**
  * Networks controller
@@ -41,6 +42,10 @@ class NetworksController extends AppController
     {
         $this->request->allowMethod('get');
 
+        $timeJsonFormat = 'yyyy-MM-dd HH:mm';
+
+        FrozenTime::setJsonEncodeFormat($timeJsonFormat);
+        FrozenTime::setToStringFormat($timeJsonFormat);
         $generations = $this->Generations->find('threaded')
             ->contain([
                 'Customers',
