@@ -52,9 +52,11 @@ class GenerationsTable extends Table
         ]);
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id',
+            'className' => 'Customers'
         ]);
-        $this->belongsTo('Customers', [
+        $this->belongsTo('Refferals', [
             'foreignKey' => 'refferal_id',
+            'className' => 'Customers'
         ]);
         $this->hasMany('ChildGenerations', [
             'className' => 'Generations',
