@@ -26,10 +26,16 @@ class TestController extends AppController
         $this->server_key = $config['serverKey'];
         $this->loadComponent('MidTrans');
 
+        $this->loadComponent('GenerationsTree');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerMutationAmounts');
     }
+    public function sponsor(){
+        $this->autoRender = false;
 
+        $this->GenerationsTree->save('9QZV3HA3S5', 'XBIKKH1Y0N');
+        exit;
+    }
     public function mutasi(){
 
 //
