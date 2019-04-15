@@ -56,7 +56,12 @@ class OrdersController extends AppController
                         'va_number',
                         'masked_card',
                         'card_type',
+                        'created',
+                        'modified'
                     ]
+                ],
+                'OrderDetails' => [
+                    'Branches'
                 ],
                 'Vouchers' => [
                     'fields' => [
@@ -78,9 +83,11 @@ class OrdersController extends AppController
             ->orderDesc('Orders.id')
             ;
 
-        $data = $this->paginate($orders)
+        $data = $this->paginate($orders, [
+            'limit' => (int) $this->request->getQuery('limit', 5)
+        ])
             ->map(function (\App\Model\Entity\Order $row) {
-                $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
+                //$row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
 
                 unset($row->customer_id);
 
