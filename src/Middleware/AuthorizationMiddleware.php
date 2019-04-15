@@ -38,6 +38,9 @@ class AuthorizationMiddleware
                     ->where([
                         'token' => $authorization->getToken()
                     ])
+                    ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                        return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
+                    })
                     ->first();
 
                 if ($find) {

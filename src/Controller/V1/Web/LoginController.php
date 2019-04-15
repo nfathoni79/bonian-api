@@ -143,6 +143,10 @@ class LoginController extends AppController
                     ]);
                 }
 
+                $find->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                    return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
+                });
+
                 $find = $find->first();
 
                 if ($find) {

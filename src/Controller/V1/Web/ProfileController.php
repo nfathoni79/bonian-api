@@ -14,6 +14,7 @@
  */
 namespace App\Controller\V1\Web;
 
+use Cake\Auth\DefaultPasswordHasher;
 use Cake\I18n\Time;
 use Cake\Utility\Hash;
 use Cake\I18n\FrozenTime;
@@ -31,6 +32,7 @@ use Cake\Http\Client\FormData;
  * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
  * @property \App\Model\Table\CustomerMutationAmountsTable $CustomerMutationAmounts
  * @property \App\Controller\Component\GenerationsTreeComponent $GenerationsTree
+ * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
  * @property \App\Controller\Component\SmsComponentComponent $Sms
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
@@ -44,6 +46,7 @@ class ProfileController extends AppController
         $this->loadModel('CustomerNotifications');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerMutationAmounts');
+        $this->loadModel('CustomerAuthenticates');
         $this->loadComponent('GenerationsTree');
         $this->loadComponent('Sms');
     }
@@ -87,6 +90,57 @@ class ProfileController extends AppController
 
         $this->set(compact('error'));
 
+
+    }
+
+
+    public function changePassword()
+    {
+        $this->request->allowMethod('post');
+
+        $passwordEntity = $this->Customers->find()
+            ->select([
+                'id',
+                'password'
+            ])
+            ->where([
+                'id' => $this->Authenticate->getId()
+            ])
+            ->first();
+
+        $validator = $this->Customers->getValidator('password')
+            ->notBlank('current_password', 'Kolom ini harus diisi')
+            ->add('current_password', 'check_password', [
+                'rule' => function($value) use ($passwordEntity) {
+                    return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
+                },
+                'message' => 'Password lama anda tidak valid'
+            ]);
+
+        $this->Customers->patchEntity($passwordEntity, $this->request->getData(), [
+            'validate' => 'password',
+            'fields' => [
+                'password'
+            ]
+        ]);
+
+        if (!$this->Customers->save($passwordEntity)) {
+            $this->setResponse($this->response->withStatus(406, 'Failed change password'));
+            $error = $passwordEntity->getErrors();
+        } else {
+            //reset token to expired
+            $this->CustomerAuthenticates->query()
+                ->update()
+                ->set([
+                    'expired' => (Time::now())->format('Y-m-d H:i:s')
+                ])
+                ->where([
+                    'customer_id' => $this->Authenticate->getId()
+                ])
+                ->execute();
+        }
+
+        $this->set(compact('error'));
 
     }
 

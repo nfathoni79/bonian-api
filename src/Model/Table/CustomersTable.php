@@ -197,17 +197,16 @@ class CustomersTable extends Table
     public function validationPassword(Validator $validator)
     {
         $validator
+            ->notBlank('password', 'Kolom ini harus diisi')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->notEqualToField('password', 'current_password', 'New password cannot match with your current password')
             ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
-                'password min 6 char at least one uppercase letter, one lowercase letter and one number');
+                'kata sandi setidaknya mengandung 1 huruf besar, 1 huruf kecil dan 1 angka');
 
         $validator
-            ->equalToField('repeat_password', 'password', 'Repeat password does not match with your password')
-            ->notEqualToField('repeat_password', 'current_password', 'Repeat password cannot match with your current password')
+            ->equalToField('repeat_password', 'password', 'konfirmasi kata Sandi baru tidak sama')
             ->allowEmpty('repeat_password', function ($context) {
                 return !isset($context['data']['password']);
-            });
+            }, 'Kolom ini harus diisi');
         return $validator;
     }
 
