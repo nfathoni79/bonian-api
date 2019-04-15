@@ -147,6 +147,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->connect('/promotions/:slug', ['controller' => 'Promotions', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/pages/:slug', ['controller' => 'Pages', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/networks/:slug', ['controller' => 'Networks', 'action' => 'index'])->setPass(['slug']);
+    $routes->connect('/leaderboards/:slug', ['controller' => 'Leaderboards', 'action' => 'index'])->setPass(['slug']);
 
 
     $routes->fallbacks(DashedRoute::class);
