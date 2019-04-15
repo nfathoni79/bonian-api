@@ -52,7 +52,7 @@ class NetworksController extends AppController
                 'Refferals'
             ])
             ->where([
-//                'Generations.refferal_id' => $this->Authenticate->getId()
+               'Generations.refferal_id' => $this->Authenticate->getId()
             ]);
 
 

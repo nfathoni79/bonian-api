@@ -31,10 +31,10 @@ class TestController extends AppController
         $this->loadModel('CustomerMutationAmounts');
     }
     public function sponsor(){
-        $this->autoRender = false;
+        // $this->autoRender = false;
 
-        $this->GenerationsTree->save('9QZV3HA3S5', 'XBIKKH1Y0N');
-        exit;
+        // $this->GenerationsTree->save('D5FLFTBQDT', 'RWAMGKBSZV');
+        // exit;
     }
     public function mutasi(){
 
