@@ -142,7 +142,7 @@ class CustomersTable extends Table
             ->requirePresence('password', 'create', 'Password harus diisi')
             ->notBlank('password', 'Password harus diisi', 'create')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/', 'Password harus mengandung min. 1 huruf besar dan 1 huruf kecil karakter');
+            ->regex('password', '/^(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', 'Password harus mengandung min. 1 huruf besar dan 1 huruf kecil karakter');
 
 
         $validator
@@ -199,7 +199,7 @@ class CustomersTable extends Table
         $validator
             ->notBlank('password', 'Kolom ini harus diisi')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
+            ->regex('password', '/^(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/',
                 'kata sandi setidaknya mengandung 1 huruf besar, 1 huruf kecil dan 1 angka');
 
         $validator
@@ -214,7 +214,7 @@ class CustomersTable extends Table
     {
         $validator
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->regex('password', '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/',
+            ->regex('password', '/^(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/',
                 'password min 6 char at least one uppercase letter, one lowercase letter and one number');
 
         $validator
