@@ -12,6 +12,7 @@ use Cake\Core\Configure;
  * @property int|null $customer_id
  * @property bool|null $is_primary
  * @property string|null $masked_card
+ * @property string|null $type
  * @property string|null $token
  * @property \Cake\I18n\FrozenTime|null $expired_at
  * @property \Cake\I18n\FrozenTime $created
@@ -34,6 +35,7 @@ class CustomerCard extends Entity
         'customer_id' => true,
         'is_primary' => true,
         'masked_card' => true,
+        'type' => true,
         'token' => true,
         'expired_at' => true,
         'created' => true,

@@ -41,7 +41,9 @@ class CardsController extends AppController
 
         $data = $this->CustomerCards->find()
             ->select([
+                'id',
                 'masked_card',
+                'type',
                 'is_primary',
                 'expired_at'
 
@@ -49,12 +51,41 @@ class CardsController extends AppController
             ->where([
                 'customer_id' => $this->Authenticate->getId()
             ])
+            ->orderDesc('is_primary')
             ->map(function (\App\Model\Entity\CustomerCard $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
                 return $row;
             });
 
         $this->set(compact('data'));
+    }
+
+
+    public function setPrimary()
+    {
+        $this->request->allowMethod(['post', 'put']);
+        if ($card_id = $this->request->getData('card_id')) {
+            $this->CustomerCards->query()
+                ->update()
+                ->set([
+                    'is_primary' => 0
+                ])
+                ->where([
+                    'customer_id' => $this->Authenticate->getId()
+                ])
+                ->execute();
+
+            $this->CustomerCards->query()
+                ->update()
+                ->set([
+                    'is_primary' => 1
+                ])
+                ->where([
+                    'customer_id' => $this->Authenticate->getId(),
+                    'CustomerCards.id' => $card_id
+                ])->execute();
+        }
+
     }
 
     /**
