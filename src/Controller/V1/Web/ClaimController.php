@@ -95,6 +95,7 @@ class ClaimController extends AppController
                                         'customer_id' => $this->Authenticate->getId(),
                                         'voucher_id' => $findVoucher->get('id'),
                                         'status ' => 1,
+                                        'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
                                     ];
                                     $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
                                     $this->CustomerVouchers->save($newEntityCustVoucher);

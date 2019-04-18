@@ -32,6 +32,7 @@ class CustomerVoucher extends Entity
         'status' => true,
         'created' => true,
         'customer' => true,
-        'voucher' => true
+        'voucher' => true,
+        'expired' => true
     ];
 }
