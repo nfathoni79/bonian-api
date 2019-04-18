@@ -56,6 +56,7 @@ class VouchersController extends AppController
                 'Vouchers.type' => 1,
             ]);
 
+        $voucher->orderDesc('CustomerVouchers.expired');
         $data = $this->paginate($voucher, [
             'limit' => (int) $this->request->getQuery('limit', 5)
         ])->map(function (\App\Model\Entity\CustomerVoucher $row) {
