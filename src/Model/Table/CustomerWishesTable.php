@@ -63,6 +63,10 @@ class CustomerWishesTable extends Table
             ->allowEmptyString('id', 'create');
 
         $validator
+            ->requirePresence('product_id', 'created')
+            ->notBlank('product_id');
+
+        $validator
             ->numeric('price')
             ->allowEmptyString('price');
 

@@ -48,6 +48,7 @@ class WishlistsController extends AppController
                         'price_sale',
                         'point',
                         'rating',
+                        'rating_count',
                     ],
                     'ProductImages' => [
                         'fields' => [
@@ -60,12 +61,16 @@ class WishlistsController extends AppController
             ])
             ->where([
                 'customer_id' => $this->Authenticate->getId()
-            ])
+            ]);
+
+        $data = $this->paginate($data, [
+            'limit' => (int) $this->request->getQuery('limit', 5)
+        ])
             ->map(function (\App\Model\Entity\CustomerWish $row) {
                 unset($row->customer_id);
                 $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
-                $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
-                $row->modified = $row->modified instanceof \Cake\I18n\FrozenTime  ? $row->modified->timestamp : 0;
+                //$row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : 0;
+                //$row->modified = $row->modified instanceof \Cake\I18n\FrozenTime  ? $row->modified->timestamp : 0;
 
                 unset($row->product->product_images);
 
@@ -111,6 +116,30 @@ class WishlistsController extends AppController
 
         $this->set(compact('error'));
 
+    }
+
+    public function delete()
+    {
+        $this->request->allowMethod(['post', 'put']);
+        if ($wishlist_id = $this->request->getData('wishlist_id')) {
+            $entity = $this->CustomerWishes->find()
+                ->where([
+                    'customer_id' => $this->Authenticate->getId(),
+                    'id' => $wishlist_id
+                ])
+                ->first();
+            if ($entity) {
+                if (!$this->CustomerWishes->delete($entity)) {
+                    $this->setResponse($this->response->withStatus(406, 'Failed to delete wishlist'));
+                    $error = $entity->getErrors();
+                }
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Wishlist not found'));
+            }
+        }
+
+
+        $this->set(compact('error'));
     }
 
 
