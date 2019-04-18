@@ -64,7 +64,8 @@ class LeaderboardsController extends AppController
             'count' => $generations->func()->count('Generations.refferal_id')
         ])
             ->where(['Generations.level' => 1])
-            ->group('Generations.refferal_id');
+            ->group('Generations.refferal_id')
+            ->limit(100);
         $generations->orderDesc('count');
 
         $data = $this->paginate($generations, [
