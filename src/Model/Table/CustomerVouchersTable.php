@@ -76,7 +76,7 @@ class CustomerVouchersTable extends Table
     {
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
         $rules->add($rules->existsIn(['voucher_id'], 'Vouchers'));
-        $rules->add($rules->isUnique(['voucher_id', 'customer_id'], 'voucher sudah pernah digunakan.'));
+//        $rules->add($rules->isUnique(['customer_id'], 'voucher sudah pernah digunakan.'));
 
         return $rules;
     }

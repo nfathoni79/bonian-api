@@ -52,7 +52,7 @@ class LeaderboardsController extends AppController
         FrozenTime::setToStringFormat($timeJsonFormat);
 
         $user_id = $this->Authenticate->getId();
-        $generations = $this->Generations->find('all')
+        $generations = $this->Generations->find()
             ->contain([
                 'Refferals'
             ]);
@@ -67,8 +67,10 @@ class LeaderboardsController extends AppController
             ->group('Generations.refferal_id')
             ->limit(100);
         $generations->orderDesc('count');
-        $data = $generations;
 
+        $data = $this->paginate($generations, [
+            'limit' => (int) $this->request->getQuery('limit', 5)
+        ]);
         $this->set(compact('data'));
 
     }
