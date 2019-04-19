@@ -366,6 +366,16 @@ class ProductsController extends Controller
     }
 
 
+    protected function highlight($text, $words)
+    {
+        preg_match_all('~\w+~', $words, $m);
+        if(!$m)
+            return $text;
+        $re = '~\\b(' . implode('|', $m[0]) . ')\\b~i';
+        return preg_replace($re, '<span class="search-highlight">$0</span>', $text);
+    }
+
+
     public function search()
     {
 
@@ -445,7 +455,7 @@ class ProductsController extends Controller
                     ->first();
 
 
-                $row->primary = $row->name . ' di <strong>' . $categories->get('product_category')->get('name') . '</strong>';
+                $row->primary = $this->highlight($row->name, $keywords) . ' di <span class="search-category">' . $categories->get('product_category')->get('name') . '</span>';
                 $row->secondary = $row->name;
                 $row->image = false;
                 $row->onclick = false;
@@ -507,8 +517,8 @@ class ProductsController extends Controller
             ->bind(':search', $keywords, 'string')
             ->orderDesc('SearchTerms.hits')
             ->limit('4')
-            ->map(function (\App\Model\Entity\SearchTerm $row){
-                $row->primary = $row->words;
+            ->map(function (\App\Model\Entity\SearchTerm $row) use($keywords) {
+                $row->primary = $this->highlight($row->words, $keywords);
                 $row->onclick = 'window.location.href=\'http://www.hyperlinkcode.com/button-links.php\';'; // custom url
                 unset($row->id);
                 unset($row->hits);
