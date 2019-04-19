@@ -47,12 +47,19 @@ class LoginController extends AppController
         $username = $this->request->getData('email');
         $password = $this->request->getData('password');
         $bid = $this->request->getHeader('bid');
+        $userAgent = $this->request->getHeader('user-agent');
 
 
         if(count($bid) > 0) {
             $bid = $bid[0];
         } else {
             $bid = null;
+        }
+
+        if(count($userAgent) > 0) {
+            $userAgent = $userAgent[0];
+        } else {
+            $userAgent = null;
         }
 
 
@@ -169,7 +176,7 @@ class LoginController extends AppController
                     if (!$browserEntity) {
                         $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
                             'bid' => $bid,
-                            'user_agent' => null
+                            'user_agent' => $userAgent
                         ]);
                         $this->CustomerAuthenticates->Browsers->save($browserEntity);
                     }
