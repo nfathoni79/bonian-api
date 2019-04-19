@@ -375,6 +375,35 @@ class ProductsController extends Controller
         return preg_replace($re, '<span class="search-highlight">$0</span>', $text);
     }
 
+    public function searchHistory()
+    {
+        $bid = $this->request->getHeader('bid');
+        if(count($bid) > 0) {
+            $bid = $bid[0];
+        } else {
+            $bid = null;
+        }
+
+        if ($bid) {
+            $data = $this->SearchTerms->SearchStats->find()
+                ->contain([
+                    'SearchTerms',
+                    'Browsers',
+                ])
+                ->where([
+                    'Browsers.bid' => $bid
+                ])
+                ->group('search_term_id')
+                ->orderDesc('SearchTerms.hits')
+                ->limit(5)
+                ->map(function (\App\Model\Entity\SearchStat $row) {
+                    unset($row->browser, $row->browser_id, $row->customer_id);
+                    return $row;
+                });
+
+            $this->set(compact('data'));
+        }
+    }
 
     public function search()
     {
