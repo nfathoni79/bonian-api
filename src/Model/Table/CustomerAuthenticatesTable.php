@@ -10,6 +10,7 @@ use Cake\Validation\Validator;
  * CustomerAuthenticates Model
  *
  * @property \App\Model\Table\CustomersTable|\Cake\ORM\Association\BelongsTo $Customers
+ * @property \App\Model\Table\BrowsersTable|\Cake\ORM\Association\BelongsTo $Browsers
  *
  * @method \App\Model\Entity\CustomerAuthenticate get($primaryKey, $options = [])
  * @method \App\Model\Entity\CustomerAuthenticate newEntity($data = null, array $options = [])
@@ -43,6 +44,9 @@ class CustomerAuthenticatesTable extends Table
 
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id'
+        ]);
+        $this->belongsTo('Browsers', [
+            'foreignKey' => 'browser_id'
         ]);
     }
 

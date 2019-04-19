@@ -133,13 +133,16 @@ class LoginController extends AppController
 
 
                 $find = $this->CustomerAuthenticates->find()
+                    ->contain([
+                        'Browsers'
+                    ])
                     ->where([
                         'customer_id' => $user->get('id')
                     ]);
 
                 if ($bid) {
                     $find->where([
-                        'bid' => $bid
+                        'Browsers.bid' => $bid
                     ]);
                 }
 
@@ -157,10 +160,20 @@ class LoginController extends AppController
                     ]), Configure::read('Encrypt.salt')));
 
                 } else {
+                    $browserEntity = $this->CustomerAuthenticates->Browsers->find()
+                        ->where([
+                            'bid' => $bid
+                        ])
+                        ->first();
+
+                    if (!$browserEntity) {
+
+                    }
+
                     $find = $this->CustomerAuthenticates->newEntity([
                         'customer_id' => $user->get('id'),
                         'token' => $key,
-                        'bid' => $bid,
+                        'browser_id' => $browserEntity->get('id'),
                         'expired' => (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s')
                     ]);
                 }

@@ -9,9 +9,8 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int|null $customer_id
  * @property string|null $token
- * @property string|null $bid
+ * @property int|null $browser_id
  * @property string|null $ip
- * @property string|null $browser
  * @property \Cake\I18n\FrozenTime|null $expired
  * @property \Cake\I18n\FrozenTime|null $created
  * @property \Cake\I18n\FrozenTime|null $modified
@@ -33,13 +32,13 @@ class CustomerAuthenticate extends Entity
     protected $_accessible = [
         'customer_id' => true,
         'token' => true,
-        'bid' => true,
+        'browser_id' => true,
         'ip' => true,
-        'browser' => true,
         'expired' => true,
         'created' => true,
         'modified' => true,
-        'customer' => true
+        'customer' => true,
+        'browser' => true
     ];
 
     /**

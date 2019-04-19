@@ -39,7 +39,7 @@ class CustomersController extends AppController
     {
         $data = $this->CustomerAuthenticates->find()
             ->select([
-                'browser',
+                'browser' => 'Browsers.user_agent',
                 'ip',
                 'modified',
                 'IpLocations.city',
@@ -52,6 +52,9 @@ class CustomersController extends AppController
             ])
             ->where([
                 'customer_id' => $this->Authenticate->getId()
+            ])
+            ->leftJoin(['Browsers' => 'browsers'], [
+                'Browsers.id = CustomerAuthenticates.browser_id'
             ])
             ->leftJoin(['IpLocations' => 'ip_locations'], [
                 'IpLocations.ip = CustomerAuthenticates.ip'
@@ -82,7 +85,7 @@ class CustomersController extends AppController
         if ($auth) {
             $this->CustomerAuthenticates->patchEntity($auth, $this->request->getData(), [
                 'fields' => [
-                    'browser',
+                    //'browser',
                     'ip'
                 ]
             ]);
