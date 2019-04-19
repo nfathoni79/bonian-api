@@ -167,7 +167,11 @@ class LoginController extends AppController
                         ->first();
 
                     if (!$browserEntity) {
-
+                        $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
+                            'bid' => $bid,
+                            'user_agent' => null
+                        ]);
+                        $this->CustomerAuthenticates->Browsers->save($browserEntity);
                     }
 
                     $find = $this->CustomerAuthenticates->newEntity([
