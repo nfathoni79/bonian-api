@@ -53,10 +53,9 @@ class VouchersController extends AppController
             ->where([
                 'CustomerVouchers.customer_id' => $this->Authenticate->getId(),
                 'CustomerVouchers.status' => $this->request->getQuery('type', '1'),
-                'Vouchers.type' => 1,
             ]);
 
-        $voucher->orderDesc('CustomerVouchers.expired');
+        $voucher->orderDesc('CustomerVouchers.id');
         $data = $this->paginate($voucher, [
             'limit' => (int) $this->request->getQuery('limit', 5)
         ])->map(function (\App\Model\Entity\CustomerVoucher $row) {
