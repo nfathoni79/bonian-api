@@ -369,7 +369,7 @@ class ProductsController extends Controller
     public function search()
     {
 
-        $keywords = $this->request->getQuery('keywords');
+        $keywords = trim($this->request->getQuery('keywords'));
         $bid = $this->request->getHeader('bid');
         $browser_id = null;
         $customer_id = null;
@@ -497,22 +497,37 @@ class ProductsController extends Controller
              * @var \App\Model\Entity\SearchTerm[] $pencarianPopuler
              */
             foreach($pencarianPopuler as $pencarian) {
+                if (strtolower($pencarian->get('words')) == strtolower($keywords)) {
+                    $pencarian->set('hits', $pencarian->get('hits') + 1);
+                    if ($kataKunci) {
+                        $pencarian->set('match', 1);
+                    }
+                    if ($this->SearchTerms->save($pencarian)) {
+                        $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                            'search_term_id' => $pencarian->get('id'),
+                            'browser_id' => $browser_id,
+                            'customer_id' => $customer_id
+                        ]);
 
-                $pencarian->set('hits', $pencarian->get('hits') + 1);
-                if ($kataKunci) {
-                    $pencarian->set('match', 1);
-                }
-                if ($this->SearchTerms->save($pencarian)) {
-                    $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                        'search_term_id' => $pencarian->get('id'),
-                        'browser_id' => $browser_id,
-                        'customer_id' => $customer_id
+                        $this->SearchTerms->SearchStats->save($searchStatEntity);
+                    }
+                } else {
+                    $searchTermEntity = $this->SearchTerms->newEntity([
+                        'words' => $keywords,
+                        'hits' => $kataKunci ? 1 : 0,
+                        'match' => $kataKunci ? true : false
                     ]);
 
-                    if ($this->SearchTerms->SearchStats->save($searchStatEntity)) {
-
+                    if ($this->SearchTerms->save($searchTermEntity)) {
+                        $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                            'search_term_id' => $searchTermEntity->get('id'),
+                            'browser_id' => $browser_id,
+                            'customer_id' => $customer_id
+                        ]);
+                        $this->SearchTerms->SearchStats->save($searchStatEntity);
                     }
                 }
+
             }
         }
 
