@@ -98,7 +98,17 @@ class WishlistsController extends AppController
         ]);
 
         try {
-            $product = $this->CustomerWishes->Products->get($entity->get('product_id'));
+            $product = $this->CustomerWishes->Products->get($entity->get('product_id'), [
+                'contain' => [
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC']
+                    ]
+                ]
+            ]);
             if ($product) {
                 $entity->set('price', $product->get('price_sale'));
             }
@@ -108,13 +118,30 @@ class WishlistsController extends AppController
 
         if ($this->CustomerWishes->save($entity)) {
             //success
+            if ($product) {
+                $data = [];
+                $allowed_fields = [
+                    'id',
+                    'name',
+                    'slug',
+                    'product_images',
+                ];
+
+
+                foreach($allowed_fields as $key) {
+                    if (isset($product[$key])) {
+                        $data[$key] = $product[$key];
+                    }
+                }
+            }
+
 
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add wishlists'));
             $error = $entity->getErrors();
         }
 
-        $this->set(compact('error'));
+        $this->set(compact('error', 'data'));
 
     }
 

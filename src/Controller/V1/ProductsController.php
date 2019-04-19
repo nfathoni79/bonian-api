@@ -191,6 +191,34 @@ class ProductsController extends Controller
 
     }
 
+    public function infoImage($product_id)
+    {
+        $data = $this->Products->find()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'model',
+                'created'
+            ])
+            ->where([
+                'Products.id' => $product_id,
+                'Products.product_status_id' => 1
+            ])
+            ->contain([
+                'ProductImages' => [
+                    'fields' => [
+                        'name',
+                        'product_id',
+                    ],
+                    'sort' => ['ProductImages.primary' => 'DESC']
+                ]
+            ])
+            ->first();
+
+        $this->set(compact('data'));
+    }
+
 
     public function newArrivals()
     {
