@@ -406,29 +406,14 @@ class ProductsController extends Controller
 
         /* PENCARIAN POPULER */
         $pencarianPopuler = $this->SearchTerms->find()
-            /*->where(function (QueryExpression $exp, Query $q) use($keywords) {
-                return $exp->like('SearchTerms.words', '%'.$keywords.'%');
-            })*/
+            ->where(function (QueryExpression $exp, Query $q) use($keywords) {
+                return $exp->like('SearchTerms.words', '%' . $keywords . '%');
+            })
             ->where([
                 'SearchTerms.match' => 1,
-                'MATCH (words) AGAINST (:search)'
             ])
-            ->bind(':search', $keywords, 'string')
             ->orderDesc('SearchTerms.hits')
             ->limit('4');
-
-        /*
-            ->map(function (\App\Model\Entity\SearchTerm $row){
-                $row->primary = $row->words;
-                $row->onclick = 'window.location.href=\'http://www.hyperlinkcode.com/button-links.php\';'; // custom url
-                unset($row->id);
-                unset($row->hits);
-                unset($row->match);
-                unset($row->words);
-                return $row;
-            })
-            ->toArray();
-        */
 
 
         /* pencarian kata kunci*/
@@ -497,41 +482,31 @@ class ProductsController extends Controller
              * @var \App\Model\Entity\SearchTerm[] $pencarianPopuler
              */
             foreach($pencarianPopuler as $pencarian) {
-                if (strtolower($pencarian->get('words')) == strtolower($keywords)) {
-                    $pencarian->set('hits', $pencarian->get('hits') + 1);
-                    if ($kataKunci) {
-                        $pencarian->set('match', 1);
-                    }
-                    if ($this->SearchTerms->save($pencarian)) {
-                        $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                            'search_term_id' => $pencarian->get('id'),
-                            'browser_id' => $browser_id,
-                            'customer_id' => $customer_id
-                        ]);
-
-                        $this->SearchTerms->SearchStats->save($searchStatEntity);
-                    }
-                } else {
-                    $searchTermEntity = $this->SearchTerms->newEntity([
-                        'words' => $keywords,
-                        'hits' => $kataKunci ? 1 : 0,
-                        'match' => $kataKunci ? true : false
+                $pencarian->set('hits', $pencarian->get('hits') + 1);
+                if ($kataKunci) {
+                    $pencarian->set('match', 1);
+                }
+                if ($this->SearchTerms->save($pencarian)) {
+                    $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                        'search_term_id' => $pencarian->get('id'),
+                        'browser_id' => $browser_id,
+                        'customer_id' => $customer_id
                     ]);
 
-                    if ($this->SearchTerms->save($searchTermEntity)) {
-                        $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                            'search_term_id' => $searchTermEntity->get('id'),
-                            'browser_id' => $browser_id,
-                            'customer_id' => $customer_id
-                        ]);
-                        $this->SearchTerms->SearchStats->save($searchStatEntity);
-                    }
+                    $this->SearchTerms->SearchStats->save($searchStatEntity);
                 }
-
             }
         }
 
-        $pencarianPopuler = $pencarianPopuler
+
+        $pencarianPopuler = $this->SearchTerms->find()
+            ->where([
+                'SearchTerms.match' => 1,
+                'MATCH (words) AGAINST (:search)'
+            ])
+            ->bind(':search', $keywords, 'string')
+            ->orderDesc('SearchTerms.hits')
+            ->limit('4')
             ->map(function (\App\Model\Entity\SearchTerm $row){
                 $row->primary = $row->words;
                 $row->onclick = 'window.location.href=\'http://www.hyperlinkcode.com/button-links.php\';'; // custom url
