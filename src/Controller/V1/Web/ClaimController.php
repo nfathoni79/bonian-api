@@ -120,4 +120,51 @@ class ClaimController extends AppController
         $this->set(compact( 'error'));
     }
 
+    public function iclaim(){
+
+        $this->request->allowMethod('post');
+
+        $auth = $this->CustomerAuthenticates->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'token' => $this->Authenticate->getToken()
+            ])
+            ->first();
+
+        if ($auth) {
+            $voucher = $this->request->getData('voucher');
+            $findVoucher = $this->Vouchers->find()
+                ->where([
+                    'code_voucher' => $voucher,
+                    'stock > ' => 0,
+                    'status' => 1,
+                    'type' => 3,
+                ])
+                ->first();
+            if($findVoucher){
+
+                $saveStock = clone $findVoucher;
+                $saveStock->set('stock', $saveStock->get('stock') - 1);
+                $saveStock->set('status', 2);
+                if($this->Vouchers->save($saveStock)){
+
+                    $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
+                    $setEntity = [
+                        'customer_id' => $this->Authenticate->getId(),
+                        'voucher_id' => $findVoucher->get('id'),
+                        'status ' => 1,
+                        'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
+                    ];
+                    $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
+                    $this->CustomerVouchers->save($newEntityCustVoucher);
+                }
+            }else{
+                $this->setResponse($this->response->withStatus(406, 'Maaf, kode ini tidak sah. Mohon coba kembali.'));
+            }
+        }else{
+            $this->setResponse($this->response->withStatus(406, 'Invalid or empty token'));
+        }
+        $this->set(compact( 'error'));
+    }
+
 }
