@@ -143,6 +143,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->connect('/products/new-arrivals', ['controller' => 'Products', 'action' => 'newArrivals']);
     $routes->connect('/products/popular-products', ['controller' => 'Products', 'action' => 'popularProducts']);
     $routes->connect('/products/best-sellers', ['controller' => 'Products', 'action' => 'bestSellers']);
+    $routes->connect('/products/search', ['controller' => 'Products', 'action' => 'search']);
     $routes->connect('/products/:slug', ['controller' => 'Products', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/promotions/:slug', ['controller' => 'Promotions', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/pages/:slug', ['controller' => 'Pages', 'action' => 'index'])->setPass(['slug']);

@@ -10,6 +10,7 @@ use Cake\I18n\Time;
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
  * @property \App\Model\Table\OrderDetailProductsTable $OrderDetailProducts
+ * @property \App\Model\Table\SearchTermsTable $SearchTerms
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ProductsController extends Controller
@@ -23,6 +24,8 @@ class ProductsController extends Controller
         $this->loadModel('Products');
         $this->loadModel('ProductDealDetails');
         $this->loadModel('OrderDetailProducts');
+        $this->loadModel('SearchTerms');
+        $this->loadModel('SearchStats');
     }
 
     /**
@@ -353,6 +356,60 @@ class ProductsController extends Controller
                 unset($row);
                 return $new_rows->product;
             });
+        $this->set(compact('data'));
+    }
+
+
+    public function search(){
+
+        $keywords = $this->request->getQuery('keywords');
+        /* PENCARIAN POPULER */
+        $pencarianPopuler = $this->SearchTerms->find()
+            ->where(function (QueryExpression $exp, Query $q) use($keywords) {
+                return $exp->like('SearchTerms.words', '%'.$keywords.'%');
+            })
+            ->where(['SearchTerms.match' => '1'])
+            ->orderDesc('SearchTerms.hits')
+            ->limit('4')
+            ->map(function (\App\Model\Entity\SearchTerm $row){
+                $row->primary = $row->words;
+                $row->onclick = 'window.location.href=\'http://www.hyperlinkcode.com/button-links.php\';'; // custom url
+                unset($row->id);
+                unset($row->hits);
+                unset($row->match);
+                unset($row->words);
+                return $row;
+            })
+            ->toArray();
+
+        $data = [
+            [
+                'header' => [
+                    'title' => 'Pencarian Populer',
+                    'slug' => 'pencarian-populer',
+                    'image' => false,
+                    'limit' => 4
+                ],
+                'data' => $pencarianPopuler
+            ],
+            [
+                'header' => [
+                    'title' => 'Kata Kunci',
+                    'slug' => 'kata-kunci',
+                    'image' => false,
+                    'limit' => 4
+                ],
+                'data' => []
+            ],
+            [
+                'header' => [
+                    'title' => 'Produk Terpopuler',
+                    'slug' => 'produk-terpopuler',
+                ],
+                'data' => []
+            ],
+        ];
+
         $this->set(compact('data'));
     }
 
