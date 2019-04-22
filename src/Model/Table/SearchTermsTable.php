@@ -10,6 +10,7 @@ use Cake\Validation\Validator;
  * SearchTerms Model
  *
  * @property \App\Model\Table\SearchStatsTable|\Cake\ORM\Association\HasMany $SearchStats
+ * @property \App\Model\Table\SearchCategoriesTable|\Cake\ORM\Association\HasMany $SearchCategories
  *
  * @method \App\Model\Entity\SearchTerm get($primaryKey, $options = [])
  * @method \App\Model\Entity\SearchTerm newEntity($data = null, array $options = [])
@@ -38,6 +39,9 @@ class SearchTermsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->hasMany('SearchStats', [
+            'foreignKey' => 'search_term_id'
+        ]);
+        $this->hasMany('SearchCategories', [
             'foreignKey' => 'search_term_id'
         ]);
     }

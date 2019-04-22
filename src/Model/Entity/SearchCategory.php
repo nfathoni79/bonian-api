@@ -9,6 +9,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int|null $search_term_id
  * @property int|null $product_category_id
+ * @property int|null $browser_id
  * @property \Cake\I18n\FrozenTime|null $created
  *
  * @property \App\Model\Entity\SearchTerm $search_term
@@ -29,8 +30,10 @@ class SearchCategory extends Entity
     protected $_accessible = [
         'search_term_id' => true,
         'product_category_id' => true,
+        'browser_id' => true,
         'created' => true,
         'search_term' => true,
-        'product_category' => true
+        'product_category' => true,
+        'browser' => true
     ];
 }

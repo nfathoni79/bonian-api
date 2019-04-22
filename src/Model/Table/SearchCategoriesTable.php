@@ -48,6 +48,9 @@ class SearchCategoriesTable extends Table
         $this->belongsTo('ProductCategories', [
             'foreignKey' => 'product_category_id'
         ]);
+        $this->belongsTo('Browsers', [
+            'foreignKey' => 'browser_id'
+        ]);
     }
 
     /**
@@ -75,7 +78,7 @@ class SearchCategoriesTable extends Table
     public function buildRules(RulesChecker $rules)
     {
         $rules->add($rules->existsIn(['search_term_id'], 'SearchTerms'));
-        $rules->add($rules->existsIn(['product_category_id'], 'ProductCategories'));
+        //$rules->add($rules->existsIn(['product_category_id'], 'ProductCategories'));
 
         return $rules;
     }

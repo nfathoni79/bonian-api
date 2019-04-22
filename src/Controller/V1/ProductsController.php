@@ -387,19 +387,20 @@ class ProductsController extends Controller
         }
 
         if ($bid) {
-            $data = $this->SearchTerms->SearchStats->find()
+            $data = $this->SearchTerms->SearchCategories->find()
                 ->contain([
                     'SearchTerms',
                     'Browsers',
+                    'ProductCategories'
                 ])
                 ->where([
                     'Browsers.bid' => $bid
                 ])
                 ->group('search_term_id')
-                ->orderDesc('SearchTerms.hits')
+                ->orderDesc('SearchCategories.created')
                 ->limit(5)
-                ->map(function (\App\Model\Entity\SearchStat $row) {
-                    unset($row->browser, $row->browser_id, $row->customer_id);
+                ->map(function (\App\Model\Entity\SearchCategory $row) {
+                    unset($row->browser, $row->browser_id);
                     return $row;
                 });
 
@@ -419,6 +420,7 @@ class ProductsController extends Controller
 
         if ($keyword = $this->request->getData('keyword')) {
 
+            $category_id = $this->request->getData('category_id', null);
             $productRelated = $this->searchByKeyword($keyword, 5);
             $bid = $this->request->getHeader('bid');
 
@@ -468,7 +470,8 @@ class ProductsController extends Controller
                             if (strtolower($keyword) == $related['fill_text']) {
                                 $searchCategoryEntity = $this->SearchCategories->newEntity([
                                     'search_term_id' => $searchTermEntity->get('id'),
-                                    'product_category_id' => $related->product_category->id
+                                    'product_category_id' => $category_id ? $category_id : $related->product_category->id,
+                                    'browser_id' => $browser_id
                                 ]);
                                 $this->SearchCategories->save($searchCategoryEntity);
                             }
@@ -499,7 +502,8 @@ class ProductsController extends Controller
                                 if (strtolower($keyword) == $related['fill_text']) {
                                     $searchCategoryEntity = $this->SearchCategories->newEntity([
                                         'search_term_id' => $term->get('id'),
-                                        'product_category_id' => $related->product_category->id
+                                        'product_category_id' => $category_id,
+                                        'browser_id' => $browser_id
                                     ]);
                                     $this->SearchCategories->save($searchCategoryEntity);
                                 }
@@ -660,8 +664,9 @@ class ProductsController extends Controller
             ->orderDesc('SearchTerms.hits')
             ->limit('4')
             ->map(function (\App\Model\Entity\SearchTerm $row) use($keywords) {
-                $row->primary = $this->highlight($row->words, $keywords);
+                $row->primary = $row->words;
                 $row->onclick = ''; // custom url
+                $row->fill_text = strtolower($keywords);
                 unset($row->id);
                 unset($row->hits);
                 unset($row->match);
