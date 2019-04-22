@@ -448,7 +448,7 @@ class ProductsController extends Controller
                 ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($keyword) {
                     return $exp->like('words', '%' . $keyword . '%');
                 })
-                ->orderDesc('created')
+                ->orderDesc('hits')
                 ->limit(1);
 
             if($searchTermEntity->isEmpty()) {
