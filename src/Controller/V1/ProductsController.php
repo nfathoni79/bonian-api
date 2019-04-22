@@ -447,7 +447,9 @@ class ProductsController extends Controller
             $searchTermEntity = $this->SearchTerms->find()
                 ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($keyword) {
                     return $exp->like('words', '%' . $keyword . '%');
-                });
+                })
+                ->orderDesc('created')
+                ->limit(1);
 
             if($searchTermEntity->isEmpty()) {
                 $searchTermEntity = $this->SearchTerms->newEntity([
