@@ -36,6 +36,7 @@ class DigitalDetail extends Entity
         'denom' => true,
         'operator' => true,
         'price' => true,
+        'point' => true,
         'status' => true,
         'digital' => true
     ];
