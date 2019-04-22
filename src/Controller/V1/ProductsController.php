@@ -432,7 +432,7 @@ class ProductsController extends Controller
             } else {
                 $bid = null;
             }
-
+			
 
             $browserEntity = $this->Browsers->find()
                 ->where([
@@ -443,6 +443,7 @@ class ProductsController extends Controller
             if ($browserEntity) {
                 $browser_id = $browserEntity->get('id');
             }
+			
 
             $searchTermEntity = $this->SearchTerms->find()
                 ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($keyword) {
@@ -500,7 +501,6 @@ class ProductsController extends Controller
 
                         if ($productRelated) {
                             foreach($productRelated as $related) {
-                                debug($related);
                                 if (strtolower($keyword) == $related['fill_text']) {
                                     $searchCategoryEntity = $this->SearchCategories->newEntity([
                                         'search_term_id' => $term->get('id'),
