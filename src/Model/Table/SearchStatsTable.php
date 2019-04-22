@@ -83,7 +83,7 @@ class SearchStatsTable extends Table
     {
         $rules->add($rules->existsIn(['search_term_id'], 'SearchTerms'));
         $rules->add($rules->existsIn(['browser_id'], 'Browsers'));
-        $rules->add($rules->existsIn(['customer_id'], 'Customers'));
+        //$rules->add($rules->existsIn(['customer_id'], 'Customers'));
 
         return $rules;
     }

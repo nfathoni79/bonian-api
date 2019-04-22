@@ -145,6 +145,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->connect('/products/best-sellers', ['controller' => 'Products', 'action' => 'bestSellers']);
     $routes->connect('/products/search', ['controller' => 'Products', 'action' => 'search']);
     $routes->connect('/products/search-history', ['controller' => 'Products', 'action' => 'searchHistory']);
+    $routes->connect('/products/save-search', ['controller' => 'Products', 'action' => 'saveSearch']);
     $routes->connect('/products/:slug', ['controller' => 'Products', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/promotions/:slug', ['controller' => 'Promotions', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/pages/:slug', ['controller' => 'Pages', 'action' => 'index'])->setPass(['slug']);

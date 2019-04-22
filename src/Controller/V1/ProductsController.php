@@ -414,46 +414,102 @@ class ProductsController extends Controller
 
     public function saveSearch()
     {
-        if ($pencarianPopuler->isEmpty()) {
-            //save search term
-            $searchTermEntity = $this->SearchTerms->newEntity([
-                'words' => $keywords,
-                'hits' => $kataKunci ? 1 : 0,
-                'match' => $kataKunci ? true : false
-            ]);
 
-            if ($this->SearchTerms->save($searchTermEntity)) {
-                $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                    'search_term_id' => $searchTermEntity->get('id'),
-                    'browser_id' => $browser_id,
-                    'customer_id' => $customer_id
-                ]);
+        $this->request->allowMethod('post');
 
-                if ($this->SearchTerms->SearchStats->save($searchStatEntity)) {
+        if ($keyword = $this->request->getData('keyword')) {
 
-                }
+            $productRelated = $this->searchByKeyword($keyword, 5);
+            $bid = $this->request->getHeader('bid');
+
+            $browser_id = null;
+            $customer_id = null;
+
+            if(count($bid) > 0) {
+                $bid = $bid[0];
+            } else {
+                $bid = null;
             }
 
-        } else {
-            /**
-             * @var \App\Model\Entity\SearchTerm[] $pencarianPopuler
-             */
-            foreach($pencarianPopuler as $pencarian) {
-                $pencarian->set('hits', $pencarian->get('hits') + 1);
-                if ($kataKunci) {
-                    $pencarian->set('match', 1);
-                }
-                if ($this->SearchTerms->save($pencarian)) {
+
+            $browserEntity = $this->Browsers->find()
+                ->where([
+                    'bid' => $bid
+                ])
+                ->first();
+
+            if ($browserEntity) {
+                $browser_id = $browserEntity->get('id');
+            }
+
+            $searchTermEntity = $this->SearchTerms->find()
+                ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($keyword) {
+                    return $exp->like('words', '%' . $keyword . '%');
+                });
+
+            if($searchTermEntity->isEmpty()) {
+                $searchTermEntity = $this->SearchTerms->newEntity([
+                    'words' => $keyword,
+                    'hits' => 0,
+                    'match' => $productRelated ? true : false
+                ]);
+
+                if ($this->SearchTerms->save($searchTermEntity)) {
                     $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                        'search_term_id' => $pencarian->get('id'),
+                        'search_term_id' => $searchTermEntity->get('id'),
                         'browser_id' => $browser_id,
                         'customer_id' => $customer_id
                     ]);
 
                     $this->SearchTerms->SearchStats->save($searchStatEntity);
+
+                    if ($productRelated) {
+                        foreach($productRelated as $related) {
+                            if (strtolower($keyword) == $related['fill_text']) {
+                                $searchCategoryEntity = $this->SearchCategories->newEntity([
+                                    'search_term_id' => $searchTermEntity->get('id'),
+                                    'product_category_id' => $related->product_category->id
+                                ]);
+                                $this->SearchCategories->save($searchCategoryEntity);
+                            }
+                        }
+                    }
+                }
+            } else {
+                /**
+                 * @var \App\Model\Entity\SearchTerm[] $searchTermEntity
+                 */
+                foreach($searchTermEntity as $term) {
+                    $term->set('hits', $term->get('hits') + 1);
+                    if ($productRelated) {
+                        $term->set('match', 1);
+                    }
+                    if ($this->SearchTerms->save($term)) {
+                        $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                            'search_term_id' => $term->get('id'),
+                            'browser_id' => $browser_id,
+                            'customer_id' => $customer_id
+                        ]);
+
+                        $this->SearchTerms->SearchStats->save($searchStatEntity);
+
+                        if ($productRelated) {
+                            foreach($productRelated as $related) {
+                                debug($related);
+                                if (strtolower($keyword) == $related['fill_text']) {
+                                    $searchCategoryEntity = $this->SearchCategories->newEntity([
+                                        'search_term_id' => $term->get('id'),
+                                        'product_category_id' => $related->product_category->id
+                                    ]);
+                                    $this->SearchCategories->save($searchCategoryEntity);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+
 
     }
 
@@ -478,11 +534,11 @@ class ProductsController extends Controller
                 ],
                 'ProductCategories'
             ])
+            ->where([
+                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            ])
             ->enableAutoFields(true)
             ->group('product_category_id')
-            ->having([
-                'score >' => 0
-            ])
             ->bind(':search', $keywords, 'string')
             ->orderDesc('score')
             ->limit($limit)
@@ -504,27 +560,19 @@ class ProductsController extends Controller
                         'SearchTerms'
                     ])
                     ->where([
-                        'product_category_id' => $row->product_category->id
+                        'product_category_id' => $row->product_category->id,
+                        'MATCH (words) AGAINST (:search)'
                     ])
+                    ->bind(':search', $keywords, 'string')
                     ->group('search_term_id')
                     ->orderDesc('total')
                     ->first();
 
                 if ($searchTerm) {
-                    $keywords = $searchTerm->get('search_term')->get('words');
-                } else {
-                    //save to new data
-                    $searchTermEntity = $this->SearchTerms->find()
-                        ->where(function(\Cake\Database\Expression\QueryExpression $exp) use ($keywords) {
-                            return $exp->like('words', '%' . $keywords . '%');
-                        })
-                        ->first();
-                    if ($searchTermEntity) {
-
-                    }
+                    $primary = $searchTerm->get('search_term')->get('words');
                 }
 
-                $row->primary = $keywords;
+                $row->primary = isset($primary) ? $primary : $keywords;
                 $row->secondary = $row->name;
                 //$row->image = false;
                 $row->onclick = false;
