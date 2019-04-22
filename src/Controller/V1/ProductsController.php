@@ -724,13 +724,15 @@ class ProductsController extends Controller
 
         $populerProduct = $this->Products->find()
             ->select([
-                'id',
-                'name',
-                'slug'
+                'Products.id',
+                'Products.name',
+                'Products.slug',
+                'Products.price',
+                'Products.price_sale',
             ])
             ->where([
                 'product_status_id' => 1,
-                'MATCH (name, highlight) AGAINST (:search)'
+                'MATCH (Products.name, Products.highlight) AGAINST (:search)'
             ])
             ->contain([
                 'ProductImages' => [
@@ -750,6 +752,33 @@ class ProductsController extends Controller
                 $row->onclick = false; // custom url
                 $row->image = false;
                 $row->fill_text = strtolower($keywords);
+
+                $product_deals = $this->ProductDealDetails->find()
+                    ->where([
+                        'ProductDeals.status' => 1,
+                        'ProductDealDetails.product_id' => $row->id
+                    ])
+                    ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                        $exp->lte('date_start', (Time::now())->format('Y-m-d H:i:s'));
+                        $exp->gte('date_end', (Time::now())->format('Y-m-d H:i:s'));
+                        return $exp;
+                    })
+                    ->contain([
+                        'ProductDeals'
+                    ])
+                    ->first();
+
+                if ($product_deals) {
+                    $row->is_flash_sale = true;
+                    $row->price_sale = $product_deals->get('price_sale');
+                } else {
+                    $row->is_flash_sale = false;
+                }
+
+                $row->price_sale_format = \Cake\I18n\Number::format($row->price_sale);
+
+
+
                 return $row;
             })
             ->toArray();
