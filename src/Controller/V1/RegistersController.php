@@ -62,6 +62,18 @@ class RegistersController extends Controller
                 'message' => 'Auth code not valid'
             ]);
 
+//        if($this->request->getData('reffcode')){
+//            $validator
+//                ->requirePresence('reffcode')
+//                ->notEmpty('reffcode', 'reffcode is required')
+//                ->add('auth_code', 'is_valid', [
+//                    'rule' => function($value) {
+//                        return $this->SendAuth->isValid($value);
+//                    },
+//                    'message' => 'Auth code not valid'
+//                ]);
+//        }
+
         // display error custom on controller
         $errors = $validator->errors($this->request->getData());
         if (empty($errors)) {
@@ -77,6 +89,8 @@ class RegistersController extends Controller
 
             $save = $this->Customers->save($register);
             if($save){
+
+
 
                 $balanceEntity = $this->CustomerBalances->newEntity([
                     'customer_id' => $save->get('id'),
@@ -116,8 +130,15 @@ class RegistersController extends Controller
         $this->SendAuth->register('register', $this->request->getData('phone'));
         $code = $this->SendAuth->generates();
         if($code){
-            $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Kode berlaku 15 mnt : '.$code;
-            $this->Sms->send($this->request->getData('phone'),$text);
+            $customerCheck = $this->Customers->find()
+                ->where(['phone' => $this->request->getData('phone')])
+                ->first();
+            if($customerCheck){
+
+            }else{
+                $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Kode berlaku 15 mnt : '.$code;
+                $this->Sms->send($this->request->getData('phone'),$text);
+            }
         }else{
             $this->setResponse($this->response->withStatus(406, 'request telah di kirim, silahkan tunggu 15 menit sampai sesi habis.'));
         }
