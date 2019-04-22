@@ -413,6 +413,50 @@ class ProductsController extends Controller
         
     }
 
+
+    public function deleteHistory()
+    {
+        $this->request->allowMethod('post');
+        if ($term_id = $this->request->getData('term_id')) {
+            $bid = $this->request->getHeader('bid');
+            if(count($bid) > 0) {
+                $bid = $bid[0];
+            } else {
+                $bid = null;
+            }
+
+            $browserEntity = $this->Browsers->find()
+                ->where([
+                    'bid' => $bid
+                ])
+                ->first();
+
+            if ($browserEntity) {
+                $browser_id = $browserEntity->get('id');
+                $entity = $this->SearchCategories->find()
+                    ->where([
+                        'search_term_id' => $term_id,
+                        'browser_id' => $browser_id
+                    ])
+                    ->first();
+                if ($entity) {
+                    $this->SearchCategories->delete($entity);
+                }
+
+                $entity = $this->SearchTerms->SearchStats->find()
+                    ->where([
+                        'search_term_id' => $term_id,
+                        'browser_id' => $browser_id
+                    ])
+                    ->first();
+                if ($entity) {
+                    $this->SearchTerms->SearchStats->delete($entity);
+                }
+            }
+
+        }
+    }
+
     public function saveSearch()
     {
 
