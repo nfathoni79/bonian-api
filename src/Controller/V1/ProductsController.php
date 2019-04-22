@@ -13,6 +13,7 @@ use Cake\I18n\Time;
  * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
  * @property \App\Model\Table\OrderDetailProductsTable $OrderDetailProducts
  * @property \App\Model\Table\SearchTermsTable $SearchTerms
+ * @property \App\Model\Table\SearchCategoriesTable $SearchCategories
  * @property \App\Model\Table\BrowsersTable $Browsers
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
@@ -30,6 +31,7 @@ class ProductsController extends Controller
         $this->loadModel('OrderDetailProducts');
         $this->loadModel('SearchTerms');
         $this->loadModel('SearchStats');
+        $this->loadModel('SearchCategories');
         $this->loadModel('Browsers');
         $this->loadModel('CustomerAuthenticates');
     }
@@ -405,11 +407,152 @@ class ProductsController extends Controller
         }
     }
 
+    public function productLists()
+    {
+        
+    }
+
+    public function saveSearch()
+    {
+        if ($pencarianPopuler->isEmpty()) {
+            //save search term
+            $searchTermEntity = $this->SearchTerms->newEntity([
+                'words' => $keywords,
+                'hits' => $kataKunci ? 1 : 0,
+                'match' => $kataKunci ? true : false
+            ]);
+
+            if ($this->SearchTerms->save($searchTermEntity)) {
+                $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                    'search_term_id' => $searchTermEntity->get('id'),
+                    'browser_id' => $browser_id,
+                    'customer_id' => $customer_id
+                ]);
+
+                if ($this->SearchTerms->SearchStats->save($searchStatEntity)) {
+
+                }
+            }
+
+        } else {
+            /**
+             * @var \App\Model\Entity\SearchTerm[] $pencarianPopuler
+             */
+            foreach($pencarianPopuler as $pencarian) {
+                $pencarian->set('hits', $pencarian->get('hits') + 1);
+                if ($kataKunci) {
+                    $pencarian->set('match', 1);
+                }
+                if ($this->SearchTerms->save($pencarian)) {
+                    $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
+                        'search_term_id' => $pencarian->get('id'),
+                        'browser_id' => $browser_id,
+                        'customer_id' => $customer_id
+                    ]);
+
+                    $this->SearchTerms->SearchStats->save($searchStatEntity);
+                }
+            }
+        }
+
+    }
+
+
+    protected function searchByKeyword($keywords, $limit = 5)
+    {
+        /* pencarian kata kunci*/
+        $kataKunci = $this->Products->ProductToCategories->find();
+
+        $kataKunci = $kataKunci
+            ->select([
+                'cnt' => "GROUP_CONCAT(product_id)",
+                'score' => "(MATCH(Products.name, Products.highlight) AGAINST(:search IN BOOLEAN MODE))"
+            ])
+            ->contain([
+                'Products' => [
+                    'fields' => [
+                        'id',
+                        'name',
+                        'slug'
+                    ]
+                ],
+                'ProductCategories'
+            ])
+            ->enableAutoFields(true)
+            ->group('product_category_id')
+            ->having([
+                'score >' => 0
+            ])
+            ->bind(':search', $keywords, 'string')
+            ->orderDesc('score')
+            ->limit($limit)
+            ->map(function(\App\Model\Entity\ProductToCategory $row) use ($keywords) {
+
+
+                $row->id = $row->product->id;
+                $row->name = $row->product->name;
+                $row->slug = $row->product->slug;
+
+                //get related keyword by categories
+                $searchTerm = $this->SearchCategories->find();
+                $searchTerm = $searchTerm
+                    ->select([
+                        'SearchTerms.words',
+                        'total' => $searchTerm->func()->count('search_term_id')
+                    ])
+                    ->contain([
+                        'SearchTerms'
+                    ])
+                    ->where([
+                        'product_category_id' => $row->product_category->id
+                    ])
+                    ->group('search_term_id')
+                    ->orderDesc('total')
+                    ->first();
+
+                if ($searchTerm) {
+                    $keywords = $searchTerm->get('search_term')->get('words');
+                } else {
+                    //save to new data
+                    $searchTermEntity = $this->SearchTerms->find()
+                        ->where(function(\Cake\Database\Expression\QueryExpression $exp) use ($keywords) {
+                            return $exp->like('words', '%' . $keywords . '%');
+                        })
+                        ->first();
+                    if ($searchTermEntity) {
+
+                    }
+                }
+
+                $row->primary = $keywords;
+                $row->secondary = $row->name;
+                //$row->image = false;
+                $row->onclick = false;
+                $row->fill_text = strtolower($keywords);
+
+                unset($row->id,
+                    $row->name,
+                    $row->slug,
+                    $row->product,
+                    $row->product_category->parent_id,
+                    $row->product_category->lft,
+                    $row->product_category->rght
+                );
+                return $row;
+            })
+
+            ->toArray();
+        return $kataKunci;
+    }
+
     public function search()
     {
 
         $keywords = trim($this->request->getQuery('keywords'));
         $bid = $this->request->getHeader('bid');
+        $limit = $this->request->getQuery('limit', 5);
+        $limit = $limit > 100 ? 100 : $limit;
+
         $browser_id = null;
         $customer_id = null;
 
@@ -455,87 +598,9 @@ class ProductsController extends Controller
             ->limit('4');
 
 
-        /* pencarian kata kunci*/
-        $kataKunci = $this->Products->find();
 
-        $kataKunci = $kataKunci
-            ->select([
-                'Products.id',
-                'Products.name',
-                'Products.slug',
-                'score' => "(MATCH(name, highlight) AGAINST(:search IN BOOLEAN MODE))"
-            ])
-            ->having([
-                'score >' => 0
-            ])
-            ->bind(':search', $keywords, 'string')
-            ->orderDesc('score')
-            ->limit(5)
-            ->map(function(\App\Model\Entity\Product $row) use ($keywords) {
+        $kataKunci = $this->searchByKeyword($keywords, $limit);
 
-                //get in category
-                $categories = $this->Products->ProductToCategories->find()
-                    ->where([
-                        'product_id' => $row->id
-                    ])
-                    ->contain([
-                        'ProductCategories'
-                    ])
-                    ->first();
-
-
-                $row->primary = $this->highlight($row->name, $keywords) . ' di <span class="search-category">' . $categories->get('product_category')->get('name') . '</span>';
-                $row->secondary = $row->name;
-                $row->image = false;
-                $row->onclick = false;
-                $row->fill_text = strtolower($keywords);
-
-                unset($row->id, $row->name, $row->slug);
-                return $row;
-            })
-
-            ->toArray();
-
-        if ($pencarianPopuler->isEmpty()) {
-            //save search term
-            $searchTermEntity = $this->SearchTerms->newEntity([
-                'words' => $keywords,
-                'hits' => $kataKunci ? 1 : 0,
-                'match' => $kataKunci ? true : false
-            ]);
-
-            if ($this->SearchTerms->save($searchTermEntity)) {
-                $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                    'search_term_id' => $searchTermEntity->get('id'),
-                    'browser_id' => $browser_id,
-                    'customer_id' => $customer_id
-                ]);
-
-                if ($this->SearchTerms->SearchStats->save($searchStatEntity)) {
-
-                }
-            }
-
-        } else {
-            /**
-             * @var \App\Model\Entity\SearchTerm[] $pencarianPopuler
-             */
-            foreach($pencarianPopuler as $pencarian) {
-                $pencarian->set('hits', $pencarian->get('hits') + 1);
-                if ($kataKunci) {
-                    $pencarian->set('match', 1);
-                }
-                if ($this->SearchTerms->save($pencarian)) {
-                    $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
-                        'search_term_id' => $pencarian->get('id'),
-                        'browser_id' => $browser_id,
-                        'customer_id' => $customer_id
-                    ]);
-
-                    $this->SearchTerms->SearchStats->save($searchStatEntity);
-                }
-            }
-        }
 
 
         $pencarianPopuler = $this->SearchTerms->find()
@@ -548,11 +613,44 @@ class ProductsController extends Controller
             ->limit('4')
             ->map(function (\App\Model\Entity\SearchTerm $row) use($keywords) {
                 $row->primary = $this->highlight($row->words, $keywords);
-                $row->onclick = 'window.location.href=\'http://www.hyperlinkcode.com/button-links.php\';'; // custom url
+                $row->onclick = ''; // custom url
                 unset($row->id);
                 unset($row->hits);
                 unset($row->match);
                 unset($row->words);
+                return $row;
+            })
+            ->toArray();
+
+
+        $populerProduct = $this->Products->find()
+            ->select([
+                'id',
+                'name',
+                'slug'
+            ])
+            ->where([
+                'product_status_id' => 1,
+                'MATCH (name, highlight) AGAINST (:search)'
+            ])
+            ->contain([
+                'ProductImages' => [
+                    'fields' => [
+                        'name',
+                        'product_id',
+                    ],
+                    'sort' => ['ProductImages.primary' => 'DESC']
+                ]
+            ])
+            ->bind(':search', $keywords, 'string')
+            ->orderDesc('Products.view')
+            ->limit($limit)
+            ->map(function (\App\Model\Entity\Product $row) use($keywords) {
+                $row->primary = $row->name;
+                $row->secondary = $row->name;
+                $row->onclick = false; // custom url
+                $row->image = false;
+                $row->fill_text = strtolower($keywords);
                 return $row;
             })
             ->toArray();
@@ -581,8 +679,9 @@ class ProductsController extends Controller
                 'header' => [
                     'title' => 'Produk Terpopuler',
                     'slug' => 'produk-terpopuler',
+                    'limit' => 4
                 ],
-                'data' => []
+                'data' => $populerProduct
             ],
         ];
 

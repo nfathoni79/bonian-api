@@ -7,21 +7,23 @@ use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
 /**
- * ProductToCategories Model
+ * SearchCategories Model
  *
- * @property \App\Model\Table\ProductsTable|\Cake\ORM\Association\BelongsTo $Products
+ * @property \App\Model\Table\SearchTermsTable|\Cake\ORM\Association\BelongsTo $SearchTerms
  * @property \App\Model\Table\ProductCategoriesTable|\Cake\ORM\Association\BelongsTo $ProductCategories
  *
- * @method \App\Model\Entity\ProductToCategory get($primaryKey, $options = [])
- * @method \App\Model\Entity\ProductToCategory newEntity($data = null, array $options = [])
- * @method \App\Model\Entity\ProductToCategory[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\ProductToCategory|bool save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ProductToCategory|bool saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ProductToCategory patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\ProductToCategory[] patchEntities($entities, array $data, array $options = [])
- * @method \App\Model\Entity\ProductToCategory findOrCreate($search, callable $callback = null, $options = [])
+ * @method \App\Model\Entity\SearchCategory get($primaryKey, $options = [])
+ * @method \App\Model\Entity\SearchCategory newEntity($data = null, array $options = [])
+ * @method \App\Model\Entity\SearchCategory[] newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\SearchCategory|bool save(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method \App\Model\Entity\SearchCategory|bool saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method \App\Model\Entity\SearchCategory patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
+ * @method \App\Model\Entity\SearchCategory[] patchEntities($entities, array $data, array $options = [])
+ * @method \App\Model\Entity\SearchCategory findOrCreate($search, callable $callback = null, $options = [])
+ *
+ * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class ProductToCategoriesTable extends Table
+class SearchCategoriesTable extends Table
 {
 
     /**
@@ -34,17 +36,17 @@ class ProductToCategoriesTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('product_to_categories');
+        $this->setTable('search_categories');
         $this->setDisplayField('id');
         $this->setPrimaryKey('id');
 
-        $this->belongsTo('Products', [
-            'foreignKey' => 'product_id',
-            'joinType' => 'LEFT'
+        $this->addBehavior('Timestamp');
+
+        $this->belongsTo('SearchTerms', [
+            'foreignKey' => 'search_term_id'
         ]);
         $this->belongsTo('ProductCategories', [
-            'foreignKey' => 'product_category_id',
-            'joinType' => 'LEFT'
+            'foreignKey' => 'product_category_id'
         ]);
     }
 
@@ -72,7 +74,7 @@ class ProductToCategoriesTable extends Table
      */
     public function buildRules(RulesChecker $rules)
     {
-        $rules->add($rules->existsIn(['product_id'], 'Products'));
+        $rules->add($rules->existsIn(['search_term_id'], 'SearchTerms'));
         $rules->add($rules->existsIn(['product_category_id'], 'ProductCategories'));
 
         return $rules;
