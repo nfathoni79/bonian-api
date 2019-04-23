@@ -120,7 +120,8 @@ class ProductsController extends Controller
                 /* discount percent */
                 $percent = ( $row->price - $row->price_sale) / $row->price * 100;
                 $row->percent = round($percent);
-
+                $optionsVariant = [];
+                $spesificVariantCounter = [];
                 foreach($row->variant as $key => $val) {
                     $image = [];
                     foreach($row->get('product_images') as $vl){
@@ -128,10 +129,14 @@ class ProductsController extends Controller
                             $image[] = $vl['name'];
                         }
                     }
+//                    foreach($val->options as $k => $vl){
+//                        $optionsVariant[$k][] = $vl;
+//                    }
 
 
                     $row->variant[$key]['price_id'] = $row->variant[$key]['id'];
                     $stocks = [];
+                    $stocksVariant = 0;
                     foreach($val->product_option_stocks as $i => $stock) {
                         $stocks[] = [
                             'stock_id' => $stock['id'],
@@ -143,12 +148,14 @@ class ProductsController extends Controller
                             'length' => $stock['length'],
                             'height' => $stock['height'],
                         ];
+                        $stocksVariant += $stock['stock'];
                     }
                     unset($row->variant[$key]['product_option_stocks']);
                     $row->variant[$key]->stocks = $stocks;
 
                     $options = [];
 //                    $optionsId = [];
+                    $optionSpesific = [];
                     foreach($val->product_option_value_lists as $i => $list) {
                         if (!isset($options[$list->option->name])) {
                             $options[$list->option->name] = [];
@@ -158,7 +165,18 @@ class ProductsController extends Controller
                         if (!in_array($list->option_value->name, $options[$list->option->name])) {
                             $options[$list->option->name][] = $list->option_value->name;
                         }
+
+                        if (!isset($optionsVariant[$list->option->name])) {
+                            $optionsVariant[$list->option->name] = [];
+//                            $optionsId[] = $list->id;
+                        }
+                        if (!in_array($list->option_value->name, $optionsVariant[$list->option->name])) {
+                            $optionsVariant[$list->option->name][] = $list->option_value->name;
+                        }
+                        $optionSpesific[$key][] = $list->option_value->name;
                     }
+
+                    $spesificVariantCounter[$key] = [implode(',',$optionSpesific[$key]) => $stocksVariant];
 
                     unset($row->variant[$key]['product_option_value_lists']);
                     unset($row->variant[$key]['product_id']);
@@ -167,8 +185,11 @@ class ProductsController extends Controller
                     $row->variant[$key]->images = $image;
 //                    $row->variant[$key]->options['code'] = implode(',',$optionsId);
 
+//                    debug($options);
                 }
 
+                $row->options = $optionsVariant;
+                $row->spesific = $spesificVariantCounter;
                 foreach($row->product_tags as $key => &$val) {
                     $val->name = $val->tag ? $val->tag->name : null;
                     unset($val->id);
