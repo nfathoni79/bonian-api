@@ -31,20 +31,14 @@ class ProductFiltersController extends Controller
     {
         foreach($object as $key => &$item) {
             if ($item instanceof \App\Model\Entity\ProductCategory) {
-                //if (!in_array($item['id'], $selected)) {
-                //    unset($object[$key]);
-                //}
 
-                if (!isset($selected[$item['id']])) {
+                if (count($selected) > 0 && !isset($selected[$item['id']])) {
                     unset($object[$key]);
                 }
-
-
+                
                 $item['text'] = $item['name'];
                 $item['total'] = 0;
-                /*if (isset($product_category_total[$item['id']])) {
-                    $item['total'] = $product_category_total[$item['id']];
-                }*/
+
                 if (isset($selected[$item['id']])) {
                     $item['total'] = $selected[$item['id']];
                     $item['text'] .= ' (' . $item['total'] . ')';
