@@ -1,0 +1,268 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: ridwan
+ * Date: 23/04/2019
+ * Time: 13:34
+ */
+
+namespace App\Controller\V1;
+
+use App\Controller\V1\AppController as Controller;
+
+/**
+ * Class ProductFiltersController
+ * @property \App\Model\Table\ProductsTable $Products
+ * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
+ * @package App\Controller\V1
+ */
+
+class ProductFiltersController extends Controller
+{
+    public function initialize()
+    {
+        parent::initialize();
+        $this->loadModel('Products');
+        $this->loadModel('ProductCategories');
+    }
+
+
+    protected function walk_recursive(&$object, $product_category_total, $selected, $expand = [])
+    {
+        foreach($object as $key => &$item) {
+            if ($item instanceof \App\Model\Entity\ProductCategory) {
+                //if (!in_array($item['id'], $selected)) {
+                //    unset($object[$key]);
+                //}
+
+                if (!isset($selected[$item['id']])) {
+                    unset($object[$key]);
+                }
+
+
+                $item['text'] = $item['name'];
+                $item['total'] = 0;
+                /*if (isset($product_category_total[$item['id']])) {
+                    $item['total'] = $product_category_total[$item['id']];
+                }*/
+                if (isset($selected[$item['id']])) {
+                    $item['total'] = $selected[$item['id']];
+                    $item['text'] .= ' (' . $item['total'] . ')';
+                }
+
+                $item['state'] = [
+                    'checked' => true,
+                    'expanded' => in_array($item['id'], $expand),
+                    'selected' => $item['id'] == $expand[count($expand) - 1]
+                ];
+                $item['nodes'] = $item['children'];
+                unset($item['path']);
+                unset($item['name']);
+                //unset($item['parent_id']);
+                unset($item['children']);
+                if ($item['nodes']) {
+                    $this->walk_recursive($item['nodes'], $product_category_total, $selected, $expand);
+                } else {
+                    unset($item['nodes']);
+                }
+
+
+            }
+        }
+        return $this;
+    }
+
+    protected function reindex(&$array)
+    {
+
+        $array = array_values($array);
+        foreach ($array as $key => &$value) {
+           if(isset($value['nodes'])) {
+               $value['nodes'] = array_values($value['nodes']);
+               $this->reindex($array[$key]['nodes']);
+           }
+        }
+        return $this;
+    }
+
+    protected function calc(&$array)
+    {
+        $total = 0;
+        foreach($array as $key => &$value) {
+            $total = $value['total'];
+            debug($value['text']);
+            debug($total);
+            if(isset($value['nodes'])) {
+                $total += $this->calc($array[$key]['nodes']);
+                //$value['total'] = $total;
+                $value['text'] .= ' (' . $total . ')';
+            }
+
+
+        }
+
+        return $total;
+    }
+
+
+    public function categories()
+    {
+
+        $keywords = $this->request->getQuery('q');
+        $category_id = $this->request->getQuery('category_id');
+
+        $categories = $this->ProductCategories->find('threaded');
+
+        $categories = $categories
+            ->select(['id','parent_id','name', 'slug','path'])
+            ->map(function (\App\Model\Entity\ProductCategory $row) {
+                return $row;
+            })
+            ->toArray();
+
+        $hasProducts = $this->Products->ProductToCategories->find();
+
+        $hasProducts = $hasProducts
+            ->select([
+                'total_products' => $hasProducts->func()->count('product_id'),
+                'product_category_id'
+            ])
+            ->contain([
+                'Products' => [
+                    'fields' => [
+                        'id',
+                        'name'
+                    ]
+                ]
+            ])
+            ->where([
+                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            ])
+            ->enableAutoFields(true)
+            ->group('product_category_id')
+            ->bind(':search', $keywords, 'string')
+            ->toArray();
+
+        $expandable = [];
+        if ($category_id) {
+            $path = $this->ProductCategories->find('path', ['for' => $category_id])->toArray();
+            foreach($path as $vals) {
+                if (!in_array($vals['id'], $expandable)) {
+                    array_push($expandable, $vals['id']);
+                }
+            }
+        }
+
+
+
+
+        $product_category_total = [];
+        $selected = [];
+        foreach($hasProducts as $val) {
+            $product_category_total[$val['product_category_id']] = $val['total_products'];
+            $path = $this->ProductCategories->find('path', ['for' => $val['product_category_id']])->toArray();
+            foreach($path as $vals) {
+                if (!isset($selected[$vals['id']])) {
+                    //array_push($selected, $vals['id']);
+                    $selected[$vals['id']] = $val['total_products'];
+                } else {
+                    $selected[$vals['id']] += $val['total_products'];
+                }
+            }
+        }
+
+        //debug($expandable);exit;
+
+
+        $this->walk_recursive($categories, $product_category_total, $selected, $expandable)
+            ->reindex($categories);
+
+
+
+        $this->set(compact('categories'));
+    }
+
+    public function index()
+    {
+        $search = $this->request->getQuery('q');
+        $category_id = $this->request->getQuery('category_id');
+
+        $data = $this->Products->find()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'model',
+                'video_url',
+                'price',
+                'price_sale',
+                'highlight',
+                'profile',
+                'view',
+                'point',
+                'rating',
+                'score' => "(MATCH(Products.name, Products.highlight) AGAINST(:search IN BOOLEAN MODE))",
+                'created'
+            ])
+            ->leftJoinWith('ProductToCategories')
+            ->where([
+                'Products.product_status_id' => 1,
+                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            ]);
+
+        if ($category_id) {
+            //ProductToCategories
+
+            $data->where([
+                'ProductToCategories.product_category_id' => $category_id
+            ]);
+        }
+
+
+        $data = $data
+            ->bind(':search', $search, 'string')
+            ->contain([
+                'ProductImages' => [
+                    'fields' => [
+                        'name',
+                        'product_id',
+                    ],
+                    'sort' => ['ProductImages.primary' => 'DESC']
+                ],
+                'ProductTags' => [
+                    'Tags'
+                ],
+                'ProductOptionPrices' => [
+                    'fields' => [
+                        'id',
+                        'product_id',
+                        'sku',
+                        'expired',
+                        'price'
+                    ],
+                    'ProductOptionValueLists' => [
+                        'Options' => [
+                            'fields' => ['id','name']
+                        ],
+                        'OptionValues' => [
+                            'fields' => ['id','name']
+                        ]
+                    ],
+                    'ProductOptionStocks' => [
+                        'Branches' => [
+                            'fields' => [
+                                'id', 'name'
+                            ]
+                        ]
+                    ]
+                ]
+            ])
+            ->orderDesc('score');
+
+        $data = $this->paginate($data, [
+            'limit' => (int) $this->request->getQuery('limit', 5)
+        ]);
+
+        $this->set(compact('data'));
+    }
+}
