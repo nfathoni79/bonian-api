@@ -53,7 +53,7 @@ class ProductFiltersController extends Controller
                 $item['state'] = [
                     'checked' => true,
                     'expanded' => in_array($item['id'], $expand),
-                    'selected' => $item['id'] == $expand[count($expand) - 1]
+                    'selected' => count($expand) > 0 && $item['id'] == $expand[count($expand) - 1]
                 ];
                 $item['nodes'] = $item['children'];
                 unset($item['path']);
