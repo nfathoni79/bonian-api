@@ -55,6 +55,7 @@ class ProductsController extends Controller
                 'highlight',
                 'profile',
                 'view',
+                'sku',
                 'point',
                 'rating',
                 'created'
@@ -64,10 +65,12 @@ class ProductsController extends Controller
                 'Products.product_status_id' => 1
             ])
             ->contain([
+                'ProductToCategories',
                 'ProductImages' => [
                     'fields' => [
                         'name',
                         'product_id',
+                        'idx',
                     ],
                     'sort' => ['ProductImages.primary' => 'DESC']
                 ],
@@ -80,7 +83,8 @@ class ProductsController extends Controller
                         'product_id',
                         'sku',
                         'expired',
-                        'price'
+                        'price',
+                        'idx'
                     ],
                     'ProductOptionValueLists' => [
                         'Options' => [
@@ -102,8 +106,28 @@ class ProductsController extends Controller
             ->map(function (\App\Model\Entity\Product $row) {
                 $row->set('created', $row->created->timestamp);
                 $row->variant = $row->get('product_option_prices');
+//
+//                $images = [];
+//                foreach($row->get('product_images') as $vl){
+//                    if($vl['idx'] == 0){
+//                        $images[] = $vl['name'];
+//                    }
+//                }
+                $category = $this->ProductCategories->find('path',['fields' => ['name', 'slug'],'for' => $row->product_to_categories[0]->product_category_id])->toArray();
+
+                /* discount percent */
+                $percent = ( $row->price - $row->price_sale) / $row->price * 100;
+                $row->percent = round($percent);
 
                 foreach($row->variant as $key => $val) {
+                    $image = [];
+                    foreach($row->get('product_images') as $vl){
+                        if($vl['idx'] == $val['idx']){
+                            $image[] = $vl['name'];
+                        }
+                    }
+
+
                     $row->variant[$key]['price_id'] = $row->variant[$key]['id'];
                     $stocks = [];
                     foreach($val->product_option_stocks as $i => $stock) {
@@ -138,6 +162,7 @@ class ProductsController extends Controller
                     unset($row->variant[$key]['product_id']);
                     unset($row->variant[$key]['id']);
                     $row->variant[$key]->options = $options;
+                    $row->variant[$key]->images = $image;
 //                    $row->variant[$key]->options['code'] = implode(',',$optionsId);
 
                 }
@@ -148,10 +173,14 @@ class ProductsController extends Controller
                     unset($val->product_id);
                     unset($val->tag);
                 }
+                $row->categories = $category;
                 $row->tags = $row->product_tags;
                 unset($row->product_tags);
+                unset($row->product_to_categories);
 
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+//                $row->images = $images;
+//                $row->images = $row->get('product_images');
 
                 unset($row->product_option_prices, $row->product_images);
                 return $row;
@@ -177,12 +206,12 @@ class ProductsController extends Controller
                 ])
                 ->first();
 
-            if ($product_deals) {
-                $product->set('price_sale', $product_deals->get('price_sale'));
-                $product->set('is_flash_sale', true);
-            } else {
-                $product->set('is_flash_sale', false);
-            }
+//            if ($product_deals) {
+//                $product->set('price_sale', $product_deals->get('price_sale'));
+//                $product->set('is_flash_sale', true);
+//            } else {
+//                $product->set('is_flash_sale', false);
+//            }
         }
 
 
