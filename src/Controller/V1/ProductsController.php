@@ -109,12 +109,12 @@ class ProductsController extends Controller
                 $row->set('created', $row->created->timestamp);
                 $row->variant = $row->get('product_option_prices');
 //
-//                $images = [];
-//                foreach($row->get('product_images') as $vl){
-//                    if($vl['idx'] == 0){
-//                        $images[] = $vl['name'];
-//                    }
-//                }
+                $images = [];
+                foreach($row->get('product_images') as $vl){
+                    if($vl['idx'] == 0){
+                        $images[] = $vl['name'];
+                    }
+                }
                 $category = $this->ProductCategories->find('path',['fields' => ['name', 'slug'],'for' => $row->product_to_categories[0]->product_category_id])->toArray();
 
                 /* discount percent */
@@ -201,8 +201,8 @@ class ProductsController extends Controller
                 unset($row->product_tags);
                 unset($row->product_to_categories);
 
-                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
-//                $row->images = $images;
+//                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+                $row->images = $images;
 //                $row->images = $row->get('product_images');
 
                 unset($row->product_option_prices, $row->product_images);
