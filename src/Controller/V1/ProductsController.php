@@ -15,6 +15,7 @@ use Cake\I18n\Time;
  * @property \App\Model\Table\SearchTermsTable $SearchTerms
  * @property \App\Model\Table\SearchCategoriesTable $SearchCategories
  * @property \App\Model\Table\BrowsersTable $Browsers
+ * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
@@ -34,6 +35,7 @@ class ProductsController extends Controller
         $this->loadModel('SearchCategories');
         $this->loadModel('Browsers');
         $this->loadModel('CustomerAuthenticates');
+        $this->loadModel('ProductCategories');
     }
 
     /**
