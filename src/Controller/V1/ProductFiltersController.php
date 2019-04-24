@@ -108,13 +108,20 @@ class ProductFiltersController extends Controller
                         'name'
                     ]
                 ]
-            ])
-            ->where([
-                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
-            ])
+            ]);
+
+        if ($keywords) {
+            $hasProducts
+                ->where([
+                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                ])
+                ->bind(':search', $keywords, 'string');
+        }
+
+
+        $hasProducts = $hasProducts
             ->enableAutoFields(true)
             ->group('product_category_id')
-            ->bind(':search', $keywords, 'string')
             ->toArray();
 
         $expandable = [];
