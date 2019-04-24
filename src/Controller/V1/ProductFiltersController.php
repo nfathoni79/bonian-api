@@ -206,6 +206,7 @@ class ProductFiltersController extends Controller
                     'fields' => [
                         'name',
                         'product_id',
+                        'idx',
                     ],
                     'sort' => ['ProductImages.primary' => 'DESC']
                 ],
@@ -241,7 +242,17 @@ class ProductFiltersController extends Controller
 
         $data = $this->paginate($data, [
             'limit' => (int) $this->request->getQuery('limit', 5)
-        ]);
+        ])->map(function(\App\Model\Entity\Product $row) {
+            $images = [];
+            foreach($row->get('product_images') as $vl){
+                if($vl['idx'] == 0){
+                    $images[] = $vl['name'];
+                }
+            }
+            $row->images = $images;
+            //unset($row->product_images);
+            return $row;
+        });
 
         $this->set(compact('data'));
     }
