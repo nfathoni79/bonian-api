@@ -50,7 +50,7 @@ class CartController extends AppController
         $customerId = $this->Authenticate->getId();
 
         if($this->request->getData('qty') <= 0){
-            $this->setResponse($this->response->withStatus(406, 'Failed to add cart'));
+            $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi quantity'));
         }else{
 
 
@@ -107,7 +107,7 @@ class CartController extends AppController
                         );
 
                         if(!$update){
-                            $this->setResponse($this->response->withStatus(406, 'Failed to add cart, not enought stock'));
+                            $this->setResponse($this->response->withStatus(406, 'Maaf, Stok tidak cukup.'));
                             $errors = $newEntityDetails->getErrors();
                         }
                     }else{
@@ -154,13 +154,13 @@ class CartController extends AppController
                         if ($this->CustomerCartDetails->save($newEntityDetails)) {
 
                         } else {
-                            $this->setResponse($this->response->withStatus(406, 'Failed to add cart'));
+                            $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi pilihan'));
                             $errors = $newEntityDetails->getErrors();
                         }
                     }
 
                 }else{
-                    $this->setResponse($this->response->withStatus(406, 'Failed to add cart'));
+                    $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi pilihan'));
                     $errors = $newEntityDetails->getErrors();
                 }
 
