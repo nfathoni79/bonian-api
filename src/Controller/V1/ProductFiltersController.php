@@ -41,7 +41,6 @@ class ProductFiltersController extends Controller
 
                 if (isset($selected[$item['id']])) {
                     $item['total'] = $selected[$item['id']];
-                    $item['text'] .= ' (' . $item['total'] . ')';
                 }
 
                 $item['state'] = [
