@@ -35,7 +35,7 @@ class ProductFiltersController extends Controller
                 if (count($selected) > 0 && !isset($selected[$item['id']])) {
                     unset($object[$key]);
                 }
-                
+
                 $item['text'] = $item['name'];
                 $item['total'] = 0;
 
@@ -45,7 +45,7 @@ class ProductFiltersController extends Controller
                 }
 
                 $item['state'] = [
-                    'checked' => true,
+                    'checked' => in_array($item['id'], $expand),
                     'expanded' => in_array($item['id'], $expand),
                     'selected' => count($expand) > 0 && $item['id'] == $expand[count($expand) - 1]
                 ];
@@ -78,26 +78,6 @@ class ProductFiltersController extends Controller
         }
         return $this;
     }
-
-    protected function calc(&$array)
-    {
-        $total = 0;
-        foreach($array as $key => &$value) {
-            $total = $value['total'];
-            debug($value['text']);
-            debug($total);
-            if(isset($value['nodes'])) {
-                $total += $this->calc($array[$key]['nodes']);
-                //$value['total'] = $total;
-                $value['text'] .= ' (' . $total . ')';
-            }
-
-
-        }
-
-        return $total;
-    }
-
 
     public function categories()
     {
