@@ -339,12 +339,36 @@ class ProductFiltersController extends Controller
         $category_id = $this->request->getQuery('category_id');
         $min_price = $this->request->getQuery('min_price');
         $max_price = $this->request->getQuery('max_price');
+        $variants = $this->request->getQuery('variants');
+
+
 
 
         $validator = $this->_validator();
         $error = $validator->errors($this->request->getQueryParams());
 
         if (!$error) {
+            $subquery = null;
+            if (is_array($variants)) {
+                $variants = array_values($variants);
+                $subquery = $this->ProductOptionValueLists->find()
+                    ->select([
+                        'Product.id'
+                    ])
+                    ->where([
+                        'ProductOptionValueLists.option_value_id IN' => $variants,
+                        'Products.id = Product.id'
+                    ])
+                    ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
+                        'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
+                    ])
+                    ->leftJoin(['Product' => 'products'], [
+                        'ProductOptionPrices.product_id = Product.id'
+                    ])
+                    ->group('Product.id');
+
+            }
+
             $data = $this->Products->find()
                 ->select([
                     'id',
@@ -367,6 +391,12 @@ class ProductFiltersController extends Controller
                 ->where([
                     'Products.product_status_id' => 1
                 ]);
+
+            if ($subquery instanceof \Cake\ORM\Query) {
+                $data->where(function (QueryExpression $exp) use ($subquery) {
+                    return $exp->exists($subquery);
+                });
+            }
 
             if ($search) {
                 $data->where([
@@ -408,33 +438,7 @@ class ProductFiltersController extends Controller
                         ],
                         'sort' => ['ProductImages.primary' => 'DESC']
                     ],
-                    'ProductTags' => [
-                        'Tags'
-                    ],
-                    'ProductOptionPrices' => [
-                        'fields' => [
-                            'id',
-                            'product_id',
-                            'sku',
-                            'expired',
-                            'price'
-                        ],
-                        'ProductOptionValueLists' => [
-                            'Options' => [
-                                'fields' => ['id','name']
-                            ],
-                            'OptionValues' => [
-                                'fields' => ['id','name']
-                            ]
-                        ],
-                        'ProductOptionStocks' => [
-                            'Branches' => [
-                                'fields' => [
-                                    'id', 'name'
-                                ]
-                            ]
-                        ]
-                    ]
+
                 ])
                 ->orderDesc('score');
 
