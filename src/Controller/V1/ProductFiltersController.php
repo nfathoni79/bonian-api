@@ -39,6 +39,8 @@ class ProductFiltersController extends Controller
 
                 if (count($selected) > 0 && !isset($selected[$item['id']])) {
                     unset($object[$key]);
+                } else if (count($selected) == 0) {
+                    unset($object[$key]);
                 }
 
                 $item['text'] = $item['name'];
@@ -88,82 +90,127 @@ class ProductFiltersController extends Controller
 
         $keywords = $this->request->getQuery('q');
         $category_id = $this->request->getQuery('category_id');
+        $min_price = $this->request->getQuery('min_price');
+        $max_price = $this->request->getQuery('max_price');
+        $variants = $this->request->getQuery('variants');
 
-        $categories = $this->ProductCategories->find('threaded');
 
-        $categories = $categories
-            ->select(['id','parent_id','name', 'slug','path'])
-            ->map(function (\App\Model\Entity\ProductCategory $row) {
-                return $row;
-            })
-            ->toArray();
+        $validator = $this->_validator();
 
-        $hasProducts = $this->Products->ProductToCategories->find();
+        $error = $validator->errors($this->request->getQueryParams());
 
-        $hasProducts = $hasProducts
-            ->select([
-                'total_products' => $hasProducts->func()->count('product_id'),
-                'product_category_id'
-            ])
-            ->contain([
-                'Products' => [
-                    'fields' => [
-                        'id',
-                        'name'
-                    ]
-                ]
-            ])
-            ->where([
-                'Products.product_status_id' => 1
-            ]);
+        if (!$error) {
+            $categories = $this->ProductCategories->find('threaded');
 
-        if ($keywords) {
-            $hasProducts
-                ->where([
-                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            $categories = $categories
+                ->select(['id','parent_id','name', 'slug','path'])
+                ->map(function (\App\Model\Entity\ProductCategory $row) {
+                    return $row;
+                })
+                ->toArray();
+
+
+            $subquery = null;
+            if (is_array($variants)) {
+                $variants = array_values($variants);
+                $subquery = $this->ProductOptionValueLists->find()
+                    ->select([
+                        'Product.id'
+                    ])
+                    ->where([
+                        'ProductOptionValueLists.option_value_id IN' => $variants,
+                        'Products.id = Product.id'
+                    ])
+                    ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
+                        'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
+                    ])
+                    ->leftJoin(['Product' => 'products'], [
+                        'ProductOptionPrices.product_id = Product.id'
+                    ])
+                    ->group('Product.id');
+
+            }
+
+            $hasProducts = $this->Products->ProductToCategories->find();
+
+            $hasProducts = $hasProducts
+                ->select([
+                    'total_products' => $hasProducts->func()->count('product_id'),
+                    'product_category_id'
                 ])
-                ->bind(':search', $keywords, 'string');
-        }
+                ->contain([
+                    'Products' => [
+                        'fields' => [
+                            'id',
+                            'name'
+                        ]
+                    ]
+                ])
+                ->where([
+                    'Products.product_status_id' => 1
+                ]);
+
+            if ($keywords) {
+                $hasProducts
+                    ->where([
+                        'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                    ])
+                    ->bind(':search', $keywords, 'string');
+            }
+
+            if ($min_price && $max_price) {
+                $hasProducts->where(function(QueryExpression $exp) use ($min_price, $max_price) {
+                    return $exp->between('price_sale', $min_price, $max_price);
+                });
+            }
+
+            if ($subquery instanceof \Cake\ORM\Query) {
+                $hasProducts->where(function (QueryExpression $exp) use ($subquery) {
+                    return $exp->exists($subquery);
+                });
+            }
 
 
-        $hasProducts = $hasProducts
-            ->enableAutoFields(true)
-            ->group('product_category_id')
-            ->toArray();
+            $hasProducts = $hasProducts
+                ->enableAutoFields(true)
+                ->group('product_category_id')
+                ->toArray();
 
-        $expandable = [];
-        if ($category_id) {
-            $path = $this->ProductCategories->find('path', ['for' => $category_id])->toArray();
-            foreach($path as $vals) {
-                if (!in_array($vals['id'], $expandable)) {
-                    array_push($expandable, $vals['id']);
+            $expandable = [];
+            if ($category_id) {
+                $path = $this->ProductCategories->find('path', ['for' => $category_id])->toArray();
+                foreach($path as $vals) {
+                    if (!in_array($vals['id'], $expandable)) {
+                        array_push($expandable, $vals['id']);
+                    }
                 }
             }
-        }
 
 
 
 
-        $product_category_total = [];
-        $selected = [];
-        foreach($hasProducts as $val) {
-            $product_category_total[$val['product_category_id']] = $val['total_products'];
-            $path = $this->ProductCategories->find('path', ['for' => $val['product_category_id']])->toArray();
-            foreach($path as $vals) {
-                if (!isset($selected[$vals['id']])) {
-                    //array_push($selected, $vals['id']);
-                    $selected[$vals['id']] = $val['total_products'];
-                } else {
-                    $selected[$vals['id']] += $val['total_products'];
+            $product_category_total = [];
+            $selected = [];
+            foreach($hasProducts as $val) {
+                $product_category_total[$val['product_category_id']] = $val['total_products'];
+                $path = $this->ProductCategories->find('path', ['for' => $val['product_category_id']])->toArray();
+                foreach($path as $vals) {
+                    if (!isset($selected[$vals['id']])) {
+                        //array_push($selected, $vals['id']);
+                        $selected[$vals['id']] = $val['total_products'];
+                    } else {
+                        $selected[$vals['id']] += $val['total_products'];
+                    }
                 }
             }
+
+
+            $this->walk_recursive($categories, $product_category_total, $selected, $expandable)
+                ->reindex($categories);
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Request failed'));
         }
 
-        //debug($expandable);exit;
-
-
-        $this->walk_recursive($categories, $product_category_total, $selected, $expandable)
-            ->reindex($categories);
 
 
 
