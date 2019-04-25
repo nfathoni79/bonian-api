@@ -263,6 +263,8 @@ class ProductFiltersController extends Controller
                     return $row;
                 })
                 ->toArray();
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Request failed'));
         }
 
 
@@ -328,7 +330,7 @@ class ProductFiltersController extends Controller
             ->numeric('max_price')
             ->range('min_price', [0, 100000000], 'harga minimal 0 - 100.000.000')
             ->range('max_price', [1, 100000000], 'harga maxsimal 1 - 100.000.000')
-            ->greaterThanOrEqualToField('max_price', 'min_price', 'harga maksimal harus lebih besar dari harga minimal');
+            ->greaterThanOrEqualToField('min_price', 'max_price', 'harga maksimal harus lebih besar dari harga minimal');
 
         return $validator;
     }
@@ -454,6 +456,8 @@ class ProductFiltersController extends Controller
                 //unset($row->product_images);
                 return $row;
             });
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Request failed'));
         }
 
         $this->set(compact('data', 'error'));
