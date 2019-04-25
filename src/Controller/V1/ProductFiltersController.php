@@ -453,7 +453,7 @@ class ProductFiltersController extends Controller
                 ]);
             }
 
-            if ($min_price >= 0 && $max_price >= 0) {
+            if ($min_price >= 0 && $max_price) {
                 $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
                     return $exp->between('price_sale', $min_price, $max_price);
                 });
