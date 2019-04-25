@@ -330,7 +330,7 @@ class ProductFiltersController extends Controller
             ->numeric('max_price')
             ->range('min_price', [0, 100000000], 'harga minimal 0 - 100.000.000')
             ->range('max_price', [1, 100000000], 'harga maxsimal 1 - 100.000.000')
-            ->greaterThanOrEqualToField('min_price', 'max_price', 'harga maksimal harus lebih besar dari harga minimal');
+            ->lessThanOrEqualToField('min_price', 'max_price', 'harga maksimal harus lebih besar dari harga minimal');
 
         return $validator;
     }
