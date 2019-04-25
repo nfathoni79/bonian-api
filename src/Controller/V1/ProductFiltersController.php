@@ -49,7 +49,7 @@ class ProductFiltersController extends Controller
                 }
 
                 $item['state'] = [
-                    'checked' => in_array($item['id'], $expand),
+                    'checked' => count($expand) > 0 && $item['id'] == $expand[count($expand) - 1], //in_array($item['id'], $expand),
                     'expanded' => in_array($item['id'], $expand),
                     'selected' => count($expand) > 0 && $item['id'] == $expand[count($expand) - 1]
                 ];
