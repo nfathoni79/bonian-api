@@ -68,6 +68,14 @@ class ProductsController extends Controller
             ])
             ->contain([
                 'ProductToCategories',
+                'ProductCoupons' => [
+                    'queryBuilder' => function ($q) {
+                        return $q
+                            ->where(['status' => 1])
+                            ->order(['ProductCoupons.id' => 'DESC'])
+                            ->limit($this->request->getQuery('limit', 5));
+                    }
+                ],
                 'ProductImages' => [
                     'fields' => [
                         'name',
@@ -108,15 +116,20 @@ class ProductsController extends Controller
             ->map(function (\App\Model\Entity\Product $row) {
                 $row->set('created', $row->created->timestamp);
                 $row->variant = $row->get('product_option_prices');
-//
+
                 $images = [];
                 foreach($row->get('product_images') as $vl){
                     if($vl['idx'] == 0){
                         $images[] = $vl['name'];
                     }
                 }
-                $category = $this->ProductCategories->find('path',['fields' => ['name', 'slug'],'for' => $row->product_to_categories[0]->product_category_id])->toArray();
-
+                $category = $this->ProductCategories->find('path',['fields' => ['id','name', 'slug'],'for' => $row->product_to_categories[0]->product_category_id])->toArray();
+                if(!empty($row->get('product_coupons'))){
+                    $row->use_coupon = true;
+                    $row->coupon_price = $row->product_coupons[0]->price;
+                }else{
+                    $row->use_coupon = false;
+                }
                 /* discount percent */
                 $percent = ( $row->price - $row->price_sale) / $row->price * 100;
                 $row->percent = round($percent);
@@ -129,9 +142,6 @@ class ProductsController extends Controller
                             $image[] = $vl['name'];
                         }
                     }
-//                    foreach($val->options as $k => $vl){
-//                        $optionsVariant[$k][] = $vl;
-//                    }
 
 
                     $row->variant[$key]['price_id'] = $row->variant[$key]['id'];
@@ -154,12 +164,10 @@ class ProductsController extends Controller
                     $row->variant[$key]->stocks = $stocks;
 
                     $options = [];
-//                    $optionsId = [];
                     $optionSpesific = [];
                     foreach($val->product_option_value_lists as $i => $list) {
                         if (!isset($options[$list->option->name])) {
                             $options[$list->option->name] = [];
-//                            $optionsId[] = $list->id;
                         }
 
                         if (!in_array($list->option_value->name, $options[$list->option->name])) {
@@ -168,7 +176,6 @@ class ProductsController extends Controller
 
                         if (!isset($optionsVariant[$list->option->name])) {
                             $optionsVariant[$list->option->name] = [];
-//                            $optionsId[] = $list->id;
                         }
                         if (!in_array($list->option_value->name, $optionsVariant[$list->option->name])) {
                             $optionsVariant[$list->option->name][] = $list->option_value->name;
@@ -183,9 +190,6 @@ class ProductsController extends Controller
                     unset($row->variant[$key]['id']);
                     $row->variant[$key]->options = $options;
                     $row->variant[$key]->images = $image;
-//                    $row->variant[$key]->options['code'] = implode(',',$optionsId);
-
-//                    debug($options);
                 }
 
                 $row->options = $optionsVariant;
@@ -198,12 +202,12 @@ class ProductsController extends Controller
                 }
                 $row->categories = $category;
                 $row->tags = $row->product_tags;
+                unset($row->product_coupons);
                 unset($row->product_tags);
                 unset($row->product_to_categories);
 
 //                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
                 $row->images = $images;
-//                $row->images = $row->get('product_images');
 
                 unset($row->product_option_prices, $row->product_images);
                 return $row;
