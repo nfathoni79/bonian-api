@@ -260,7 +260,7 @@ class CartController extends AppController
                     ]
                 ])
                 ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3]]);
-
+            $cartList->orderDesc('CustomerCartDetails.id');
             $data = $this->paginate($cartList, [
                 'limit' => (int) $this->request->getQuery('limit',100)
             ])->map(function (\App\Model\Entity\CustomerCartDetail $row) {
