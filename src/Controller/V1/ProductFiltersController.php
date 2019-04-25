@@ -15,6 +15,7 @@ use Cake\Utility\Hash;
  * Class ProductFiltersController
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
+ * @property \App\Model\Table\ProductOptionValueListsTable $ProductOptionValueLists
  * @package App\Controller\V1
  */
 
@@ -25,6 +26,7 @@ class ProductFiltersController extends Controller
         parent::initialize();
         $this->loadModel('Products');
         $this->loadModel('ProductCategories');
+        $this->loadModel('ProductOptionValueLists');
     }
 
 
@@ -164,6 +166,91 @@ class ProductFiltersController extends Controller
 
 
         $this->set(compact('categories'));
+    }
+
+    public function variant()
+    {
+        $search = $this->request->getQuery('q');
+        $category_id = $this->request->getQuery('category_id');
+
+        $data = $this->ProductOptionValueLists->find();
+
+        $data = $data
+            ->select([
+                'option_values' => "GROUP_CONCAT(ProductOptionValueLists.option_value_id)",
+                'Options.id',
+                'Options.name'
+            ])
+            ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
+                'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
+            ])
+            ->leftJoin(['Products' => 'products'], [
+                'ProductOptionPrices.product_id = Products.id'
+            ])
+            ->leftJoin(['ProductToCategories' => 'product_to_categories'], [
+                'ProductOptionPrices.product_id = ProductToCategories.product_id'
+            ])
+            ->leftJoin(['Options' => 'options'], [
+                'ProductOptionValueLists.option_id = Options.id'
+            ])
+            ->leftJoin(['OptionValues' => 'option_values'], [
+                'ProductOptionValueLists.option_value_id = OptionValues.id'
+            ])
+            ->group([
+                'ProductOptionValueLists.option_id'
+            ])
+            ->where([]);
+
+        if ($search) {
+            $data->where([
+                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            ])
+            ->bind(':search', $search, 'string');
+        }
+
+        if ($category_id) {
+            $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
+                ->toArray();
+            $children = Hash::extract($descendants, '{n}.id');
+            if ($children) {
+                $data->where([
+                    'ProductToCategories.product_category_id IN' => $children
+                ]);
+            } else {
+                $data->where([
+                    'ProductToCategories.product_category_id' => $category_id
+                ]);
+            }
+        }
+
+        $data = $data
+            ->map(function(\App\Model\Entity\ProductOptionValueList $row) {
+                $values = array_unique(explode(',', $row->option_values));
+                $value_lists = [];
+                if (is_array($values)) {
+                    $valueEntities = $this->ProductOptionValueLists->OptionValues->find()
+                        ->where([
+                            'id IN' => $values
+                        ])
+                        ->toArray();
+                    foreach($valueEntities as $val) {
+                        array_push($value_lists, [
+                           //'option_id' => (int) $row->get('Options')['id'],
+                            'option_value_id' => $val->get('id'),
+                            'name' => $val->get('name')
+                        ]);
+                    }
+
+                }
+
+                $row->values = $value_lists;
+                unset($row->option_values);
+                return $row;
+            })
+            ->toArray();
+
+
+        $this->set(compact('data'));
     }
 
     public function priceRange()
