@@ -9,6 +9,7 @@
 namespace App\Controller\V1;
 
 use App\Controller\V1\AppController as Controller;
+use Cake\Utility\Hash;
 
 /**
  * Class ProductFiltersController
@@ -107,6 +108,9 @@ class ProductFiltersController extends Controller
                         'name'
                     ]
                 ]
+            ])
+            ->where([
+                'Products.product_status_id' => 1
             ]);
 
         if ($keywords) {
@@ -162,6 +166,51 @@ class ProductFiltersController extends Controller
         $this->set(compact('categories'));
     }
 
+    public function priceRange()
+    {
+        $search = $this->request->getQuery('q');
+        $category_id = $this->request->getQuery('category_id');
+
+        $data = $this->Products->find();
+
+        $data = $data
+            ->select([
+                'min_price' => $data->func()->min('price_sale'),
+                'max_price' => $data->func()->max('price_sale')
+            ])
+            ->leftJoinWith('ProductToCategories')
+            ->where([
+                'Products.product_status_id' => 1
+            ]);
+
+        if ($search) {
+            $data->where([
+                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+            ])
+                ->bind(':search', $search, 'string');
+        }
+
+        if ($category_id) {
+            $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
+                ->toArray();
+            $children = Hash::extract($descendants, '{n}.id');
+            if ($children) {
+                $data->where([
+                    'ProductToCategories.product_category_id IN' => $children
+                ]);
+            } else {
+                $data->where([
+                    'ProductToCategories.product_category_id' => $category_id
+                ]);
+            }
+
+        }
+
+        $data = $data->first();
+
+        $this->set(compact('data'));
+    }
+
     public function index()
     {
         $search = $this->request->getQuery('q');
@@ -181,21 +230,35 @@ class ProductFiltersController extends Controller
                 'view',
                 'point',
                 'rating',
+                'rating_count',
                 'score' => "(MATCH(Products.name, Products.highlight) AGAINST(:search IN BOOLEAN MODE))",
                 'created'
             ])
             ->leftJoinWith('ProductToCategories')
             ->where([
-                'Products.product_status_id' => 1,
+                'Products.product_status_id' => 1
+            ]);
+
+        if ($search) {
+            $data->where([
                 'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
             ]);
+        }
 
         if ($category_id) {
-            //ProductToCategories
+            $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
+                ->toArray();
+            $children = Hash::extract($descendants, '{n}.id');
+            if ($children) {
+                $data->where([
+                    'ProductToCategories.product_category_id IN' => $children
+                ]);
+            } else {
+                $data->where([
+                    'ProductToCategories.product_category_id' => $category_id
+                ]);
+            }
 
-            $data->where([
-                'ProductToCategories.product_category_id' => $category_id
-            ]);
         }
 
 
@@ -245,9 +308,8 @@ class ProductFiltersController extends Controller
         ])->map(function(\App\Model\Entity\Product $row) {
             $images = [];
             foreach($row->get('product_images') as $vl){
-                if($vl['idx'] == 0){
-                    $images[] = $vl['name'];
-                }
+
+                $images[] = $vl['name'];
             }
             $row->images = $images;
             //unset($row->product_images);
