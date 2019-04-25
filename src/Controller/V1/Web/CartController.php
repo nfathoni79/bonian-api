@@ -154,7 +154,7 @@ class CartController extends AppController
                         if ($this->CustomerCartDetails->save($newEntityDetails)) {
 
                         } else {
-                            $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi pilihan'));
+                            $this->setResponse($this->response->withStatus(406, 'Stok tidak cukup'));
                             $errors = $newEntityDetails->getErrors();
                         }
                     }
@@ -225,12 +225,16 @@ class CartController extends AppController
         $cart = $this->CustomerCarts->find()
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
-                    return $q
-                        ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                return $q
+                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
                 }
             )
-            ->contain([
-                'CustomerCartDetails' => [
+            ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
+            ->first();
+
+        if($cart){
+            $cartList = $this->CustomerCartDetails->find()
+                ->contain([
                     'Products' => [
                         'fields' => [
                             'id',
@@ -253,11 +257,13 @@ class CartController extends AppController
                     ],
                     'ProductOptionStocks' => [
                         'Branches'
-                    ],
-                ]
-            ])
-            ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
-            ->map(function (\App\Model\Entity\CustomerCart $row) {
+                    ]
+                ])
+                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3]]);
+
+            $data = $this->paginate($cartList, [
+                'limit' => (int) $this->request->getQuery('limit',100)
+            ])->map(function (\App\Model\Entity\CustomerCartDetail $row) {
                 $status = [
                     1 => 'available',
                     2 => 'expired',
@@ -265,50 +271,41 @@ class CartController extends AppController
                     4 => 'deleted',
                     5 => 'move to whislist'
                 ];
-                foreach ($row['customer_cart_details'] as $key => $vals){
-                    $row->customer_cart_details[$key]->cartid = $row->customer_cart_details[$key]->id;
-                    $row->customer_cart_details[$key]->status = $status[$row->customer_cart_details[$key]->status];
-                    $row->customer_cart_details[$key]->name = $row->customer_cart_details[$key]->product->name;
-                    $row->customer_cart_details[$key]->slug = $row->customer_cart_details[$key]->product->slug;
-                    $row->customer_cart_details[$key]->regular_price = $row->customer_cart_details[$key]->product->price;
-                    $row->customer_cart_details[$key]->price = $row->customer_cart_details[$key]->price;
+
+                $row->cartid = $row->id;
+                $row->status_text = $status[$row->status];
+                $row->name = $row->product->name;
+                $row->slug = $row->product->slug;
+                $row->regular_price = $row->product->price;
+                $row->price = $row->price;
 
 
 
-                    $row->customer_cart_details[$key]->sku = $row->customer_cart_details[$key]->product_option_price->sku;
-                    $row->customer_cart_details[$key]->origin = $row->customer_cart_details[$key]->product_option_stock->branch->name;
+                $row->sku = $row->product_option_price->sku;
+                $row->origin = $row->product_option_stock->branch->name;
 
-                    $variant = [];
-                    foreach($vals['product_option_price']['product_option_value_lists'] as $val){
-                        $variant[$key][] = $val['option']['name'] .' : '. $val['option_value']['name'];
-                    }
-
-                    $row->customer_cart_details[$key]->variant = implode(', ', $variant[$key]);
-                    $row->customer_cart_details[$key]->price_id = $row->customer_cart_details[$key]->product_option_price_id;
-                    $row->customer_cart_details[$key]->stock_id = $row->customer_cart_details[$key]->product_option_stock_id;
-                    $row->customer_cart_details[$key]->images = Hash::extract($row->customer_cart_details[$key]->product->product_images, '{n}.name');
-
-
-
-                    unset($row->customer_cart_details[$key]->created);
-                    unset($row->customer_cart_details[$key]->modified);
-                    unset($row->customer_cart_details[$key]->product);
-                    unset($row->customer_cart_details[$key]->product_option_stock);
-                    unset($row->customer_cart_details[$key]->product_option_price);
-                    unset($row->customer_cart_details[$key]->id);
-                    unset($row->customer_cart_details[$key]->customer_cart_id);
-                    unset($row->customer_cart_details[$key]->product_option_price_id);
-                    unset($row->customer_cart_details[$key]->product_option_stock_id);
+                $variant = [];
+                foreach($row->product_option_price['product_option_value_lists'] as $val){
+                    $variant[] = $val['option']['name'] .' : '. $val['option_value']['name'];
                 }
+
+                $row->variant = implode(', ', $variant);
+                $row->price_id = $row->product_option_price_id;
+                $row->stock_id = $row->product_option_stock_id;
+                $row->images = Hash::extract($row->product->product_images, '{n}.name');
+
+
+
+                unset($row->created);
+                unset($row->modified);
                 unset($row->id);
                 unset($row->customer_id);
-                unset($row->status);
                 unset($row->created);
                 unset($row->modified);
                 return $row;
-            })
-            ->first();
-        $this->set(compact('cart'));
+            });
+            $this->set(compact('data'));
+        }
 
     }
 
