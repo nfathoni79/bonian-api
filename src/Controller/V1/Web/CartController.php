@@ -153,6 +153,8 @@ class CartController extends AppController
 
                         if ($this->CustomerCartDetails->save($newEntityDetails)) {
 
+                           $data = $newEntityDetails->get('id');
+                            $this->set(compact('data'));
                         } else {
                             $this->setResponse($this->response->withStatus(406, 'Stok tidak cukup'));
                             $errors = $newEntityDetails->getErrors();
