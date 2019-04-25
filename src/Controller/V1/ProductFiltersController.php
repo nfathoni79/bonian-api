@@ -90,7 +90,7 @@ class ProductFiltersController extends Controller
 
         $keywords = $this->request->getQuery('q');
         $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price');
+        $min_price = $this->request->getQuery('min_price', '0');
         $max_price = $this->request->getQuery('max_price');
         $variants = $this->request->getQuery('variants');
 
@@ -158,7 +158,7 @@ class ProductFiltersController extends Controller
                     ->bind(':search', $keywords, 'string');
             }
 
-            if ($min_price && $max_price) {
+            if ($min_price >= 0 && $max_price) {
                 $hasProducts->where(function(QueryExpression $exp) use ($min_price, $max_price) {
                     return $exp->between('price_sale', $min_price, $max_price);
                 });
@@ -221,7 +221,7 @@ class ProductFiltersController extends Controller
     {
         $search = $this->request->getQuery('q');
         $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price');
+        $min_price = $this->request->getQuery('min_price', '0');
         $max_price = $this->request->getQuery('max_price');
 
         $validator = $this->_validator();
@@ -264,7 +264,7 @@ class ProductFiltersController extends Controller
                     ->bind(':search', $search, 'string');
             }
 
-            if ($min_price && $max_price) {
+            if ($min_price >= 0 && $max_price) {
                 $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
                     return $exp->between('price_sale', $min_price, $max_price);
                 });
@@ -386,7 +386,7 @@ class ProductFiltersController extends Controller
     {
         $search = $this->request->getQuery('q');
         $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price');
+        $min_price = $this->request->getQuery('min_price', '0');
         $max_price = $this->request->getQuery('max_price');
         $variants = $this->request->getQuery('variants');
 
@@ -453,7 +453,7 @@ class ProductFiltersController extends Controller
                 ]);
             }
 
-            if ($min_price && $max_price) {
+            if ($min_price >= 0 && $max_price >= 0) {
                 $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
                     return $exp->between('price_sale', $min_price, $max_price);
                 });
