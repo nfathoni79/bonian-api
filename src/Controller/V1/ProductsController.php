@@ -163,7 +163,7 @@ class ProductsController extends Controller
                         }
 
                         if (!in_array($list->option_value->name, $options[$list->option->name])) {
-                            $options[$list->option->name][] = $list->option_value->name;
+                            $options[$list->option->name] = $list->option_value->name;
                         }
 
                         if (!isset($optionsVariant[$list->option->name])) {
