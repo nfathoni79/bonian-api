@@ -214,6 +214,20 @@ class ProductsController extends Controller
             })
             ->first();
 
+
+
+        if ($product) {
+            $saveProduct = clone $product;
+            $saveProduct->set('view', $saveProduct->get('view') + 1);
+            $this->Products->save($saveProduct);
+            //unset($product->modified);
+        } else {
+            //if product not found set response code to 404
+            $this->setResponse($this->response->withStatus(404, 'Product not found'));
+        }
+
+        $data = $product;
+
         /**
          * note price di timpa jika ada flash sale. ambil dari flash sale harga nya
          */
@@ -233,26 +247,13 @@ class ProductsController extends Controller
                 ])
                 ->first();
 
-//            if ($product_deals) {
-//                $product->set('price_sale', $product_deals->get('price_sale'));
-//                $product->set('is_flash_sale', true);
-//            } else {
-//                $product->set('is_flash_sale', false);
-//            }
+            if ($product_deals) {
+                $product->set('price_sale', $product_deals->get('price_sale'));
+                $product->set('is_flash_sale', true);
+            } else {
+                $product->set('is_flash_sale', false);
+            }
         }
-
-
-        if ($product) {
-            $saveProduct = clone $product;
-            $saveProduct->set('view', $saveProduct->get('view') + 1);
-            $this->Products->save($saveProduct);
-            //unset($product->modified);
-        } else {
-            //if product not found set response code to 404
-            $this->setResponse($this->response->withStatus(404, 'Product not found'));
-        }
-
-        $data = $product;
 
         $this->set(compact('data'));
 
