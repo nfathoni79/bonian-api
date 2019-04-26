@@ -93,6 +93,7 @@ class ProductFiltersController extends Controller
         $min_price = $this->request->getQuery('min_price', '0');
         $max_price = $this->request->getQuery('max_price');
         $variants = $this->request->getQuery('variants');
+        $brands = $this->request->getQuery('brands');
 
 
         $validator = $this->_validator();
@@ -170,6 +171,13 @@ class ProductFiltersController extends Controller
                 });
             }
 
+            if ($brands && is_array($brands)) {
+                $brands = array_values($brands);
+                $hasProducts->where([
+                    'Products.brand_id IN' => $brands
+                ]);
+            }
+
 
             $hasProducts = $hasProducts
                 ->enableAutoFields(true)
@@ -215,6 +223,80 @@ class ProductFiltersController extends Controller
 
 
         $this->set(compact('categories'));
+    }
+
+    public function brand()
+    {
+        $search = $this->request->getQuery('q');
+        $category_id = $this->request->getQuery('category_id');
+        $min_price = $this->request->getQuery('min_price', '0');
+        $max_price = $this->request->getQuery('max_price');
+
+        $validator = $this->_validator();
+
+        $error = $validator->errors($this->request->getQueryParams());
+
+        if (!$error) {
+
+            $data = $this->Products->find();
+
+            $data = $data
+                ->select([
+                    'total' => $data->func()->count('Products.brand_id'),
+                    'Brands.id',
+                    'Brands.name',
+
+                ])
+                ->leftJoinWith('ProductToCategories')
+                ->contain([
+                    'Brands'
+                ])
+                ->where([
+                    'Products.product_status_id' => 1,
+                    'Products.brand_id >' => 0
+                ]);
+
+            if ($search) {
+                $data->where([
+                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                ])
+                    ->bind(':search', $search, 'string');
+            }
+
+            if ($category_id) {
+                $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
+                    ->toArray();
+                $children = Hash::extract($descendants, '{n}.id');
+                if ($children) {
+                    $data->where([
+                        'ProductToCategories.product_category_id IN' => $children
+                    ]);
+                } else {
+                    $data->where([
+                        'ProductToCategories.product_category_id' => $category_id
+                    ]);
+                }
+
+            }
+
+
+            $data = $data
+                ->group('Products.brand_id')
+                ->map(function(\App\Model\Entity\Product $row) {
+                    $row->brand_id = $row->brand ? $row->brand->id : null;
+                    $row->name = $row->brand ? $row->brand->name : null;
+
+                    unset($row->brand);
+                    return $row;
+                })
+                ->toArray();
+
+            //debug($data);exit;
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Request failed'));
+        }
+
+        $this->set(compact('data', 'error'));
     }
 
     public function variant()
@@ -389,6 +471,7 @@ class ProductFiltersController extends Controller
         $min_price = $this->request->getQuery('min_price', '0');
         $max_price = $this->request->getQuery('max_price');
         $variants = $this->request->getQuery('variants');
+        $brands = $this->request->getQuery('brands');
 
 
 
@@ -473,6 +556,13 @@ class ProductFiltersController extends Controller
                     ]);
                 }
 
+            }
+
+            if ($brands && is_array($brands)) {
+                $brands = array_values($brands);
+                $data->where([
+                    'Products.brand_id IN' => $brands
+                ]);
             }
 
 
