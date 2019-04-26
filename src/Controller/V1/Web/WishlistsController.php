@@ -44,6 +44,7 @@ class WishlistsController extends AppController
                         'id',
                         'name',
                         'slug',
+                        'sku',
                         'price',
                         'price_sale',
                         'point',
@@ -137,7 +138,7 @@ class WishlistsController extends AppController
 
 
         } else {
-            $this->setResponse($this->response->withStatus(406, 'Failed to add wishlists'));
+            $this->setResponse($this->response->withStatus(406, 'Produk sudah ada dalam daftar wish list"'));
             $error = $entity->getErrors();
         }
 
