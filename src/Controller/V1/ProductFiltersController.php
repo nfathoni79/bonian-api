@@ -263,6 +263,12 @@ class ProductFiltersController extends Controller
                     ->bind(':search', $search, 'string');
             }
 
+            if ($min_price >= 0 && $max_price) {
+                $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
+                    return $exp->between('price_sale', $min_price, $max_price);
+                });
+            }
+
             if ($category_id) {
                 $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
                     ->toArray();
