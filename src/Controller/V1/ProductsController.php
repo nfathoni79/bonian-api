@@ -87,6 +87,11 @@ class ProductsController extends Controller
                 'ProductTags' => [
                     'Tags'
                 ],
+
+                'ProductAttributes' => [
+                    'Attributes',
+                    'AttributeNames'
+                ],
                 'ProductOptionPrices' => [
                     'fields' => [
                         'id',
@@ -200,6 +205,20 @@ class ProductsController extends Controller
                     unset($val->product_id);
                     unset($val->tag);
                 }
+
+                $attributes = [];
+                foreach($row->product_attributes as $key => $vals){
+                    $attributes[$vals['attribute_name']['name']][] = $vals['attribute']['name'];
+                }
+
+                $list_attribute = [];
+
+                foreach($attributes as $key => $vals){
+                    $list_attribute[$key] = implode(',',$vals);
+                }
+                $row->attributes = $list_attribute;
+                unset($row->product_attributes);
+                
                 $row->categories = $category;
                 $row->tags = $row->product_tags;
                 unset($row->product_coupons);

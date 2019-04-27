@@ -44,7 +44,8 @@ class ProductAttributesTable extends Table
             'joinType' => 'INNER'
         ]);
         $this->belongsTo('AttributeNames', [
-            'foreignKey' => 'attribute_name_id'
+            'foreignKey' => 'attribute_name_id',
+            'className' => 'Attributes'
         ]);
         $this->belongsTo('Attributes', [
             'foreignKey' => 'attribute_id',
