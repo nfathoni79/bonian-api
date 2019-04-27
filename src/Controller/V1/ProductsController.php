@@ -629,7 +629,7 @@ class ProductsController extends Controller
         $kataKunci = $kataKunci
             ->select([
                 'cnt' => "GROUP_CONCAT(product_id)",
-                'score' => "(MATCH(Products.name, Products.highlight) AGAINST(:search IN BOOLEAN MODE))"
+                'score' => "(MATCH(Products.name, Products.highlight_text) AGAINST(:search IN BOOLEAN MODE))"
             ])
             ->contain([
                 'Products' => [
@@ -642,7 +642,7 @@ class ProductsController extends Controller
                 'ProductCategories'
             ])
             ->where([
-                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
             ])
             ->enableAutoFields(true)
             ->group('product_category_id')
@@ -789,7 +789,7 @@ class ProductsController extends Controller
             ])
             ->where([
                 'product_status_id' => 1,
-                'MATCH (Products.name, Products.highlight) AGAINST (:search)'
+                'MATCH (Products.name, Products.highlight_text) AGAINST (:search)'
             ])
             ->contain([
                 'ProductImages' => [

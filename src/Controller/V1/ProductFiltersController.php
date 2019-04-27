@@ -154,7 +154,7 @@ class ProductFiltersController extends Controller
             if ($keywords) {
                 $hasProducts
                     ->where([
-                        'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                        'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
                     ])
                     ->bind(':search', $keywords, 'string');
             }
@@ -258,7 +258,7 @@ class ProductFiltersController extends Controller
 
             if ($search) {
                 $data->where([
-                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
                 ])
                     ->bind(':search', $search, 'string');
             }
@@ -347,7 +347,7 @@ class ProductFiltersController extends Controller
 
             if ($search) {
                 $data->where([
-                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
                 ])
                     ->bind(':search', $search, 'string');
             }
@@ -427,7 +427,7 @@ class ProductFiltersController extends Controller
 
         if ($search) {
             $data->where([
-                'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
             ])
                 ->bind(':search', $search, 'string');
         }
@@ -522,7 +522,7 @@ class ProductFiltersController extends Controller
                     'point',
                     'rating',
                     'rating_count',
-                    'score' => "(MATCH(Products.name, Products.highlight) AGAINST(:search IN BOOLEAN MODE))",
+                    'score' => "(MATCH(Products.name, Products.highlight_text) AGAINST(:search IN BOOLEAN MODE))",
                     'created'
                 ])
                 ->leftJoinWith('ProductToCategories')
@@ -538,7 +538,7 @@ class ProductFiltersController extends Controller
 
             if ($search) {
                 $data->where([
-                    'MATCH (Products.name, Products.highlight) AGAINST (:search IN BOOLEAN MODE)'
+                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
                 ]);
             }
 
