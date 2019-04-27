@@ -32,6 +32,25 @@ class ProductFiltersController extends Controller
     }
 
 
+    protected function getQuery($key, $default = null, $clean = true)
+    {
+        $text = $this->request->getQuery($key, $default);
+        if ($clean && $text) {
+            if (is_array($text)) {
+                array_walk_recursive($text, function(&$val, $key) {
+                    if (!is_array($val)) {
+                        $val = filter_var($val, FILTER_SANITIZE_STRING);
+                    }
+                });
+            } else {
+                $text = filter_var($text, FILTER_SANITIZE_STRING);
+            }
+        }
+
+        return $text;
+    }
+
+
     protected function walk_recursive(&$object, $product_category_total, $selected, $expand = [])
     {
         foreach($object as $key => &$item) {
@@ -58,7 +77,6 @@ class ProductFiltersController extends Controller
                 $item['nodes'] = $item['children'];
                 unset($item['path']);
                 unset($item['name']);
-                //unset($item['parent_id']);
                 unset($item['children']);
                 if ($item['nodes']) {
                     $this->walk_recursive($item['nodes'], $product_category_total, $selected, $expand);
@@ -88,12 +106,12 @@ class ProductFiltersController extends Controller
     public function categories()
     {
 
-        $keywords = $this->request->getQuery('q');
-        $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price', '0');
-        $max_price = $this->request->getQuery('max_price');
-        $variants = $this->request->getQuery('variants');
-        $brands = $this->request->getQuery('brands');
+        $keywords = $this->getQuery('q');
+        $category_id = $this->getQuery('category_id');
+        $min_price = $this->getQuery('min_price', '0');
+        $max_price = $this->getQuery('max_price');
+        $variants = $this->getQuery('variants');
+        $brands = $this->getQuery('brands');
 
 
         $validator = $this->_validator();
@@ -227,10 +245,10 @@ class ProductFiltersController extends Controller
 
     public function brand()
     {
-        $search = $this->request->getQuery('q');
-        $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price', '0');
-        $max_price = $this->request->getQuery('max_price');
+        $search = $this->getQuery('q');
+        $category_id = $this->getQuery('category_id');
+        $min_price = $this->getQuery('min_price', '0');
+        $max_price = $this->getQuery('max_price');
 
         $validator = $this->_validator();
 
@@ -307,10 +325,10 @@ class ProductFiltersController extends Controller
 
     public function variant()
     {
-        $search = $this->request->getQuery('q');
-        $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price', '0');
-        $max_price = $this->request->getQuery('max_price');
+        $search = $this->getQuery('q');
+        $category_id = $this->getQuery('category_id');
+        $min_price = $this->getQuery('min_price', '0');
+        $max_price = $this->getQuery('max_price');
 
         $validator = $this->_validator();
 
@@ -410,8 +428,8 @@ class ProductFiltersController extends Controller
 
     public function priceRange()
     {
-        $search = $this->request->getQuery('q');
-        $category_id = $this->request->getQuery('category_id');
+        $search = $this->getQuery('q');
+        $category_id = $this->getQuery('category_id');
 
         $data = $this->Products->find();
 
@@ -472,12 +490,12 @@ class ProductFiltersController extends Controller
 
     public function index()
     {
-        $search = $this->request->getQuery('q');
-        $category_id = $this->request->getQuery('category_id');
-        $min_price = $this->request->getQuery('min_price', '0');
-        $max_price = $this->request->getQuery('max_price');
-        $variants = $this->request->getQuery('variants');
-        $brands = $this->request->getQuery('brands');
+        $search = $this->getQuery('q');
+        $category_id = $this->getQuery('category_id');
+        $min_price = $this->getQuery('min_price', '0');
+        $max_price = $this->getQuery('max_price');
+        $variants = $this->getQuery('variants');
+        $brands = $this->getQuery('brands');
 
 
 
@@ -588,7 +606,7 @@ class ProductFiltersController extends Controller
                 ->orderDesc('score');
 
             $data = $this->paginate($data, [
-                'limit' => (int) $this->request->getQuery('limit', 5)
+                'limit' => (int) $this->getQuery('limit', 5)
             ])->map(function(\App\Model\Entity\Product $row) {
                 $images = [];
                 foreach($row->get('product_images') as $vl){

@@ -6,6 +6,8 @@ use Cake\Database\Expression\QueryExpression;
 use Cake\Database\Query;
 use Cake\Utility\Hash;
 use Cake\I18n\Time;
+use Cake\Utility\Text;
+
 /**
  * Categories Controller
  *
@@ -539,7 +541,7 @@ class ProductsController extends Controller
         $this->request->allowMethod('post');
 
         if ($keyword = $this->request->getData('keyword')) {
-
+            $keyword = filter_var($keyword, FILTER_SANITIZE_STRING);
             $category_id = $this->request->getData('category_id', null);
             $productRelated = $this->searchByKeyword($keyword, 5);
             $bid = $this->request->getHeader('bid');
