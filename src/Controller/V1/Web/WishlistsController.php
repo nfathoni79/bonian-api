@@ -63,7 +63,7 @@ class WishlistsController extends AppController
             ->where([
                 'customer_id' => $this->Authenticate->getId()
             ]);
-
+        $data->orderDesc('id');
         $data = $this->paginate($data, [
             'limit' => (int) $this->request->getQuery('limit', 5)
         ])
