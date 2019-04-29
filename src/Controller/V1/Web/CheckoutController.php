@@ -247,6 +247,32 @@ class CheckoutController extends AppController
     }
 
 
+    public function changeAddress()
+    {
+        $this->request->allowMethod('post');
+
+        $customer_id = $this->Authenticate->getId();
+        $address =  $this->Customers->CustomerAddreses->find()
+            ->where([
+                'customer_id' => $customer_id
+            ]);
+
+        if ($this->request->getData('address_id')) {
+            $address = $address->where([
+                'id' => $this->request->getData('address_id')
+            ])->map(function(\App\Model\Entity\CustomerAddrese $row) {
+                unset($row->customer_id);
+                return $row;
+            })
+            ->first();
+            $cache = Cache::read($this->getStorageKey(), 'checkout');
+            $cache['customer_address'] = $address;
+
+            Cache::write($this->getStorageKey(), $cache, 'checkout');
+        }
+
+
+    }
     public function cart()
     {
         $this->request->allowMethod('post');
@@ -355,10 +381,11 @@ class CheckoutController extends AppController
 
 
             $customer_id = $this->Authenticate->getId();
-            $data['customer_address'] = $this->getAddress();
+            if(empty($cache['customer_address'])){
+                $data['customer_address'] = $this->getAddress();
+            }
 
             $data = array_merge($data, $cache);
-
             /*
             $get_point = $this->Customers->CustomerBalances->find()
                 ->where([
@@ -417,7 +444,6 @@ class CheckoutController extends AppController
             }
 
             $data['total'] = $total;
-
 
             //grouping by origin_id
             $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
@@ -1226,14 +1252,23 @@ class CheckoutController extends AppController
         );
 
         $result = [];
+        $rename = [
+            'CTC' => 'reg',
+            'CTCYES' => 'yes',
+        ];
 
         if ($out && $out['rajaongkir']['status']['code'] == 200) {
             foreach($out['rajaongkir']['results'] as $key => $val) {
                 foreach($val['costs'] as $k => $cost) {
+                    if(array_key_exists($cost['service'],$rename )) {
+                        $label = $rename[$cost['service']];
+                    }else{
+                        $label = $cost['service'];
+                    }
                     $result[] = [
                         'code' => $val['code'],
                         'service' => $cost['service'],
-                        'name' => $val['code'] . ' - ' . strtolower($cost['service']),
+                        'name' => $val['code'] . ' - ' . strtolower($label),
                         'description' => $cost['description'],
                         'cost' => $cost['cost'][0]['value'],
                         'etd' => $cost['cost'][0]['etd'],
