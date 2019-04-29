@@ -310,13 +310,11 @@ class CheckoutController extends AppController
         if (!$error) {
             if ($storage_key = $this->getStorageKey()) {
                 //save storage
-                if (($cache = Cache::read($storage_key, 'checkout')) === false) {
-                    Cache::write($storage_key, [
-                        'point' => $this->request->getData('point'),
-                        'voucher' => $this->request->getData('voucher'),
-                        'step' => 1
-                    ], 'checkout');
-                }
+                Cache::write($storage_key, [
+                    'point' => $this->request->getData('point'),
+                    'voucher' => $this->request->getData('voucher'),
+                    'step' => 1
+                ], 'checkout');
             } else {
                 $this->setResponse($this->response->withStatus(406, 'Invalid cart'));
             }
