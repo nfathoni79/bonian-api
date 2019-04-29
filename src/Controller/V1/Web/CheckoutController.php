@@ -58,6 +58,7 @@ class CheckoutController extends AppController
      * @var array
      */
     protected $customerDetailStatuses = [1];
+    protected $cacheKey = null;
 
     public function initialize()
     {
@@ -359,6 +360,9 @@ class CheckoutController extends AppController
     protected function getStorageKey()
     {
         //get current cart_id
+        if ($this->cacheKey) {
+            return $this->cacheKey;
+        }
         $cartEntity = $this->CustomerCarts->find()
             ->where([
                 'customer_id' => $this->Authenticate->getId(),
@@ -366,7 +370,7 @@ class CheckoutController extends AppController
             ])
             ->first();
         if ($cartEntity) {
-            return $this->Authenticate->getId() . '_' . $cartEntity->get('id');
+            return $this->cacheKey = $this->Authenticate->getId() . '_' . $cartEntity->get('id');
         }
     }
 
