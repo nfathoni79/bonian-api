@@ -23,6 +23,7 @@ use Cake\Validation\Validator;
 
 class ProductFiltersController extends Controller
 {
+
     public function initialize()
     {
         parent::initialize();
@@ -496,6 +497,8 @@ class ProductFiltersController extends Controller
         $max_price = $this->getQuery('max_price');
         $variants = $this->getQuery('variants');
         $brands = $this->getQuery('brands');
+        $sortBy = $this->getQuery('sortBy');
+        $order = $this->getQuery('order');
 
 
 
@@ -602,12 +605,28 @@ class ProductFiltersController extends Controller
                         'sort' => ['ProductImages.primary' => 'DESC']
                     ],
 
-                ])
-                ->orderDesc('score');
+                ])->orderDesc('score');
 
-            $data = $this->paginate($data, [
+
+            $pagination_options = [
                 'limit' => (int) $this->getQuery('limit', 5)
-            ])->map(function(\App\Model\Entity\Product $row) {
+            ];
+
+            if (!empty($sortBy) && !empty($order) && in_array($sortBy, ['price', 'rating']) && in_array($order, ['asc', 'desc'])) {
+                $sort_keys = [
+                    'price' => 'price_sale',
+                    'rating' => 'rating',
+                ];
+                $pagination_options['order'] = [$sort_keys[$sortBy] => $order];
+            } else {
+                //$data = $data->orderDesc('score');
+                $pagination_options['order'] = ['score' => 'desc'];
+            }
+
+            //debug($pagination_options);exit;
+
+
+            $data = $this->paginate($data, $pagination_options)->map(function(\App\Model\Entity\Product $row) {
                 $images = [];
                 foreach($row->get('product_images') as $vl){
 
