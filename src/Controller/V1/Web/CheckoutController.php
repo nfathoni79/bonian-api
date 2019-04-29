@@ -243,77 +243,143 @@ class CheckoutController extends AppController
 
     public function index()
     {
-        //list checkout and default customer address
-        $data = [];
-        $customer_id = $this->Authenticate->getId();
-
-        $data['customer_address'] = $this->getAddress();
-
-        $get_point = $this->Customers->CustomerBalances->find()
-            ->where([
-                'customer_id' => $customer_id
-            ])
-            ->first();
-
-        $data['point'] = (int) $get_point->get('point');
+        $this->request->allowMethod('post');
 
 
-        $product_to_couriers = [];
-        $total = 0;
-        $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
-            $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
-        }, function(\App\Model\Entity\CustomerCart $row) use (&$total) {
-            foreach($row['customer_cart_details'] as $val) {
-                $total += (float) $val['price'] * intval($val['qty']);
+        $validator = new Validator();
+
+        $validator->numeric('voucher')
+            ->numeric('point')
+            ->allowEmptyString('point')
+            ->allowEmptyString('voucher');
+
+        //validation point
+        $validator->add('point', 'valid_point', [
+            'rule' => function($value) {
+                $currentPoint = $this->Customers->CustomerBalances->find()
+                    ->where([
+                        'customer_id' => $this->Authenticate->getId(),
+                    ])
+                    ->first();
+                if ($currentPoint) {
+                    return $value <= $currentPoint->get('point') && $value > 0;
+                }
+            },
+            'message' => 'Point yang di input tidak valid.'
+        ]);
+
+        //validation voucher
+        $validator->add('voucher', 'valid_voucher', [
+            'rule' => function($value) {
+                $voucher = $this->CustomerVouchers->find()
+                    ->where([
+                        'CustomerVouchers.customer_id' => $this->Authenticate->getId(),
+                        'CustomerVouchers.status' => 1,
+                        'CustomerVouchers.id' => $value,
+                    ])
+                    ->contain([
+                        'Vouchers'
+                    ])
+                    ->first();
+                if ($voucher) {
+                    switch($voucher->get('voucher')->type) {
+                        case '1':
+                            //check expired
+                            /**
+                             * @var \Cake\I18n\FrozenTime $expired
+                             */
+                            $expired = $voucher->get('expired');
+                            return $expired->gte(Time::now());
+                            break;
+                        default:
+                            return true;
+                            break;
+                    }
+                } else {
+                    return false;
+                }
+            },
+            'message' => 'voucher yang di input tidak valid.'
+        ]);
+
+
+
+        $error = $validator->errors($this->request->getData());
+
+        if (!$error) {
+            //list checkout and default customer address
+            $data = [];
+            $customer_id = $this->Authenticate->getId();
+
+            $data['customer_address'] = $this->getAddress();
+
+            $get_point = $this->Customers->CustomerBalances->find()
+                ->where([
+                    'customer_id' => $customer_id
+                ])
+                ->first();
+
+            $data['point'] = (int) $get_point->get('point');
+
+
+            $product_to_couriers = [];
+            $total = 0;
+            $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
+                $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+            }, function(\App\Model\Entity\CustomerCart $row) use (&$total) {
+                foreach($row['customer_cart_details'] as $val) {
+                    $total += (float) $val['price'] * intval($val['qty']);
+                }
+            });
+
+            $data['gross_total'] = $total;
+
+            //check if customer using voucher
+            /**
+             * @var \App\Model\Entity\CustomerVoucher $voucherEntity
+             */
+            $voucherEntity = $this->CustomerVouchers->find()
+                ->where([
+                    'CustomerVouchers.customer_id' => $customer_id,
+                    'CustomerVouchers.status' => 1
+                ])
+                ->contain([
+                    'Vouchers'
+                ])
+                ->orderDesc('CustomerVouchers.id')
+                ->first();
+
+            if ($voucherEntity) {
+                switch($voucherEntity->voucher->type) {
+                    case '1':
+                        $discount = $voucherEntity->voucher->value / 100 * $total;
+                        $data['discount'] = $discount;
+                        $total = $total - $discount;
+                        break;
+                    case '2':
+                        $discount = $voucherEntity->voucher->value;
+                        $data['discount'] = $discount;
+                        $total = $total - $discount;
+                        break;
+                }
+
+                $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
+
+
             }
-        });
 
-        $data['gross_total'] = $total;
-
-        //check if customer using voucher
-        /**
-         * @var \App\Model\Entity\CustomerVoucher $voucherEntity
-         */
-        $voucherEntity = $this->CustomerVouchers->find()
-            ->where([
-                'CustomerVouchers.customer_id' => $customer_id,
-                'CustomerVouchers.status' => 1
-            ])
-            ->contain([
-                'Vouchers'
-            ])
-            ->orderDesc('CustomerVouchers.id')
-            ->first();
-
-        if ($voucherEntity) {
-            switch($voucherEntity->voucher->type) {
-                case '1':
-                    $discount = $voucherEntity->voucher->value / 100 * $total;
-                    $data['discount'] = $discount;
-                    $total = $total - $discount;
-                    break;
-                case '2':
-                    $discount = $voucherEntity->voucher->value;
-                    $data['discount'] = $discount;
-                    $total = $total - $discount;
-                    break;
-            }
-
-            $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
+            $data['total'] = $total;
 
 
+            //grouping by origin_id
+            $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
+            $data['carts'] = $cart_group_origin;
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'Cannot process checkout'));
         }
 
-        $data['total'] = $total;
 
-
-        //grouping by origin_id
-        $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
-
-
-        $data['carts'] = $cart_group_origin;
-
-        $this->set(compact('data'));
+        $this->set(compact('data', 'error'));
 
     }
 
