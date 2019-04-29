@@ -74,7 +74,7 @@ class CheckoutController extends AppController
 
     }
 
-    protected function groupCartByBranch($cart, $product_to_couriers, \App\Model\Entity\CustomerAddrese $address)
+    protected function groupCartByBranch($cart, $product_to_couriers, $address)
     {
         $cart_group_origin = [];
         if ($cart['customer_cart_details']) {
@@ -88,12 +88,17 @@ class CheckoutController extends AppController
                     $cart_group_origin[$val['origin_id']]['origin'] = $val['origin'];
                     $cart_group_origin[$val['origin_id']]['origin_id'] = $val['origin_id'];
                     $cart_group_origin[$val['origin_id']]['total_weight'] = $val['weight'] * $val['qty'];
-                    $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
-                        implode(':', $courier_group),
-                        $val['origin_district_id'],
-                        $address->subdistrict_id,
-                        $val['weight'] * $val['qty']
-                    );
+                    if ($address instanceof \App\Model\Entity\CustomerAddrese) {
+                        $cart_group_origin[$val['origin_id']]['shipping_options'] = $this->getShipping(
+                            implode(':', $courier_group),
+                            $val['origin_district_id'],
+                            $address->subdistrict_id,
+                            $val['weight'] * $val['qty']
+                        );
+                    } else {
+                        $cart_group_origin[$val['origin_id']]['shipping_options'] = [];
+                    }
+
                     $cart_group_origin[$val['origin_id']]['data'][] = $val;
 
                 } else {
