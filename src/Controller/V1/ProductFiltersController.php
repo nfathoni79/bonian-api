@@ -543,12 +543,33 @@ class ProductFiltersController extends Controller
                     'point',
                     'rating',
                     'rating_count',
-                    'score' => "(MATCH(Products.name, Products.highlight_text) AGAINST(:search IN BOOLEAN MODE))",
+                    //'score' => "MATCH(Products.name, Products.highlight_text) AGAINST(:searchField IN BOOLEAN MODE)",
                     'created'
                 ])
                 ->leftJoinWith('ProductToCategories')
                 ->where([
-                    'Products.product_status_id' => 1
+                   'Products.product_status_id' => 1
+                ]);
+
+
+            if ($search) {
+                $data->where([
+                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
+                ])
+                ->bind(':search', $search, 'string');
+            }
+
+            $data
+                ->contain([
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                            'idx',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC']
+                    ],
+
                 ]);
 
             if ($subquery instanceof \Cake\ORM\Query) {
@@ -557,11 +578,7 @@ class ProductFiltersController extends Controller
                 });
             }
 
-            if ($search) {
-                $data->where([
-                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
-                ]);
-            }
+
 
             if ($min_price >= 0 && $max_price) {
                 $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
@@ -593,20 +610,6 @@ class ProductFiltersController extends Controller
             }
 
 
-            $data = $data
-                ->bind(':search', $search, 'string')
-                ->contain([
-                    'ProductImages' => [
-                        'fields' => [
-                            'name',
-                            'product_id',
-                            'idx',
-                        ],
-                        'sort' => ['ProductImages.primary' => 'DESC']
-                    ],
-
-                ])->orderDesc('score');
-
 
             $pagination_options = [
                 'limit' => (int) $this->getQuery('limit', 5)
@@ -619,21 +622,18 @@ class ProductFiltersController extends Controller
                 ];
                 $pagination_options['order'] = [$sort_keys[$sortBy] => $order];
             } else {
-                //$data = $data->orderDesc('score');
-                $pagination_options['order'] = ['score' => 'desc'];
+                //$data->orderDesc('score');
             }
 
-            //debug($pagination_options);exit;
+
 
 
             $data = $this->paginate($data, $pagination_options)->map(function(\App\Model\Entity\Product $row) {
                 $images = [];
                 foreach($row->get('product_images') as $vl){
-
                     $images[] = $vl['name'];
                 }
                 $row->images = $images;
-                //unset($row->product_images);
                 return $row;
             });
         } else {
