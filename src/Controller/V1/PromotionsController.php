@@ -15,6 +15,7 @@ use Cake\ORM\Query;
  */
 class PromotionsController extends Controller
 {
+    protected $is_new_rules = -30; //in days
     public function initialize()
     {
         parent::initialize();
@@ -63,6 +64,7 @@ class PromotionsController extends Controller
                                     'point',
                                     'price',
                                     'price_sale',
+                                    'created',
 
                                 ],
                                 'queryBuilder' => function (Query $q) {
@@ -78,7 +80,9 @@ class PromotionsController extends Controller
 						])
 						->where(['product_category_id' => $vals->product_category->id])->limit($limit)->toArray();
 					$vals->product_category->products = 	$query; 
-                    foreach($vals->product_category->products as $kk => $val){  
+                    foreach($vals->product_category->products as $kk => $val){
+                        $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+                        $val->product->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                         $val->product->images = Hash::extract( $val->product->product_images, '{n}.name');
                         unset($val->product->product_images);
                     }
