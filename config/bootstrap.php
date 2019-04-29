@@ -159,6 +159,13 @@ Email::setConfig(Configure::consume('Email'));
 Log::setConfig(Configure::consume('Log'));
 Security::setSalt(Configure::consume('Security.salt'));
 
+Cache::setConfig('checkout', [
+    'className' => 'File',
+    'duration' => '+7 days',
+    'path' => CACHE  . 'checkout' . DS,
+    'prefix' => 'customer_checkout_'
+]);
+
 /*
  * The default crypto extension in 3.0 is OpenSSL.
  * If you are migrating from 2.x uncomment this code to

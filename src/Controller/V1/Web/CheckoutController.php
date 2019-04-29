@@ -33,6 +33,7 @@ use App\Lib\MidTrans\Token;
 use Cake\Utility\Security;
 use Cake\Core\Configure;
 use Cake\Validation\Validator;
+use Cake\Cache\Cache;
 
 
 /**
@@ -302,12 +303,41 @@ class CheckoutController extends AppController
 
 
 
+
+
         $error = $validator->errors($this->request->getData());
 
         if (!$error) {
-            //save storage
+            if ($storage_key = $this->getStorageKey()) {
+                //save storage
+                if (($cache = Cache::read($storage_key, 'checkout')) === false) {
+                    Cache::write($storage_key, [
+                        'point' => $this->request->getData('point'),
+                        'voucher' => $this->request->getData('voucher'),
+                        'step' => 1
+                    ], 'checkout');
+                }
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Invalid cart'));
+            }
+
         } else {
             $this->setResponse($this->response->withStatus(406, 'Cannot process checkout'));
+        }
+    }
+
+
+    protected function getStorageKey()
+    {
+        //get current cart_id
+        $cartEntity = $this->CustomerCarts->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'status' => 1
+            ])
+            ->first();
+        if ($cartEntity) {
+            return $this->Authenticate->getId() . '_' . $cartEntity->get('id');
         }
     }
 
@@ -316,71 +346,82 @@ class CheckoutController extends AppController
     {
         //list checkout and default customer address
         $data = [];
-        $customer_id = $this->Authenticate->getId();
 
-        $data['customer_address'] = $this->getAddress();
-
-        $get_point = $this->Customers->CustomerBalances->find()
-            ->where([
-                'customer_id' => $customer_id
-            ])
-            ->first();
-
-        $data['point'] = (int) $get_point->get('point');
+        //get storage cache
+        if (($cache = Cache::read($this->getStorageKey(), 'checkout'))) {
 
 
-        $product_to_couriers = [];
-        $total = 0;
-        $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers) {
-            $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
-        }, function(\App\Model\Entity\CustomerCart $row) use (&$total) {
-            foreach($row['customer_cart_details'] as $val) {
-                $total += (float) $val['price'] * intval($val['qty']);
+            $customer_id = $this->Authenticate->getId();
+            $data['customer_address'] = $this->getAddress();
+
+            $data = array_merge($data, $cache);
+
+            /*
+            $get_point = $this->Customers->CustomerBalances->find()
+                ->where([
+                    'customer_id' => $customer_id
+                ])
+                ->first();
+
+            $data['point'] = (int) $get_point->get('point');
+            */
+
+
+            $product_to_couriers = [];
+            $total = 0;
+            $cart = $this->getCart(function ($key, \App\Model\Entity\CustomerCart $row) use (&$product_to_couriers) {
+                $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
+            }, function (\App\Model\Entity\CustomerCart $row) use (&$total) {
+                foreach ($row['customer_cart_details'] as $val) {
+                    $total += (float)$val['price'] * intval($val['qty']);
+                }
+            });
+
+            $data['gross_total'] = $total;
+
+            //check if customer using voucher
+            /**
+             * @var \App\Model\Entity\CustomerVoucher $voucherEntity
+             */
+            $voucherEntity = $this->CustomerVouchers->find()
+                ->where([
+                    'CustomerVouchers.customer_id' => $customer_id,
+                    'CustomerVouchers.status' => 1
+                ])
+                ->contain([
+                    'Vouchers'
+                ])
+                ->orderDesc('CustomerVouchers.id')
+                ->first();
+
+            if ($voucherEntity) {
+                switch ($voucherEntity->voucher->type) {
+                    case '1':
+                        $discount = $voucherEntity->voucher->value / 100 * $total;
+                        $data['discount'] = $discount;
+                        $total = $total - $discount;
+                        break;
+                    case '2':
+                        $discount = $voucherEntity->voucher->value;
+                        $data['discount'] = $discount;
+                        $total = $total - $discount;
+                        break;
+                }
+
+                $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
+
+
             }
-        });
 
-        $data['gross_total'] = $total;
-
-        //check if customer using voucher
-        /**
-         * @var \App\Model\Entity\CustomerVoucher $voucherEntity
-         */
-        $voucherEntity = $this->CustomerVouchers->find()
-            ->where([
-                'CustomerVouchers.customer_id' => $customer_id,
-                'CustomerVouchers.status' => 1
-            ])
-            ->contain([
-                'Vouchers'
-            ])
-            ->orderDesc('CustomerVouchers.id')
-            ->first();
-
-        if ($voucherEntity) {
-            switch($voucherEntity->voucher->type) {
-                case '1':
-                    $discount = $voucherEntity->voucher->value / 100 * $total;
-                    $data['discount'] = $discount;
-                    $total = $total - $discount;
-                    break;
-                case '2':
-                    $discount = $voucherEntity->voucher->value;
-                    $data['discount'] = $discount;
-                    $total = $total - $discount;
-                    break;
-            }
-
-            $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
+            $data['total'] = $total;
 
 
+            //grouping by origin_id
+            $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
+            $data['carts'] = $cart_group_origin;
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'invalid step checkout'));
         }
-
-        $data['total'] = $total;
-
-
-        //grouping by origin_id
-        $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
-        $data['carts'] = $cart_group_origin;
 
 
         $this->set(compact('data', 'error'));
