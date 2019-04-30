@@ -100,23 +100,34 @@ class CardsController extends AppController
 
 
         $credit_Card_validator = new Validator();
-        $credit_Card_validator->requirePresence('number')
-            ->creditCard('number');
+        $credit_Card_validator->requirePresence('number', 'create', 'Wajib diisi')
+            ->add('number', 'valid_cc', [
+                'rule' => function($value) {
+                    $result = CreditCardValidation::validCreditCard($value);
+                    return $result['valid'];
+                },
+                'message' => 'Tidak sah'
+            ]);
 
-        $credit_Card_validator->requirePresence('exp_month')
-            ->notBlank('exp_month')
-            ->minLength('exp_month', 2)
-            ->maxLength('exp_month', 2);
+        $credit_Card_validator->requirePresence('exp_month', 'create', 'Wajib diisi')
+            ->notBlank('exp_month', 'Tidak sah')
+            ->minLength('exp_month', 2, 'Input 2 digit')
+            ->maxLength('exp_month', 2, 'Input 2 digit')
+            ->lessThanOrEqual('exp_month', 12, 'Tidak sah')
+            ->greaterThanOrEqual('exp_month', 1, 'tidak sah');
 
-        $credit_Card_validator->requirePresence('exp_year')
-            ->notBlank('exp_year')
-            ->minLength('exp_year', 4)
-            ->maxLength('exp_year', 4);
+        $credit_Card_validator->requirePresence('exp_year', 'create', 'Wajib diisi')
+            ->notBlank('exp_year', 'Tidah sah')
+            ->minLength('exp_year', 4, 'Input 4 digit')
+            ->maxLength('exp_year', 4, 'Input 4 digit')
+            ->greaterThanOrEqual('exp_year', date('Y'), 'Tidak sah')
+            ->lessThanOrEqual('exp_year', 2090, 'Tidak sah');
 
-        $credit_Card_validator->requirePresence('cvv')
-            ->notBlank('cvv')
-            ->minLength('cvv', 3)
-            ->maxLength('cvv', 3);
+        $credit_Card_validator->requirePresence('cvv', 'create', 'Wajib diisi')
+            ->notBlank('cvv', 'Tidak sah')
+            ->minLength('cvv', 3, 'Input 3 digit')
+            ->maxLength('cvv', 3, 'Input 3 digit')
+            ->numeric('cvv', 'Tidak sah');
 
         $error = $credit_Card_validator->errors($this->request->getData());
         if (empty($error)) {
@@ -167,7 +178,8 @@ class CardsController extends AppController
                     } else {
                         $data = [
                             'id' => $customer_card_entity->get('id'),
-                            'masked_card' => $customer_card_entity->get('masked_card')
+                            'masked_card' => $customer_card_entity->get('masked_card'),
+                            'type' => $creditCardType
                         ];
                     }
                 } else {
