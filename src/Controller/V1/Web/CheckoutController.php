@@ -375,6 +375,7 @@ class CheckoutController extends AppController
         if ($cartEntity) {
             return $this->cacheKey = $this->Authenticate->getId() . '_' . $cartEntity->get('id');
         }
+        return $this->Authenticate->getId();
     }
 
 
