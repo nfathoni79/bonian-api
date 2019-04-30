@@ -12,6 +12,7 @@
         "donatj/phpuseragentparser": "^0.13.0",
         "guzzlehttp/guzzle": "^6.3",
         "imagine/imagine": "^1.2",
+        "inacho/php-credit-card-validator": "^1.0",
         "josegonzalez/cakephp-upload": "^4.0",
         "mobiledetect/mobiledetectlib": "2.*",
         "narendravaghela/cakephp-mailgun": "^4.0",

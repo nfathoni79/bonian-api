@@ -17,6 +17,7 @@ namespace App\Controller\V1\Web;
 use App\Lib\MidTrans\CreditCardToken;
 use Cake\I18n\Time;
 use Cake\Validation\Validator;
+use Inacho\CreditCard as CreditCardValidation;
 
 /**
  * Customers controller
@@ -140,6 +141,12 @@ class CardsController extends AppController
                     ])
                     ->first();
 
+                $creditCardType = null;
+                if ($parseCreditCard = CreditCardValidation::validCreditCard($number)) {
+                    $creditCardType = $parseCreditCard['type'];
+                }
+
+
                 $count_card = $this->CustomerCards->find()
                     ->where([
                         'customer_id' => $customer_id
@@ -151,11 +158,17 @@ class CardsController extends AppController
                         'customer_id' => $customer_id,
                         'masked_card' => $response['masked_card'],
                         'token' => $response['saved_token_id'],
+                        'type' => $creditCardType,
                         'is_primary' => $count_card == 0 ? 1 : 0
                     ]);
 
                     if(!$this->CustomerCards->save($customer_card_entity)) {
                         $this->setResponse($this->response->withStatus(406, 'Gagal menyimpan kartu kredit'));
+                    } else {
+                        $data = [
+                            'id' => $customer_card_entity->get('id'),
+                            'masked_card' => $customer_card_entity->get('masked_card')
+                        ];
                     }
                 } else {
 
@@ -169,7 +182,7 @@ class CardsController extends AppController
 
 
 
-        $this->set(compact('error'));
+        $this->set(compact('error', 'data'));
 
     }
 
