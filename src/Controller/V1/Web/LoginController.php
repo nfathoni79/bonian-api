@@ -92,6 +92,7 @@ class LoginController extends AppController
                     'email',
                     'password',
                     'customer_status_id',
+                    'reffcode',
                     'is_verified',
                 ])
                 ->where([
@@ -196,6 +197,7 @@ class LoginController extends AppController
                     'first_name' => $user->get('first_name'),
                     'last_name' => $user->get('last_name'),
                     'customer_status_id' => $user->get('customer_status_id'),
+                    'reffcode' => $user->get('reffcode'),
                     'token' => $token
                 ];
             }
