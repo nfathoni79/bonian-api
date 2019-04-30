@@ -57,6 +57,7 @@ class ProductsController extends Controller
                 'price',
                 'price_sale',
                 'highlight',
+                'highlight_text',
                 'profile',
                 'view',
                 'sku',
