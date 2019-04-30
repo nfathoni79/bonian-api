@@ -42,6 +42,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerCardsTable $CustomerCards
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
+ * @property \App\Model\Table\CustomerPointRatesTable $CustomerPointRates
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\CourriersTable $Courriers
@@ -59,6 +60,7 @@ class CheckoutController extends AppController
      */
     protected $customerDetailStatuses = [1];
     protected $cacheKey = null;
+    protected $isCreateToken = false;
 
     public function initialize()
     {
@@ -66,6 +68,7 @@ class CheckoutController extends AppController
         $this->loadModel('Customers');
         $this->loadModel('CustomerCards');
         $this->loadModel('CustomerCarts');
+        $this->loadModel('CustomerPointRates');
         $this->loadModel('CustomerVouchers');
         $this->loadModel('Orders');
         $this->loadModel('Courriers');
@@ -414,38 +417,10 @@ class CheckoutController extends AppController
             $data['gross_total'] = $total;
 
             //check if customer using voucher
-            /**
-             * @var \App\Model\Entity\CustomerVoucher $voucherEntity
-             */
-            $voucherEntity = $this->CustomerVouchers->find()
-                ->where([
-                    'CustomerVouchers.customer_id' => $customer_id,
-                    'CustomerVouchers.status' => 1
-                ])
-                ->contain([
-                    'Vouchers'
-                ])
-                ->orderDesc('CustomerVouchers.id')
-                ->first();
-
-            if ($voucherEntity) {
-                switch ($voucherEntity->voucher->type) {
-                    case '1':
-                        $discount = $voucherEntity->voucher->value / 100 * $total;
-                        $data['discount'] = $discount;
-                        $total = $total - $discount;
-                        break;
-                    case '2':
-                        $discount = $voucherEntity->voucher->value;
-                        $data['discount'] = $discount;
-                        $total = $total - $discount;
-                        break;
-                }
-
-                $data['code_voucher'] = $voucherEntity->voucher->code_voucher;
-
-
-            }
+            $total = $this->usingVoucher($customer_id, $total, function(\App\Model\Entity\CustomerVoucher $customerVoucherEntity, $discount) use (&$data) {
+                $data['code_voucher'] = $customerVoucherEntity->voucher->code_voucher;
+                $data['discount'] = $discount;
+            });
 
             $data['total'] = $total;
 
@@ -459,6 +434,52 @@ class CheckoutController extends AppController
 
         $this->set(compact('data', 'error'));
 
+    }
+
+    /**
+     * @param $customer_id
+     * @param $total
+     * @param callable|null $callback
+     * @return float|int
+     */
+    protected function usingVoucher($customer_id, $total, callable $callback = null)
+    {
+        /**
+         * @var \App\Model\Entity\CustomerVoucher $customerVoucherEntity
+         */
+        $customerVoucherEntity = $this->CustomerVouchers->find()
+            ->where([
+                'CustomerVouchers.customer_id' => $customer_id,
+                'CustomerVouchers.status' => 1,
+                'Vouchers.status' => 1
+            ])
+            ->contain([
+                'Vouchers'
+            ])
+            ->orderDesc('CustomerVouchers.id')
+            ->first();
+
+        if ($customerVoucherEntity) {
+            $discount = 0;
+            switch($customerVoucherEntity->voucher->type) {
+                case '1':
+                    $discount = $customerVoucherEntity->voucher->percent / 100 * $total;
+                    $discount = $discount > $customerVoucherEntity->voucher->value ? $customerVoucherEntity->voucher->value : $discount;
+                    $total = $total - $discount;
+                    break;
+                case '2':
+                    //$discount = $customerVoucherEntity->voucher->value;
+                    //$total = $total - $discount;
+                    break;
+            }
+
+            if (is_callable($callback)) {
+                call_user_func_array($callback, [$customerVoucherEntity, $discount]);
+            }
+
+        }
+
+        return $total;
     }
 
 
@@ -545,6 +566,12 @@ class CheckoutController extends AppController
     }
 
 
+    public function createToken()
+    {
+        $this->isCreateToken = true;
+        $amount = $this->process();
+        $this->set(compact('amount'));
+    }
 
 
     /**
@@ -596,7 +623,7 @@ class CheckoutController extends AppController
 
         $shippingValidation = new Validator();
         $shippingValidation->requirePresence('code')
-            ->inList('code', ['jne', 'jnt', 'tiki', 'pos'])
+            ->inList('code', ['JNE', 'JNT', 'TIKI', 'POS', 'J&T'])
             ->notBlank('code')
             ->requirePresence('service')
             ->notBlank('service');
@@ -821,48 +848,37 @@ class CheckoutController extends AppController
                 }
 
 
-                $total = $gross_total - $use_point;
+                $total = $gross_total;
 
                 if ($use_point > 0) {
+
+                    $pointRateEntity = $this->CustomerPointRates->find()
+                        ->orderDesc('CustomerPointRates.id')
+                        ->first();
+
+                    if ($pointRateEntity) {
+                        $use_point = ($use_point / intval($pointRateEntity->get('point'))) * intval($pointRateEntity->get('value'));
+                    }
+
+                    $total = $total - $use_point;
                     $trx->addItem('point', -$use_point, 1, 'Using Point Customer');
                 }
 
-                //check voucher claim
                 /**
                  * @var \App\Model\Entity\CustomerVoucher $customerVoucherEntity
                  */
-                $customerVoucherEntity = $this->CustomerVouchers->find()
-                    ->where([
-                        'CustomerVouchers.customer_id' => $customer_id,
-                        'CustomerVouchers.status' => 1
-                    ])
-                    ->contain([
-                        'Vouchers'
-                    ])
-                    ->orderDesc('CustomerVouchers.id')
-                    ->first();
-
-                if ($customerVoucherEntity) {
-                    $discount = 0;
-                    switch($customerVoucherEntity->voucher->type) {
-                        case '1':
-                            $discount = $customerVoucherEntity->voucher->value / 100 * $total;
-                            $total = $total - $discount;
-                            break;
-                        case '2':
-                            $discount = $customerVoucherEntity->voucher->value;
-                            $total = $total - $discount;
-                            break;
-                    }
-
+                $customerVoucherEntity = null;
+                //check voucher claim
+                $total = $this->usingVoucher($customer_id, $total, function(\App\Model\Entity\CustomerVoucher $voucherEntity, $discount) use (&$trx, &$customerVoucherEntity) {
                     $trx->addItem(
-                        'vocher' . $customerVoucherEntity->get('id'),
+                        'vocher' . $voucherEntity->get('id'),
                         -$discount,
                         1,
-                        'Using voucher ' . $customerVoucherEntity->voucher->code_voucher
+                        'Using voucher ' . $voucherEntity->voucher->code_voucher
                     );
 
-                }
+                    $customerVoucherEntity = $voucherEntity;
+                });
 
 
 
@@ -893,6 +909,10 @@ class CheckoutController extends AppController
 
                 $data['payment_method'] = $payment_method;
                 $data['payment_amount'] = $trx->getAmount();
+
+                if ($this->isCreateToken) {
+                    return $trx->getAmount();
+                }
 
                 $payment = null;
 
@@ -1269,6 +1289,7 @@ class CheckoutController extends AppController
                     }else{
                         $label = $cost['service'];
                     }
+                    $val['code'] = strtoupper(str_replace('J&T', 'JNT', $val['code']));
                     $result[] = [
                         'code' => $val['code'],
                         'service' => $cost['service'],

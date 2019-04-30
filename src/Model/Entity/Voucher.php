@@ -7,12 +7,18 @@ use Cake\ORM\Entity;
  * Voucher Entity
  *
  * @property int $id
+ * @property string $name
+ * @property string $slug
  * @property string $code_voucher
  * @property \Cake\I18n\FrozenTime $date_start
  * @property \Cake\I18n\FrozenTime $date_end
  * @property int $qty
+ * @property int $stock
  * @property int $type
- * @property float $value
+ * @property int $point
+ * @property int $percent
+ * @property int $value
+ * @property string $tos
  * @property int $status
  *
  * @property \App\Model\Entity\Order[] $orders
@@ -30,12 +36,18 @@ class Voucher extends Entity
      * @var array
      */
     protected $_accessible = [
+        'name' => true,
+        'slug' => true,
         'code_voucher' => true,
         'date_start' => true,
         'date_end' => true,
         'qty' => true,
+        'stock' => true,
         'type' => true,
+        'point' => true,
+        'percent' => true,
         'value' => true,
+        'tos' => true,
         'status' => true,
         'orders' => true
     ];
