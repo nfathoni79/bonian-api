@@ -570,7 +570,25 @@ class CheckoutController extends AppController
     {
         $this->isCreateToken = true;
         $amount = $this->process();
-        $this->set(compact('amount'));
+        $customer_id = $this->Authenticate->getId();
+        $customer_card_entity = $this->CustomerCards->find()
+            ->where([
+                'customer_id' => $customer_id,
+                'id' => $this->request->getData('card_id')
+            ])
+            ->first();
+
+        if ($customer_card_entity) {
+            $credit_card_token = new CreditCardToken();
+            $token = $credit_card_token->setToken($customer_card_entity->get('token'))
+                ->setCvv($this->request->getData('cvv'))
+                ->setSecure(true)
+                ->request($amount);
+        }
+
+
+
+        $this->set(compact('token'));
     }
 
 
@@ -695,7 +713,8 @@ class CheckoutController extends AppController
                                 ->count() > 0;
                     },
                     'message' => 'Silahkan masukan credit credit card'
-                ]);
+                ])
+                ->notBlank('token');
 
             if (!$this->request->getData('card_id')) {
 
@@ -932,7 +951,6 @@ class CheckoutController extends AppController
 
                         if ($customer_card_entity) {
 
-                            /*
                             $payment = new CreditCard();
                             $payment->setToken($this->request->getData('token'))
                                 ->saveToken(true)
@@ -945,21 +963,11 @@ class CheckoutController extends AppController
                                 )
                                 ->setBillingAddress()
                                 ->setShippingFromBilling();
-                            */
 
-                            /**
-                             * if credit card generate token base on amount first
-                             *
-                             */
 
-                            $credit_card_token = new CreditCardToken();
-                            $token = $credit_card_token->setToken($customer_card_entity->get('token'))
-                                ->setCvv($this->request->getData('cvv'))
-                                ->setSecure(true)
-                                ->request($trx->getAmount());
                         } else {
 
-                            $credit_card_token = new CreditCardToken(
+                            /*$credit_card_token = new CreditCardToken(
                                 $this->request->getData('card_number'),
                                 $this->request->getData('card_exp_month'),
                                 $this->request->getData('card_exp_year'),
@@ -967,14 +975,14 @@ class CheckoutController extends AppController
                             );
 
                             $token = $credit_card_token->setSecure(true)
-                                ->request($trx->getAmount());
+                                ->request($trx->getAmount());*/
                         }
 
-                        $data[$payment_method] = array_filter([
+                        /*$data[$payment_method] = array_filter([
                             'redirect_url' => $token->redirect_url,
                             'token' => $token->token_id,
                             'bank' => $token->bank
-                        ]);
+                        ]);*/
 
 
                         break;
