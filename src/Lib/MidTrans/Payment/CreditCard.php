@@ -82,6 +82,7 @@ class CreditCard extends PaymentRequest
     public function setShippingFromBilling()
     {
         $this->customer_details['shipping_address'] = $this->customer_details['billing_address'];
+        return $this;
     }
 
     public function setShippingAddress($address = "Sudirman", $city = "Jakarta", $postal_code = 12190, $country_code = "IDN")

@@ -593,6 +593,42 @@ class CheckoutController extends AppController
         $this->set(compact('token', 'amount'));
     }
 
+    public function oke()
+    {
+        //get customer
+        $customerEntity = null;
+        try {
+            $customerEntity = $this->Customers->get($this->Authenticate->getId());
+        } catch(\Exception $e) {
+
+        }
+
+        $payment = new CreditCard();
+        $payment->setToken('xxxxxx')
+            ->saveToken(true)
+            ->setAuthentication(true)
+            ->setCustomer(
+                $customerEntity->get('email'),
+                $customerEntity->get('first_name'),
+                $customerEntity->get('last_name'),
+                $customerEntity->get('phone')
+            )
+            ->setBillingAddress()
+            ->setShippingFromBilling();
+
+        $request = new Request($payment);
+        //$request = $request->toObject();
+
+        $trx = new Transaction('cccccc');
+
+        $trx->addItem('point', 5000, 1, 'Using Point Customer');
+        $request->addTransaction($trx);
+
+        $this->MidTrans->charge($request);
+
+        $this->set(compact('payment', 'request'));
+    }
+
 
     /**
      * process checkout json input params
@@ -956,7 +992,7 @@ class CheckoutController extends AppController
                             $payment = new CreditCard();
                             $payment->setToken($this->request->getData('token'))
                                 ->saveToken(true)
-                                ->setAuthentication(true)
+                                //->setAuthentication(true)
                                 ->setCustomer(
                                     $customerEntity->get('email'),
                                     $customerEntity->get('first_name'),
@@ -965,6 +1001,8 @@ class CheckoutController extends AppController
                                 )
                                 ->setBillingAddress()
                                 ->setShippingFromBilling();
+
+
 
 
                         } else {
@@ -1036,13 +1074,15 @@ class CheckoutController extends AppController
                 $request->addTransaction($trx);
 
 
+                if (!$request->isCreditCard()) {
+                    $request->setCustomer(
+                        $customerEntity->get('email'),
+                        $customerEntity->get('first_name'),
+                        $customerEntity->get('last_name'),
+                        $customerEntity->get('phone')
+                    );
+                }
 
-                $request->setCustomer(
-                    $customerEntity->get('email'),
-                    $customerEntity->get('first_name'),
-                    $customerEntity->get('last_name'),
-                    $customerEntity->get('phone')
-                );
 
                 $process_save_order = true;
                 $process_payment_charge = true;
@@ -1138,7 +1178,6 @@ class CheckoutController extends AppController
                          * status_code 200 is success and using credit card
                          * status_code 201 is pending and using gopay, virtual_account, clickpay
                          */
-
                         if ($charge && isset($charge['status_code'])) {
                             switch ($charge['status_code']) {
                                 case 200:

@@ -31,6 +31,7 @@ class Request
         foreach(get_object_vars($payment) as $key => $val) {
             $this->{$key} = $val;
         }
+
         return $this;
     }
 
@@ -202,6 +203,7 @@ class Request
 
     public function toObject()
     {
+
         $this->validRequest();
         return array_filter(get_object_vars($this));
     }
