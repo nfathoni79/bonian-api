@@ -91,6 +91,7 @@ class LoginController extends AppController
                     'last_name',
                     'email',
                     'password',
+                    'avatar',
                     'customer_status_id',
                     'reffcode',
                     'is_verified',
@@ -196,6 +197,7 @@ class LoginController extends AppController
                     'email' => $user->get('email'),
                     'first_name' => $user->get('first_name'),
                     'last_name' => $user->get('last_name'),
+                    'avatar' => $user->get('avatar'),
                     'customer_status_id' => $user->get('customer_status_id'),
                     'reffcode' => $user->get('reffcode'),
                     'token' => $token

@@ -131,6 +131,9 @@ class ProductsTable extends Table
         $this->hasMany('ProductCoupons', [
             'foreignKey' => 'product_id'
         ]);
+        $this->hasMany('ProductDiscussions', [
+            'foreignKey' => 'product_id'
+        ]);
     }
 
     /**
