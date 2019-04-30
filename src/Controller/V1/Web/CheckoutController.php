@@ -588,7 +588,9 @@ class CheckoutController extends AppController
 
 
 
-        $this->set(compact('token'));
+
+
+        $this->set(compact('token', 'amount'));
     }
 
 
@@ -1129,50 +1131,49 @@ class CheckoutController extends AppController
 
                 if ($process_save_order) {
 
-                    if ($payment_method == 'credit_card') {
-                        $data['payload'] = base64_encode(Security::encrypt(serialize($request), Configure::read('Encrypt.salt') . $token->token_id));
-                    } else {
-                        //process charge exception credit card
-                        try {
-                            $charge = $this->MidTrans->charge($request);
-                            /*
-                             * status_code 200 is success and using credit card
-                             * status_code 201 is pending and using gopay, virtual_account, clickpay
-                             */
+                    //process charge exception credit card
+                    try {
+                        $charge = $this->MidTrans->charge($request);
+                        /*
+                         * status_code 200 is success and using credit card
+                         * status_code 201 is pending and using gopay, virtual_account, clickpay
+                         */
 
-                            if ($charge && isset($charge['status_code'])) {
-                                switch ($charge['status_code']) {
-                                    case 200:
-                                        $data['payment_status'] = 'success';
-                                        $data['payment'] = $charge;
-                                        break;
-                                    case 201:
-                                        //process pending need response to frontend
-                                        $data['payment_status'] = 'pending';
-                                        $data['payment'] = $charge;
-                                        break;
-                                    default:
-                                        $data['payment_status'] = 'failed';
-                                        $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
-                                        $process_payment_charge = false;
-                                        break;
-                                }
-
-
+                        if ($charge && isset($charge['status_code'])) {
+                            switch ($charge['status_code']) {
+                                case 200:
+                                    $data['payment_status'] = 'success';
+                                    $data['payment'] = $charge;
+                                    break;
+                                case 201:
+                                    //process pending need response to frontend
+                                    $data['payment_status'] = 'pending';
+                                    $data['payment'] = $charge;
+                                    break;
+                                default:
+                                    $data['payment_status'] = 'failed';
+                                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 1'));
+                                    $process_payment_charge = false;
+                                    break;
                             }
 
-                        } catch(\Exception $e) {
-                            $this->Orders->getConnection()->rollback();
-                            $process_payment_charge = false;
+
                         }
+
+                    } catch(\Exception $e) {
+                        $this->Orders->getConnection()->rollback();
+                        $process_payment_charge = false;
+
                     }
 
                 }
 
+
+
                 if ($process_save_order && $process_payment_charge) {
                     $this->Orders->getConnection()->commit();
                 } else {
-                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 2'));
                 }
 
             } else {
