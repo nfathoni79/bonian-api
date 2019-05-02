@@ -93,6 +93,14 @@ class ProductImagesTable extends Table
         return $validator;
     }
 
+    public function beforeFind ($event, $query, $options, $primary)
+    {
+        $order = $query->clause('order');
+        if ($order === null || !count($order)) {
+            $query->order( ['ProductImages.primary' => 'DESC'] );
+        }
+    }
+
     /**
      * Returns a rules checker object that will be used for validating
      * application integrity.

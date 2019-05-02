@@ -228,8 +228,8 @@ class ProductsController extends Controller
                 unset($row->product_tags);
                 unset($row->product_to_categories);
 
-//                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
-                $row->images = $images;
+                $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+//                $row->images = $images;
 
                 unset($row->product_option_prices, $row->product_images);
                 return $row;

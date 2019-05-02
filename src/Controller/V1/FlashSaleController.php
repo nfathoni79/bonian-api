@@ -55,7 +55,8 @@ class FlashSaleController extends Controller
                             'fields' => [
                                 'name',
                                 'product_id',
-                            ]
+                            ],
+                            'sort' => ['ProductImages.primary' => 'DESC']
                         ],
                         'ProductToCategories' => [
                             'fields' => [

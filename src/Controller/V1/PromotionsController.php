@@ -75,7 +75,8 @@ class PromotionsController extends Controller
                                     'fields' => [
                                         'name',
                                         'product_id',
-                                    ]
+                                    ],
+                                    'sort' => ['ProductImages.primary' => 'DESC']
                                 ],
 							]
 						])
