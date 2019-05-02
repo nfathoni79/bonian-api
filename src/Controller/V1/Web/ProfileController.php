@@ -168,13 +168,14 @@ class ProfileController extends AppController
 
             $response = $http->post(Configure::read('postImage').'/avatar', (string)$data,['headers' => ['Content-Type' => $data->contentType()]]);
             $result = json_decode($response->getBody()->getContents());
-            if($result->is_success){
 
+            if($result->is_success){
+                $data = $result->data;
             }else{
                 $this->setResponse($this->response->withStatus(406, 'Unable to update data profile'));
             }
         }
-        $this->set(compact('error'));
+        $this->set(compact('error', 'data'));
     }
 
 

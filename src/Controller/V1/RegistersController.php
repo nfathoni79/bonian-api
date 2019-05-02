@@ -84,6 +84,7 @@ class RegistersController extends Controller
             $register->set('customer_group_id', 1);
             $register->set('customer_status_id', 1);
             $register->set('is_verified', 0);
+            $register->set('avatar', 'avatar.jpg');
             $register->set('platforrm', 'Android');
             $register->set('activation', \Cake\Utility\Text::uuid());
 

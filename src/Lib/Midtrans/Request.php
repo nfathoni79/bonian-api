@@ -24,14 +24,17 @@ class Request
 
     /**
      * Request constructor.
-     * payment_type: bank_transfer, credit_card, echannel, gopay
-     * @param $payment_type
+     * @param PaymentRequest $payment
      */
-    public function __construct($payment_type)
+    public function __construct(PaymentRequest $payment)
     {
-        $this->payment_type = $payment_type;
+        foreach(get_object_vars($payment) as $key => $val) {
+            $this->{$key} = $val;
+        }
+
         return $this;
     }
+
 
     public function getPaymentType()
     {
@@ -200,6 +203,7 @@ class Request
 
     public function toObject()
     {
+
         $this->validRequest();
         return array_filter(get_object_vars($this));
     }

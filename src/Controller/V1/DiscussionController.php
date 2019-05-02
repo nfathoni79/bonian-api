@@ -26,6 +26,7 @@ class DiscussionController extends Controller
         $data = $this->ProductDiscussions->find('threaded')
             ->contain(['Customers' => ['fields' => ['avatar','first_name','last_name','email']]])
             ->where(['ProductDiscussions.product_id' => $this->request->getData('product_id')]);
+        $data = $data->orderAsc('ProductDiscussions.id');
         $data = $this->paginate($data, [
             'limit' => (int) $this->request->getQuery('limit', 5)
         ])->map(function(\App\Model\Entity\ProductDiscussion $row){
