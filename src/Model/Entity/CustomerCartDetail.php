@@ -42,6 +42,7 @@ class CustomerCartDetail extends Entity
         'customer_cart_id' => true,
         'qty' => true,
         'product_id' => true,
+        'product_category_id' => true,
         'product_option_price_id' => true,
         'product_option_stock_id' => true,
         'price' => true,

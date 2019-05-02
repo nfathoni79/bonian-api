@@ -314,7 +314,11 @@ class CheckoutController extends AppController
                         'CustomerVouchers.id' => $value,
                     ])
                     ->contain([
-                        'Vouchers'
+                        'Vouchers'=> [
+                            'VoucherDetails' => [
+                                'ProductCategories'
+                            ]
+                        ]
                     ])
                     ->first();
                 if ($voucher) {
@@ -326,6 +330,32 @@ class CheckoutController extends AppController
                              */
                             $expired = $voucher->get('expired');
                             return $expired->gte(Time::now());
+                            break;
+                        case '2':
+                            // CATEGORY IN LIST CART ONLY
+
+                            $categoryIn = [];
+                            foreach($voucher['voucher']['voucher_details'] as $k => $v){
+                                $categoryIn[] = $v['product_category_id'];
+                            }
+
+
+                            $query = $this->CustomerCarts->find()
+                                ->contain(['CustomerCartDetails'])
+                                ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(), 'CustomerCarts.status' => 1])
+                                ->first()
+                                ->toArray();
+
+                            foreach($query['customer_cart_details'] as $vals){
+                                if($vals['status'] == 1){
+                                    if(in_array($vals['product_category_id'],$categoryIn )){
+                                        return true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            return false;
                             break;
                         default:
                             return true;
@@ -350,6 +380,7 @@ class CheckoutController extends AppController
                 Cache::write($storage_key, [
                     'point' => $this->request->getData('point'),
                     'voucher' => $this->request->getData('voucher'),
+                    'kupon' => $this->request->getData('kupon'),
                     'step' => 1
                 ], 'checkout');
 

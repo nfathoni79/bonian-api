@@ -138,28 +138,62 @@ class ClaimController extends AppController
                     'code_voucher' => $voucher,
                     'stock > ' => 0,
                     'status' => 1,
-                    'type' => 3,
+                    'type IN ' => [2,3],
                 ])
                 ->first();
             if($findVoucher){
 
-                $saveStock = clone $findVoucher;
-                $saveStock->set('stock', $saveStock->get('stock') - 1);
-                $saveStock->set('status', 2);
-                if($this->Vouchers->save($saveStock)){
+                switch ($findVoucher->get('type')) {
+                    case '3':
+                        $saveStock = clone $findVoucher;
+                        $saveStock->set('stock', $saveStock->get('stock') - 1);
+                        $saveStock->set('status', 2);
+                        if($this->Vouchers->save($saveStock)){
 
-                    $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
-                    $setEntity = [
-                        'customer_id' => $this->Authenticate->getId(),
-                        'voucher_id' => $findVoucher->get('id'),
-                        'status ' => 1,
-                        'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
-                    ];
-                    $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
-                    $this->CustomerVouchers->save($newEntityCustVoucher);
+                            $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
+                            $setEntity = [
+                                'customer_id' => $this->Authenticate->getId(),
+                                'voucher_id' => $findVoucher->get('id'),
+                                'status' => 1,
+                                'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
+                            ];
+                            $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
+                            $this->CustomerVouchers->save($newEntityCustVoucher);
+                        }
+                        break;
+
+                    case '2':
+                        $findCustVoucher = $this->CustomerVouchers->find()
+                            ->where([
+                                'customer_id' => $this->Authenticate->getId(),
+                                'voucher_id' => $findVoucher->get('id'),
+                            ])->first();
+                        if($findCustVoucher){
+                            $this->setResponse($this->response->withStatus(406, 'Maaf, kode ini telah di gunakan.'));
+                        }else{
+                            $saveStock = clone $findVoucher;
+                            $saveStock->set('stock', $saveStock->get('stock') - 1);
+                            if($saveStock->get('stock') == 0){
+                                $saveStock->set('status', 2);
+                            }
+                            if($this->Vouchers->save($saveStock)){
+
+                                $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
+                                $setEntity = [
+                                    'customer_id' => $this->Authenticate->getId(),
+                                    'voucher_id' => $findVoucher->get('id'),
+                                    'status' => 1,
+                                    'expired' => $findVoucher->get('date_end'),
+                                ];
+                                $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
+                                $this->CustomerVouchers->save($newEntityCustVoucher);
+                            }
+                        }
+
+                    break;
                 }
             }else{
-                $this->setResponse($this->response->withStatus(406, 'Maaf, kode ini tidak sah. Mohon coba kembali.'));
+                $this->setResponse($this->response->withStatus(406, 'Maaf, kode ini tidak sah. Mohon coba kembal;i.'));
             }
         }else{
             $this->setResponse($this->response->withStatus(406, 'Invalid or empty token'));

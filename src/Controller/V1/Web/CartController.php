@@ -126,9 +126,16 @@ class CartController extends AppController
 
 
                         $getAddPrice = $this->ProductOptionPrices->find()
-                            ->contain(['Products'])
+                            ->contain([
+                                'Products' => [
+                                    'ProductToCategories'
+                                ]
+                            ])
                             ->where(['ProductOptionPrices.id' => $this->request->getData('price_id')])
                             ->first();
+
+                        $newEntityDetails->set('product_category_id', $getAddPrice['product']['product_to_categories'][0]['product_category_id']);
+
                         $newEntityDetails->set('add_price', $getAddPrice->get('price'));
                         $checkFlashSale = $this->ProductDealDetails->checkStatusProduct($this->request->getData('product_id'));
                         $checkGroupSale = $this->ProductGroupDetails->checkStatusProduct($this->request->getData('product_id'));
