@@ -56,8 +56,7 @@ class VouchersController extends AppController
             ]);
 
         $voucher->orderDesc('CustomerVouchers.id');
-        debug($voucher);
-        exit;
+
 
 
 
