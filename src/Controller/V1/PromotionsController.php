@@ -64,6 +64,7 @@ class PromotionsController extends Controller
                                     'point',
                                     'price',
                                     'price_sale',
+                                    'rating',
                                     'created',
 
                                 ],
