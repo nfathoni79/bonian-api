@@ -85,7 +85,7 @@ class ProductsController extends Controller
                         'product_id',
                         'idx',
                     ],
-                    'sort' => ['ProductImages.primary' => 'DESC']
+                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ],
                 'ProductTags' => [
                     'Tags'
@@ -301,7 +301,7 @@ class ProductsController extends Controller
                         'name',
                         'product_id',
                     ],
-                    'sort' => ['ProductImages.primary' => 'DESC']
+                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ]
             ])
             ->first();
@@ -336,7 +336,7 @@ class ProductsController extends Controller
                         'name',
                         'product_id',
                     ],
-                    'sort' => ['ProductImages.primary' => 'DESC']
+                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ]
             ])
             ->limit(10)
@@ -376,7 +376,7 @@ class ProductsController extends Controller
                         'name',
                         'product_id',
                     ],
-                    'sort' => ['ProductImages.primary' => 'DESC']
+                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ]
             ])
             ->orderDesc('Products.view')
@@ -424,7 +424,7 @@ class ProductsController extends Controller
                             'name',
                             'product_id',
                         ],
-                        'sort' => ['ProductImages.primary' => 'DESC']
+                        'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                     ]
                 ]
             ])
@@ -819,7 +819,7 @@ class ProductsController extends Controller
                         'name',
                         'product_id',
                     ],
-                    'sort' => ['ProductImages.primary' => 'DESC']
+                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ]
             ])
             ->bind(':search', $keywords, 'string')

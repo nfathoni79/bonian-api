@@ -76,7 +76,7 @@ class PromotionsController extends Controller
                                         'name',
                                         'product_id',
                                     ],
-                                    'sort' => ['ProductImages.primary' => 'DESC']
+                                    'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                                 ],
 							]
 						])

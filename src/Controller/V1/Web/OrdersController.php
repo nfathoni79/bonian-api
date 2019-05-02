@@ -129,7 +129,9 @@ class OrdersController extends AppController
                     'OrderStatuses',
                     'OrderDetailProducts' => [
                         'Products' => [
-                            'ProductImages'
+                            'ProductImages' => [
+                                'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
+                            ]
                         ],
                         'ProductOptionPrices' => [
                             'ProductOptionValueLists' => [

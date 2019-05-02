@@ -97,7 +97,7 @@ class ProductImagesTable extends Table
     {
         $order = $query->clause('order');
         if ($order === null || !count($order)) {
-            $query->order( ['ProductImages.primary' => 'DESC'] );
+            $query->order( ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC'] );
         }
     }
 

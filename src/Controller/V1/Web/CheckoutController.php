@@ -139,7 +139,8 @@ class CheckoutController extends AppController
                             'fields' => [
                                 'name',
                                 'product_id',
-                            ]
+                            ],
+                            'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                         ],
                         'ProductToCourriers' => [
                             'Courriers'
