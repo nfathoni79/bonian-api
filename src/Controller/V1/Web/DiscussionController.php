@@ -26,9 +26,9 @@ class DiscussionController extends AppController{
         $validator = new Validator();
 
         $validator->requirePresence('comment')
-            ->notBlank('comment', 'Komentar tidak boleh kosong');
+            ->notBlank('comment', 'Pertanyaan diskusi tidak boleh kosong');
         $validator->requirePresence('product_id')
-            ->notBlank('product_id', 'unknown product id') ;
+            ->notBlank('product_id', 'produk tidak ditemukan') ;
 
         $error = $validator->errors($this->request->getData());
         if (empty($error)) {

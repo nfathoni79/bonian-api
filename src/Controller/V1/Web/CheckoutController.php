@@ -41,6 +41,7 @@ use Cake\Cache\Cache;
  *
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerCardsTable $CustomerCards
+ * @property \App\Model\Table\CustomerCartDetailsTable $CustomerCartDetails
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
  * @property \App\Model\Table\CustomerPointRatesTable $CustomerPointRates
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
@@ -73,6 +74,7 @@ class CheckoutController extends AppController
         $this->loadModel('Orders');
         $this->loadModel('Courriers');
         $this->loadModel('Products');
+        $this->loadModel('CustomerCartDetails');
 
         $this->loadComponent('RajaOngkir');
 
@@ -350,6 +352,18 @@ class CheckoutController extends AppController
                     'voucher' => $this->request->getData('voucher'),
                     'step' => 1
                 ], 'checkout');
+
+                foreach($this->request->getData('note') as $k => $v){
+                    $query = $this->CustomerCartDetails->query();
+                    $query->update()
+                        ->set(['comment' => $v])
+                        ->where([
+                            'id' => $k
+                        ])
+                        ->execute();
+                }
+
+
             } else {
                 $this->setResponse($this->response->withStatus(406, 'Invalid cart'));
             }

@@ -22,6 +22,8 @@ use Cake\Utility\Hash;
  *
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
+ * @property \App\Model\Table\ProductCouponsTable $ProductCoupons
+ * @property \App\Model\Table\CustomerCartCouponsTable $CustomerCartCoupons
  * @property \App\Model\Table\CustomerCartDetailsTable $CustomerCartDetails
  * @property \App\Model\Table\ProductOptionPricesTable $ProductOptionPrices
  * @property \App\Model\Table\ProductDealDetailsTable $ProductDealDetails
@@ -39,9 +41,11 @@ class CartController extends AppController
         $this->loadModel('CustomerCarts');
         $this->loadModel('CustomerCartDetails');
         $this->loadModel('Products');
+        $this->loadModel('ProductCoupons');
         $this->loadModel('ProductOptionPrices');
         $this->loadModel('ProductDealDetails');
         $this->loadModel('ProductGroupDetails');
+        $this->loadModel('CustomerCartCoupons');
         $this->loadModel('CustomerWishes');
     }
 
@@ -52,7 +56,6 @@ class CartController extends AppController
         if($this->request->getData('qty') <= 0){
             $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi quantity'));
         }else{
-
 
             $customerCart = $this->CustomerCarts->find()
                 ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1])
@@ -153,7 +156,31 @@ class CartController extends AppController
 
                         if ($this->CustomerCartDetails->save($newEntityDetails)) {
 
-                           $data = $newEntityDetails->get('id');
+
+
+                            $findCoupon = $this->ProductCoupons->find()
+                                ->where(['ProductCoupons.product_id' => $this->request->getData('product_id'), 'ProductCoupons.status' => 1])
+                                ->first();
+                            if($findCoupon){
+                                $findCartCoupon = $this->CustomerCartCoupons->find()
+                                    ->where(['CustomerCartCoupons.customer_cart_id' => $cartId, 'CustomerCartCoupons.product_coupon_id' => $findCoupon->get('id')])
+                                    ->first();
+                                if(empty($findCartCoupon)){
+                                    $newEntity = $this->CustomerCartCoupons->newEntity();
+                                    $setNewEntity = [
+                                        'customer_cart_id' => $cartId,
+                                        'product_coupon_id' => $findCoupon->get('id')
+                                    ];
+                                    $this->CustomerCartCoupons->patchEntity($newEntity,$setNewEntity);
+                                    $this->CustomerCartCoupons->save($newEntity);
+                                }
+                            }
+
+
+
+
+
+                            $data = $newEntityDetails->get('id');
                             $this->set(compact('data'));
                         } else {
                             $this->setResponse($this->response->withStatus(406, 'Stok tidak cukup'));
@@ -210,6 +237,26 @@ class CartController extends AppController
 
             $this->CustomerCartDetails->patchEntity($cartDetails,$setEntity);
             if($this->CustomerCartDetails->save($cartDetails)){
+
+                $findCoupon = $this->ProductCoupons->find()
+                    ->where(['ProductCoupons.product_id' => $productId, 'ProductCoupons.status' => 1])
+                    ->first();
+                if($findCoupon){
+                    $findCartCoupon = $this->CustomerCartCoupons->find()
+                        ->where(['CustomerCartCoupons.customer_cart_id' => $findCart->get('customer_cart_id'), 'CustomerCartCoupons.product_coupon_id' => $findCoupon->get('id')])
+                        ->first();
+                    if(empty($findCartCoupon)){
+                        $newEntity = $this->CustomerCartCoupons->newEntity();
+                        $setNewEntity = [
+                            'customer_cart_id' => $findCart->get('customer_cart_id'),
+                            'product_coupon_id' => $findCoupon->get('id')
+                        ];
+                        $this->CustomerCartCoupons->patchEntity($newEntity,$setNewEntity);
+                        $this->CustomerCartCoupons->save($newEntity);
+                    }
+                }
+
+
                 return true;
             }else{
                 return false;
@@ -219,6 +266,37 @@ class CartController extends AppController
 
     }
 
+    public function coupon(){
+
+        $this->request->allowMethod(['get']);
+        $customerId = $this->Authenticate->getId();
+
+        $cart = $this->CustomerCarts->find()
+            ->contain(
+                'CustomerCartDetails', function (\Cake\ORM\Query $q) {
+                    return $q
+                        ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                }
+            )
+            ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
+            ->first();
+
+        if($cart){
+            $couponList = $this->CustomerCartCoupons->find()
+                ->contain([
+                    'ProductCoupons' => [
+                        'Products' => [
+                            'fields' => [
+                                'name'
+                            ]
+                        ]
+                    ]
+                ])
+                ->where(['CustomerCartCoupons.customer_cart_id' => $cart->get('id')]);
+            $data = $couponList;
+            $this->set(compact('data'));
+        }
+    }
 
     public function view(){
         $this->request->allowMethod(['get']);
@@ -328,6 +406,30 @@ class CartController extends AppController
             $entity->set('status', 4);
             if ($this->CustomerCartDetails->save($entity)) {
                 //success
+//                produk yang sama dalam cart yang sama dengan status = 1
+                $counter = $this->CustomerCartDetails->find()
+                    ->where([
+                        'CustomerCartDetails.customer_cart_id' => $find->get('customer_cart_id'),
+                        'CustomerCartDetails.product_id' => $find->get('product_id'),
+                        'CustomerCartDetails.status' => 1
+                    ])->count();
+                if($counter == 0){
+                    /* DELETE COUPON DARI LIST COUPON */
+                    $productCoupon = $this->ProductCoupons->find()
+                        ->where(['ProductCoupons.product_id' => $find->get('product_id') ])->first();
+                    if($productCoupon){
+                        $findCustomerCartCoupon = $this->CustomerCartCoupons->find()
+                            ->where([
+                                'CustomerCartCoupons.customer_cart_id' => $find->get('customer_cart_id'),
+                                'CustomerCartCoupons.product_coupon_id' => $productCoupon->get('id'),
+                            ])->first();
+                        if($findCustomerCartCoupon){
+                            $entityCustomerCartCoupon = $this->CustomerCartCoupons->get($findCustomerCartCoupon->get('id'));
+                            $this->CustomerCartCoupons->delete($entityCustomerCartCoupon);
+                        }
+                    }
+                }
+
 
             } else {
                 $this->setResponse($this->response->withStatus(406, 'Failed to delete cart'));
