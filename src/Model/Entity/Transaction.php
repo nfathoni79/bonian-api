@@ -21,6 +21,7 @@ use Cake\ORM\Entity;
  * @property string|null $masked_card
  * @property string|null $card_type
  * @property string|null $approval_code
+ * @property string|null $raw_response
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
  *
@@ -53,6 +54,7 @@ class Transaction extends Entity
         'masked_card' => true,
         'card_type' => true,
         'approval_code' => true,
+        'raw_response' => true,
         'created' => true,
         'modified' => true,
         'order' => true

@@ -67,26 +67,24 @@ class IpnController extends AppController
 
                     if ($transactionEntity) {
                         $this->Transactions->patchEntity($transactionEntity, $content);
-                    } else {
-                        $transactionEntity = $this->Transactions->newEntity($content);
-                    }
+                        //patch again with order_id relations to table orders
+                        $this->Transactions->patchEntity($transactionEntity, [
+                            'order_id' => $orderEntity->get('id')
+                        ]);
 
-                    //patch again with order_id relations to table orders
-                    $this->Transactions->patchEntity($transactionEntity, [
-                        'order_id' => $orderEntity->get('id')
-                    ]);
+                        if ($this->Transactions->save($transactionEntity)) {
+                            //$content['status_code'] == 200
+                            if ($content['status_code'] == 200) {
+                                $orderEntity->set('payment_status', 2);
+                            } else if (strtolower($content['transaction_status']) == 'expire') {
+                                $orderEntity->set('payment_status', 12); // 12: expired
+                            }
 
-                    if ($this->Transactions->save($transactionEntity)) {
-                        //$content['status_code'] == 200
-                        if ($content['status_code'] == 200) {
-                            $orderEntity->set('payment_status', 2);
-                        } else if (strtolower($content['transaction_status']) == 'expire') {
-                            $orderEntity->set('payment_status', 12); // 12: expired
+                            $this->Orders->save($orderEntity);
+
                         }
-
-                        $this->Orders->save($orderEntity);
-
                     }
+
                 }
 
             }

@@ -48,6 +48,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\CourriersTable $Courriers
  * @property \App\Model\Table\ProductsTable $Products
+ * @property \App\Model\Table\TransactionsTable $Transactions
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -75,6 +76,7 @@ class CheckoutController extends AppController
         $this->loadModel('Courriers');
         $this->loadModel('Products');
         $this->loadModel('CustomerCartDetails');
+        $this->loadModel('Transactions');
 
         $this->loadComponent('RajaOngkir');
 
@@ -676,6 +678,47 @@ class CheckoutController extends AppController
         $this->set(compact('payment', 'request'));
     }
 
+    public function gopayStatus()
+    {
+        $this->request->allowMethod('post');
+        if ($transaction_id = $this->request->getData('transaction_id')) {
+            $transactionEntity = $this->Transactions->find()
+                ->where([
+                    'Transactions.transaction_id' => $transaction_id,
+                    'Transactions.payment_type' => 'gopay'
+                ])
+                ->first();
+
+            if ($transactionEntity) {
+                $raw_response = $transactionEntity->get('raw_response');
+                if ($raw_response) {
+                    $response = json_decode($raw_response, true);
+                    if (isset($response['actions'])) {
+                        foreach($response['actions'] as $val) {
+                            if ($val['name'] == 'get-status') {
+                                try {
+                                    $r = $this->MidTrans->makeRequest()
+                                        ->get($val['url'])
+                                        ->getBody()
+                                        ->getContents();
+                                    $data = json_decode($r, true);
+                                } catch(\GuzzleHttp\Exception\ClientException $e) {}
+
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                $this->setResponse($this->response->withStatus(404, 'Transaction not found'));
+            }
+        }
+
+        $this->set(compact('data'));
+    }
+
 
     /**
      * process checkout json input params
@@ -1108,7 +1151,7 @@ class CheckoutController extends AppController
                         break;
 
                     case 'gopay':
-                        $payment = new Gopay('http://php.net');
+                        $payment = new Gopay($this->request->getData('callback_url'));
                         break;
 
                     default:
@@ -1257,6 +1300,14 @@ class CheckoutController extends AppController
 
 
                 if ($process_save_order && $process_payment_charge) {
+
+                    $transactionEntity = $this->Transactions->newEntity($charge);
+                    if ($transactionEntity->payment_type && $orderEntity->get('id')) {
+                        $transactionEntity->set('raw_response', json_encode($charge));
+                        $transactionEntity->set('order_id', $orderEntity->get('id'));
+                        $this->Transactions->save($transactionEntity);
+                    }
+
                     $this->Orders->getConnection()->commit();
                 } else {
                     $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 2'));
