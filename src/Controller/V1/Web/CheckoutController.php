@@ -1286,6 +1286,17 @@ class CheckoutController extends AppController
                                     break;
                             }
 
+                            switch($charge['payment_type']) {
+                                case 'bank_transfer':
+                                    if (isset($charge['va_numbers'])) {
+                                        foreach($charge['va_numbers'] as $va) {
+                                            $charge['va_number'] = $va['va_number'];
+                                            $charge['bank'] = $va['bank'];
+                                        }
+                                    }
+                                    break;
+                            }
+
 
                         }
 

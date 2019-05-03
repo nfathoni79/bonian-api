@@ -200,7 +200,31 @@ class OrdersController extends AppController
     }
 
 
+    public function getPendingInvoice($invoice)
+    {
+        $data = $this->Transactions->find()
+            ->contain([
+                'Orders'
+            ])
+            ->where([
+                'Orders.customer_id' => $this->Authenticate->getId(),
+                'Orders.invoice' => $invoice,
+                'Orders.payment_status' => 1,
+            ])
+            ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                return $exp->isNotNull('va_number');
+            })
+            ->map(function(\App\Model\Entity\Transaction $row) {
+                return $row;
+            })
+            ->first();
 
+        if (!$data) {
+            $this->setResponse($this->response->withStatus(404, 'Invoice not found'));
+        }
+
+        $this->set(compact('data'));
+    }
 
 
 
