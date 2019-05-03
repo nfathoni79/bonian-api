@@ -80,8 +80,12 @@ class IpnController extends AppController
                         //$content['status_code'] == 200
                         if ($content['status_code'] == 200) {
                             $orderEntity->set('payment_status', 2);
-                            $this->Orders->save($orderEntity);
+                        } else if (strtolower($content['transaction_status']) == 'expire') {
+                            $orderEntity->set('payment_status', 12); // 12: expired
                         }
+
+                        $this->Orders->save($orderEntity);
+
                     }
                 }
 
