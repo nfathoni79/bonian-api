@@ -8,16 +8,11 @@
 
 namespace App\Controller\V1\Web;
 
-use Cake\Auth\DefaultPasswordHasher;
+
 use Cake\Utility\Security;
 use Cake\I18n\Time;
 use Cake\Core\Configure;
 use Cake\Validation\Validator;
-
-use Hybridauth\Hybridauth;
-use Hybridauth\HttpClient;
-use App\Lib\Hybridauth\File;
-
 
 /**
  * Class LoginController
@@ -41,20 +36,11 @@ class OauthController extends AppController
         $this->config = Configure::read('Oauth');
     }
 
-
-
-
     /**
-     * index login
+     * @return \SocialConnect\Auth\Service
      */
-    public function index()
+    protected function setService()
     {
-
-        $callback = $this->request->getHeader('callback');
-        if(count($callback) > 0) {
-            $this->config['callback'] = $callback[0];
-        }
-
         $bid = $this->request->getHeader('bid');
         if(count($bid) > 0) {
             $bid = $bid[0];
@@ -62,6 +48,29 @@ class OauthController extends AppController
             $bid = null;
         }
 
+        $httpClient = new \SocialConnect\Common\Http\Client\Curl();
+        /**
+         * By default collection factory is null, in this case Auth\Service will create
+         * a new instance of \SocialConnect\Auth\CollectionFactory
+         * you can use custom or register another providers by CollectionFactory instance
+         */
+        $collectionFactory = null;
+
+
+        $service = new \SocialConnect\Auth\Service(
+            $httpClient,
+            new \App\Lib\SocialConnect\File($bid),
+            $this->config,
+            $collectionFactory
+        );
+        return $service;
+    }
+
+    /**
+     *
+     */
+    public function index()
+    {
         $userAgent = $this->request->getHeader('user-agent');
         if(count($userAgent) > 0) {
             $userAgent = $userAgent[0];
@@ -69,137 +78,180 @@ class OauthController extends AppController
             $userAgent = null;
         }
 
+        $callback = $this->request->getHeader('callback');
+        if(count($callback) > 0) {
+            $this->config['redirectUri'] = $callback[0];
+        }
 
-        $provider = $this->request->getQuery('provider');
+        //debug($this->config);exit;
 
+        $service = $this->setService();
 
-        try {
-            $hybridauth = new Hybridauth( $this->config, null, new File($bid));
-            $adapter = $hybridauth->authenticate($provider);
-            // $adapter = $hybridauth->authenticate( 'Google' );
-            // $adapter = $hybridauth->authenticate( 'Facebook' );
-            // $adapter = $hybridauth->authenticate( 'Twitter' );
+        if ($provider = $this->request->getQuery('provider')) {
+            try {
+                $provider = $service->getProvider($provider);
+                $redirect = $provider->makeAuthUrl();
+            } catch(\Exception $e) {
+                $this->setResponse($this->response->withStatus(400, $e->getMessage()));
+            }
 
-            $tokens = $adapter->getAccessToken();
-            $profile = $adapter->getUserProfile();
+        }
 
+        $this->set(compact('redirect'));
+    }
 
-            if ($profile->email) {
-                $user = $this->Customers->find()
-                    ->select([
-                        'id',
-                        'first_name',
-                        'last_name',
-                        'email',
-                        'password',
-                        'avatar',
-                        'customer_status_id',
-                        'reffcode',
-                        'is_verified',
-                    ])
-                    ->where([
-                        'email' => $profile->email
-                    ])->first();
+    public function cb($provider)
+    {
+        $service = $this->setService();
 
+        if (!$service->getFactory()->has($provider)) {
+            $this->setResponse($this->response->withStatus(400, 'invalid provider'));
+        } else {
+            try {
+                $provider = $service->getProvider($provider);
 
+                $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+                //debug($oauthToken);exit;
 
-                if ($user) {
+                $oauth = [
+                  'token' => $oauthToken->getToken(),
+                    'expires' => $oauthToken->getExpires(),
+                    'uid' => $oauthToken->getUserId()
+                ];
 
-                    $message = '';
-                    switch($user->get('customer_status_id')) {
-                        case '2':
-                            $message = 'Status email anda di blok, silahkan hubungi customer service';
-                            $this->setResponse($this->response->withStatus(406, $message));
-                            break;
-                        case '3':
-                            $message = 'Status email anda pending, silahkan konfirmasi email';
-                            $this->setResponse($this->response->withStatus(406, $message));
-                            break;
-                    }
+                //debug($accessToken->getUserId());
+                //debug($accessToken->getExpires());
 
-                    $key = Security::randomString();
-                    $token = base64_encode(Security::encrypt(json_encode([
-                        'id' => $user->get('id'),
-                        'email' => $user->get('email'),
-                        'token' => $key
-                    ]), Configure::read('Encrypt.salt')));
+                $profile = $provider->getIdentity($oauthToken);
 
+                $bid = $this->request->getHeader('bid');
+                if(count($bid) > 0) {
+                    $bid = $bid[0];
+                } else {
+                    $bid = null;
+                }
 
+                $userAgent = $this->request->getHeader('user-agent');
+                if(count($userAgent) > 0) {
+                    $userAgent = $userAgent[0];
+                } else {
+                    $userAgent = null;
+                }
 
-                    $find = $this->CustomerAuthenticates->find()
-                        ->contain([
-                            'Browsers'
+                if ($profile && $profile instanceof \SocialConnect\Common\Entity\User) {
+                    $user = $this->Customers->find()
+                        ->select([
+                            'id',
+                            'first_name',
+                            'last_name',
+                            'email',
+                            'password',
+                            'avatar',
+                            'customer_status_id',
+                            'reffcode',
+                            'is_verified',
                         ])
                         ->where([
-                            'customer_id' => $user->get('id')
-                        ]);
+                            'email' => $profile->email
+                        ])->first();
 
-                    if ($bid) {
-                        $find->where([
-                            'Browsers.bid' => $bid
-                        ]);
-                    }
 
-                    $find->where(function(\Cake\Database\Expression\QueryExpression $exp) {
-                        return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
-                    });
 
-                    $find = $find->first();
+                    if ($user) {
+                        $message = '';
+                        switch($user->get('customer_status_id')) {
+                            case '2':
+                                $message = 'Status email anda di blok, silahkan hubungi customer service';
+                                $this->setResponse($this->response->withStatus(406, $message));
+                                break;
+                            case '3':
+                                $message = 'Status email anda pending, silahkan konfirmasi email';
+                                $this->setResponse($this->response->withStatus(406, $message));
+                                break;
+                        }
 
-                    if ($find) {
+                        $key = Security::randomString();
                         $token = base64_encode(Security::encrypt(json_encode([
                             'id' => $user->get('id'),
                             'email' => $user->get('email'),
-                            'token' => $find->get('token')
+                            'token' => $key
                         ]), Configure::read('Encrypt.salt')));
 
-                    } else {
-                        $browserEntity = $this->CustomerAuthenticates->Browsers->find()
-                            ->where([
-                                'bid' => $bid
-                            ])
-                            ->first();
 
-                        if (!$browserEntity) {
-                            $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
-                                'bid' => $bid,
-                                'user_agent' => $userAgent
+
+                        $find = $this->CustomerAuthenticates->find()
+                            ->contain([
+                                'Browsers'
+                            ])
+                            ->where([
+                                'customer_id' => $user->get('id')
                             ]);
-                            $this->CustomerAuthenticates->Browsers->save($browserEntity);
+
+                        if ($bid) {
+                            $find->where([
+                                'Browsers.bid' => $bid
+                            ]);
                         }
 
-                        $find = $this->CustomerAuthenticates->newEntity([
-                            'customer_id' => $user->get('id'),
-                            'token' => $key,
-                            'browser_id' => $browserEntity->get('id'),
-                            'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
-                        ]);
+                        $find->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                            return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
+                        });
+
+                        $find = $find->first();
+
+                        if ($find) {
+                            $token = base64_encode(Security::encrypt(json_encode([
+                                'id' => $user->get('id'),
+                                'email' => $user->get('email'),
+                                'token' => $find->get('token')
+                            ]), Configure::read('Encrypt.salt')));
+
+                        } else {
+                            $browserEntity = $this->CustomerAuthenticates->Browsers->find()
+                                ->where([
+                                    'bid' => $bid
+                                ])
+                                ->first();
+
+                            if (!$browserEntity) {
+                                $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
+                                    'bid' => $bid,
+                                    'user_agent' => $userAgent
+                                ]);
+                                $this->CustomerAuthenticates->Browsers->save($browserEntity);
+                            }
+
+                            $find = $this->CustomerAuthenticates->newEntity([
+                                'customer_id' => $user->get('id'),
+                                'token' => $key,
+                                'browser_id' => $browserEntity->get('id'),
+                                'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
+                            ]);
+                        }
+
+                        $this->CustomerAuthenticates->save($find);
+
+                        $data = [
+                            'email' => $user->get('email'),
+                            'first_name' => $user->get('first_name'),
+                            'last_name' => $user->get('last_name'),
+                            'avatar' => $user->get('avatar'),
+                            'customer_status_id' => $user->get('customer_status_id'),
+                            'reffcode' => $user->get('reffcode'),
+                            'token' => $token
+                        ];
+                    } else {
+                        $this->setResponse($this->response->withStatus(406, 'Gagal login'));
                     }
-
-                    $this->CustomerAuthenticates->save($find);
-
-                    $data = [
-                        'email' => $user->get('email'),
-                        'first_name' => $user->get('first_name'),
-                        'last_name' => $user->get('last_name'),
-                        'avatar' => $user->get('avatar'),
-                        'customer_status_id' => $user->get('customer_status_id'),
-                        'reffcode' => $user->get('reffcode'),
-                        'token' => $token
-                    ];
-                } else {
-                    $this->setResponse($this->response->withStatus(406, 'Gagal login'));
                 }
+
+
+            } catch (\Exception $e) {
+                $this->setResponse($this->response->withStatus(400, $e->getMessage()));
             }
-
-
-        }
-        catch (\Exception $e) {
-            //echo $e->getMessage();
-            $this->setResponse($this->response->withStatus(400, $e->getMessage()));
         }
 
-
-        $this->set(compact('data', 'tokens', 'error'));
+        $this->set(compact('data', 'oauth', 'error'));
     }
+
 }

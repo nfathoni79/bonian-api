@@ -6,14 +6,14 @@
  * Time: 2:23
  */
 
-namespace App\Lib\Hybridauth;
+namespace App\Lib\SocialConnect;
 
 use Hybridauth\Exception\RuntimeException;
-use Hybridauth\Storage\StorageInterface;
 use Cake\Cache\Cache;
+use SocialConnect\Provider\Session\SessionInterface;
 
 
-class File implements StorageInterface
+class File implements SessionInterface
 {
     protected $key = 'default';
 
@@ -39,11 +39,6 @@ class File implements StorageInterface
         return isset($cache[$key]) ? $cache[$key] : null;
     }
 
-    public function clear()
-    {
-
-        //Cache::clear(true, 'oauth');
-    }
 
     public function delete($key)
     {
@@ -52,15 +47,4 @@ class File implements StorageInterface
         Cache::write($this->key, $cache, 'oauth');
     }
 
-    public function deleteMatch($key)
-    {
-        $cache = Cache::read($this->key, 'oauth');
-        foreach($cache as $k => $v) {
-            if (preg_match('/' . preg_quote($key) . '/i', $k)) {
-                unset($cache[$v]);
-            }
-        }
-
-        Cache::write($this->key, $cache, 'oauth');
-    }
 }
