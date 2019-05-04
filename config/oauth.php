@@ -16,7 +16,7 @@ return [
           ],
           'Google' => [
               'enabled' => true,
-              'keys'    => [ 'key' => '', 'secret' => '' ],
+              'keys'    => [ 'key' => '254083460174-s43rpck2ho8v2iqs1l6lar9ov5hrtcl6.apps.googleusercontent.com', 'secret' => 'og9WmBBnRgpKRmZokudpufCt' ],
           ]
       ]
   ]
