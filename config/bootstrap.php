@@ -81,6 +81,12 @@ try {
 } catch (\Exception $e) {
     exit($e->getMessage() . "\n");
 }
+
+try {
+    Configure::load('oauth', 'default');
+} catch (\Exception $e) {
+    exit($e->getMessage() . "\n");
+}
 /*
  * Load an environment local configuration file.
  * You can use a file like app_local.php to provide local overrides to your
@@ -164,6 +170,13 @@ Cache::setConfig('checkout', [
     'duration' => '+7 days',
     'path' => CACHE  . 'checkout' . DS,
     'prefix' => 'customer_checkout_'
+]);
+
+Cache::setConfig('oauth', [
+    'className' => 'File',
+    'duration' => '+1 years',
+    'path' => CACHE  . 'oauth' . DS,
+    'prefix' => 'oauth_'
 ]);
 
 /*

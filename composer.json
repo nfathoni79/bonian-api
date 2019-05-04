@@ -11,6 +11,7 @@
         "cakephp/plugin-installer": "^1.0",
         "donatj/phpuseragentparser": "^0.13.0",
         "guzzlehttp/guzzle": "^6.3",
+        "hybridauth/hybridauth": "v3.0.0-rc.10",
         "imagine/imagine": "^1.2",
         "inacho/php-credit-card-validator": "^1.0",
         "josegonzalez/cakephp-upload": "^4.0",

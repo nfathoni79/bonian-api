@@ -123,6 +123,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
         $routes->applyMiddleware('authorization');
 
         $routes->post('/login', ['controller' => 'Login', 'action' => 'index', 'disableAuthorization' => true]);
+        $routes->connect('/oauth', ['controller' => 'Oauth', 'action' => 'index', 'disableAuthorization' => true]);
 
         $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
         $routes->connect('/:controller');
