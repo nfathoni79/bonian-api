@@ -100,18 +100,24 @@ class OauthController extends AppController
         $this->set(compact('redirect'));
     }
 
-    public function cb($provider)
+    public function cb($providerName)
     {
+		$callback = $this->request->getHeader('callback');
+        if(count($callback) > 0) {
+            $this->config['redirectUri'] = $callback[0];
+        }
+		
         $service = $this->setService();
 
-        if (!$service->getFactory()->has($provider)) {
+        if (!$service->getFactory()->has($providerName)) {
             $this->setResponse($this->response->withStatus(400, 'invalid provider'));
         } else {
+			
             try {
-                $provider = $service->getProvider($provider);
+                $provider = $service->getProvider($providerName);
 
                 $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
-                //debug($oauthToken);exit;
+                
 
                 $oauth = [
                   'token' => $oauthToken->getToken(),
