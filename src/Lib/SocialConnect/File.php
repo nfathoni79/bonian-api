@@ -8,7 +8,6 @@
 
 namespace App\Lib\SocialConnect;
 
-use Hybridauth\Exception\RuntimeException;
 use Cake\Cache\Cache;
 use SocialConnect\Provider\Session\SessionInterface;
 
