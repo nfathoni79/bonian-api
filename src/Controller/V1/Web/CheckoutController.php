@@ -289,13 +289,15 @@ class CheckoutController extends AppController
         $this->request->allowMethod('post');
         $validator = new Validator();
 
+        $getData = $this->request->getData();
+
         $validator->numeric('voucher')
             ->numeric('point')
             ->allowEmptyString('point')
             ->allowEmptyString('kupon')
             ->allowEmptyString('voucher');
 
-        //validation point
+
         $validator->add('point', 'valid_point', [
             'rule' => function($value) {
                 $currentPoint = $this->Customers->CustomerBalances->find()
@@ -401,7 +403,7 @@ class CheckoutController extends AppController
 
 
 
-        $error = $validator->errors($this->request->getData());
+        $error = $validator->errors($getData);
 
         if (!$error) {
             if ($storage_key = $this->getStorageKey()) {
@@ -839,19 +841,19 @@ class CheckoutController extends AppController
 
         $validator->addNestedMany('shipping', $shippingValidation);*/
 
-        $validator->add('use_point', 'valid_point', [
-            'rule' => function($value) use($customer_id) {
-                $currentPoint = $this->Customers->CustomerBalances->find()
-                    ->where([
-                        'customer_id' => $customer_id,
-                    ])
-                    ->first();
-                if ($currentPoint) {
-                    return $value <= $currentPoint->get('point') && $value > 0;
-                }
-            },
-            'message' => 'Point yang di input tidak valid.'
-        ]);
+//        $validator->add('use_point', 'valid_point', [
+//            'rule' => function($value) use($customer_id) {
+//                $currentPoint = $this->Customers->CustomerBalances->find()
+//                    ->where([
+//                        'customer_id' => $customer_id,
+//                    ])
+//                    ->first();
+//                if ($currentPoint) {
+//                    return $value <= $currentPoint->get('point') && $value > 0;
+//                }
+//            },
+//            'message' => 'Point yang di input tidak valid.'
+//        ]);
 
         $shippingValidation = new Validator();
         $shippingValidation->requirePresence('code')
@@ -1004,10 +1006,12 @@ class CheckoutController extends AppController
                 $this->Orders->getConnection()->begin();
 
 
+                $cache = Cache::read($this->getStorageKey(), 'checkout');
+
                 $invoice = strtoupper(date('ymdHs') . Security::randomString(4));
                 $addresses = $this->getAddress($address_id);
                 $gross_total = 0;
-                $use_point = (int)$this->request->getData('use_point');
+                $use_point = (int)$cache['point'];
 
                 $trx = new Transaction($invoice);
 
@@ -1102,17 +1106,25 @@ class CheckoutController extends AppController
                  */
                 $customerVoucherEntity = null;
                 //check voucher claim
-                $total = $this->usingVoucher($customer_id, $total, function(\App\Model\Entity\CustomerVoucher $voucherEntity, $discount) use (&$trx, &$customerVoucherEntity) {
+
+                $discountVoucher = 0;
+                $total = $this->usingVoucher($customer_id, $total, $cache['voucher'], $cart, function(\App\Model\Entity\CustomerVoucher $voucherEntity, $discount) use (&$trx, &$customerVoucherEntity, &$discountVoucher) {
                     $trx->addItem(
                         'vocher' . $voucherEntity->get('id'),
                         -$discount,
                         1,
                         'Using voucher ' . $voucherEntity->voucher->code_voucher
                     );
-
+                    $discountVoucher = $discount;
                     $customerVoucherEntity = $voucherEntity;
                 });
 
+                $customerCouponEntity = null;
+                $discountCoupon = 0;
+                $total = $this->usingKupon($customer_id, $total, $cache['kupon'], function(\App\Model\Entity\CustomerCartCoupon $couponEntity, $discount) use (&$discountCoupon, &$customerCouponEntity) {
+                    $discountCoupon = $discount;
+                    $customerCouponEntity = $couponEntity;
+                });
 
 
                 $orderEntity = $this->Orders->newEntity([
@@ -1124,11 +1136,12 @@ class CheckoutController extends AppController
                     'address' => $addresses->get('address'),
                     'use_point' => $use_point,
                     'gross_total' => $gross_total,
+                    'discount_voucher' => $discountVoucher,
+                    'discount_kupon' => $discountCoupon,
                     'total' => $total,
-                    'voucher_id' => $customerVoucherEntity ? $customerVoucherEntity->get('voucher_id') : null
+                    'voucher_id' => $customerVoucherEntity ? $customerVoucherEntity->get('voucher_id') : null,
+                    'product_coupon_id' => $customerCouponEntity ? $customerCouponEntity->get('product_coupon_id') : null
                 ]);
-
-
 
                 //get customer
                 $customerEntity = null;
@@ -1325,14 +1338,14 @@ class CheckoutController extends AppController
                         }
 
                         //process mutation point here
-                        if ($this->request->getData('use_point') > 0) {
+                        if ($use_point > 0) {
                             $this
                                 ->Customers
                                 ->CustomerMutationPoints
                                 ->saving(
                                     $customer_id,
                                     1,
-                                    - intval($this->request->getData('use_point')),
+                                    - intval($use_point),
                                     'penggunaan point untuk belanja'
                                 );
                         }
