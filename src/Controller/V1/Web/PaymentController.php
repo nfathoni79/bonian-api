@@ -242,6 +242,11 @@ class PaymentController extends AppController
              */
             $inquiryEntity = null;
 
+            /**
+             * @var \App\Model\Entity\DigitalDetail $digitalDetailEntity
+             */
+            $digitalDetailEntity = null;
+
             //get customer
             $customerEntity = null;
             try {
@@ -261,7 +266,7 @@ class PaymentController extends AppController
                     ->first();
                 if ($inquiryEntity) {
                     if ($code = $inquiryEntity->get('code')) {
-                        $digital = $this->DigitalDetails->find()
+                        $digitalDetailEntity = $this->DigitalDetails->find()
                             ->where([
                                 'code' => $code
                             ])
@@ -269,10 +274,10 @@ class PaymentController extends AppController
                                 'Digitals'
                             ])
                             ->first();
-                        if ($digital) {
-                            $gross_total = $digital->get('price');
+                        if ($digitalDetailEntity) {
+                            $gross_total = $digitalDetailEntity->get('price');
                             $total = $gross_total;
-                            $trx->addItem($inquiry_id, $digital->get('price'), 1, $digital->get('name'));
+                            $trx->addItem($inquiry_id, $digitalDetailEntity->get('price'), 1, $digitalDetailEntity->get('name'));
                         }
 
                     }
@@ -477,13 +482,25 @@ class PaymentController extends AppController
                                     $inquiryEntity->code,
                                     $invoice
                                 );
-                                $inquiryEntity->set('raw_response', json_encode($pulsa));
+                                $inquiryEntity->set('status', true);
+                                //$inquiryEntity->set('raw_response', json_encode($pulsa));
+                                $this->CustomerDigitalInquiry->save($inquiryEntity);
+
+                                $orderDigitalEntity = $this->Orders->OrderDigitals->newEntity([
+                                    'order_id' => $orderEntity->get('id'),
+                                    'digital_detail_id' => $digitalDetailEntity->get('id'),
+                                    'customer_number' => $inquiryEntity->get('customer_number'),
+                                    'price' => $digitalDetailEntity->get('price'),
+                                    'raw_response' => json_encode($pulsa)
+                                ]);
+
+                                $this->Orders->OrderDigitals->save($orderDigitalEntity);
+
+
                             } catch(\GuzzleHttp\Exception\ClientException $e) {
                                 $this->setResponse($this->response->withStatus(406, $e->getResponse()->getBody()->getContents()));
+                                //TODO sebaiknya dana yg sudah masuk ke midtrans di balikin jika menggunakan kartu kredit atau gopay
                             }
-
-
-
 
                             break;
                     }
@@ -491,7 +508,8 @@ class PaymentController extends AppController
 
                 $this->Orders->getConnection()->commit();
             } else {
-                $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 23'));
+                $this->Orders->getConnection()->rollback();
+                $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
             }
 
 

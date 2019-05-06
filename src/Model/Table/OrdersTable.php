@@ -59,15 +59,15 @@ class OrdersTable extends Table
         ]);
         $this->belongsTo('Provinces', [
             'foreignKey' => 'province_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
         ]);
         $this->belongsTo('Cities', [
             'foreignKey' => 'city_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
         ]);
         $this->belongsTo('Subdistricts', [
             'foreignKey' => 'subdistrict_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
         ]);
         $this->hasMany('OrderDetails', [
             'foreignKey' => 'order_id'
@@ -75,7 +75,7 @@ class OrdersTable extends Table
         $this->hasMany('Transactions', [
             'foreignKey' => 'order_id'
         ]);
-        $this->hasMany('OrderDigitals', [
+        $this->hasOne('OrderDigitals', [
             'foreignKey' => 'order_id'
         ]);
     }

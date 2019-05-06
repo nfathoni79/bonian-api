@@ -205,7 +205,9 @@ class OrdersController extends AppController
     {
         $data = $this->Transactions->find()
             ->contain([
-                'Orders'
+                'Orders' => [
+                    'OrderDigitals'
+                ]
             ])
             ->where([
                 'Orders.customer_id' => $this->Authenticate->getId(),
