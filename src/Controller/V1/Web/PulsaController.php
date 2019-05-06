@@ -48,7 +48,7 @@ class PulsaController extends AppController
 
             if ($dataEntity) {
                 $entity = $this->CustomerDigitalInquiry->patchEntity($dataEntity, $this->request->getData(), [
-                    'fieldList' => [
+                    'fields' => [
                         'customer_number',
                         'code'
                     ]

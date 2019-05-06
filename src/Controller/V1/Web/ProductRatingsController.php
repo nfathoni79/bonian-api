@@ -52,7 +52,7 @@ class ProductRatingsController extends AppController
 
                 $productRating = $this->ProductRatings->get($findProductRating->get('id'));
                 $this->ProductRatings->patchEntity($productRating, $this->request->getData(), [
-                    'fieldList' => [
+                    'fields' => [
                         'order_detail_product_id',
                         'rating',
                         'comment'
