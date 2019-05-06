@@ -14,6 +14,7 @@ use Cake\ORM\Entity;
  *
  * @property \App\Model\Entity\Customer $customer
  * @property \App\Model\Entity\CustomerCartDetail[] $customer_cart_details
+ * @property \App\Model\Entity\CustomerCartCoupon[] $customer_cart_coupons
  */
 class CustomerCart extends Entity
 {
@@ -33,6 +34,7 @@ class CustomerCart extends Entity
         'created' => true,
         'modified' => true,
         'customer' => true,
-        'customer_cart_details' => true
+        'customer_cart_details' => true,
+        'customer_cart_coupons' => true
     ];
 }

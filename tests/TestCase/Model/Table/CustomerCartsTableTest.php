@@ -26,7 +26,8 @@ class CustomerCartsTableTest extends TestCase
     public $fixtures = [
         'app.CustomerCarts',
         'app.Customers',
-        'app.CustomerCartDetails'
+        'app.CustomerCartDetails',
+        'app.CustomerCartCoupons'
     ];
 
     /**

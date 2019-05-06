@@ -19,7 +19,7 @@ class CustomerCartsFixture extends TestFixture
     public $fields = [
         'id' => ['type' => 'integer', 'length' => 11, 'unsigned' => false, 'null' => false, 'default' => null, 'comment' => '', 'autoIncrement' => true, 'precision' => null],
         'customer_id' => ['type' => 'integer', 'length' => 11, 'unsigned' => false, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null, 'autoIncrement' => null],
-        'status' => ['type' => 'integer', 'length' => 1, 'unsigned' => false, 'null' => false, 'default' => null, 'comment' => '1, active, 2 : expired', 'precision' => null, 'autoIncrement' => null],
+        'status' => ['type' => 'integer', 'length' => 1, 'unsigned' => false, 'null' => false, 'default' => null, 'comment' => '1, active, 2 : expired, 3: deleted', 'precision' => null, 'autoIncrement' => null],
         'created' => ['type' => 'datetime', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
         'modified' => ['type' => 'datetime', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
         '_constraints' => [
@@ -44,8 +44,8 @@ class CustomerCartsFixture extends TestFixture
                 'id' => 1,
                 'customer_id' => 1,
                 'status' => 1,
-                'created' => '2019-03-11 09:55:05',
-                'modified' => '2019-03-11 09:55:05'
+                'created' => '2019-05-06 12:31:02',
+                'modified' => '2019-05-06 12:31:02'
             ],
         ];
         parent::init();

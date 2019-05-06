@@ -45,6 +45,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
  * @property \App\Model\Table\CustomerPointRatesTable $CustomerPointRates
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
+ * @property \App\Model\Table\CustomerCartCouponsTable $CustomerCartCoupons
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\CourriersTable $Courriers
  * @property \App\Model\Table\ProductsTable $Products
@@ -72,6 +73,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCarts');
         $this->loadModel('CustomerPointRates');
         $this->loadModel('CustomerVouchers');
+        $this->loadModel('CustomerCartCoupons');
         $this->loadModel('Orders');
         $this->loadModel('Courriers');
         $this->loadModel('Products');
@@ -146,7 +148,7 @@ class CheckoutController extends AppController
                         ],
                         'ProductToCourriers' => [
                             'Courriers'
-                        ],
+                        ]
                     ],
                     'ProductOptionPrices' => [
                         'ProductOptionValueLists' => [
@@ -371,6 +373,29 @@ class CheckoutController extends AppController
             'message' => 'voucher yang di input tidak valid.'
         ]);
 
+        //validation kupon
+        $validator->add('kupon', 'valid_kupon', [
+            'rule' => function($value) {
+                $kupon = $this->CustomerCartCoupons->find()
+                    ->contain([
+                        'CustomerCarts',
+                        'ProductCoupons',
+                    ])
+                    ->where([
+                        'CustomerCarts.customer_id' => $this->Authenticate->getId(),
+                        'CustomerCarts.status' => 1,
+                        'CustomerCartCoupons.id' => $value,
+                    ])
+                    ->first();
+                if ($kupon) {
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            'message' => 'kupon yang di input tidak valid.'
+        ]);
+
 
 
 
@@ -465,17 +490,29 @@ class CheckoutController extends AppController
 
             $data['gross_total'] = $total;
 
-            //check if customer using voucher
-            $total = $this->usingVoucher($customer_id, $total, function(\App\Model\Entity\CustomerVoucher $customerVoucherEntity, $discount) use (&$data) {
-                $data['code_voucher'] = $customerVoucherEntity->voucher->code_voucher;
-                $data['discount'] = $discount;
-            });
-
-            $data['total'] = $total;
-
             //grouping by origin_id
             $cart_group_origin = $this->groupCartByBranch($cart, $product_to_couriers, $data['customer_address']);
+
+
+            //check if customer using voucher
+            $total = $this->usingVoucher($customer_id, $total, $data['voucher'],$cart_group_origin, function(\App\Model\Entity\CustomerVoucher $customerVoucherEntity, $discount) use (&$data) {
+                $data['code_voucher'] = $customerVoucherEntity->voucher->code_voucher;
+                $data['potongan_voucher'] = $discount;
+            });
+
+            //check if customer using kupon
+            $total = $this->usingKupon($customer_id, $total, $data['kupon'], function(\App\Model\Entity\CustomerCartCoupon $customerCouponEntity, $discount) use (&$data) {
+//                $data['code_kupon'] = $customerVoucherEntity->voucher->code_voucher;
+                $data['potongan_kupon'] = $discount;
+            });
+
+
+
+            $data['total'] = $total - $data['point'];
             $data['carts'] = $cart_group_origin;
+
+
+
         } else {
             $this->setResponse($this->response->withStatus(406, 'invalid step checkout'));
         }
@@ -491,7 +528,36 @@ class CheckoutController extends AppController
      * @param callable|null $callback
      * @return float|int
      */
-    protected function usingVoucher($customer_id, $total, callable $callback = null)
+    protected function usingKupon($customer_id, $total, $kuponId,  callable $callback = null){
+
+        /**
+         * @var \App\Model\Entity\CustomerCartCoupon $CustomerCartCouponEntity
+         */
+        $customerCartCouponEntity = $this->CustomerCartCoupons->find()
+            ->where([
+                'CustomerCarts.customer_id' => $customer_id,
+                'CustomerCarts.status' => 1,
+                'CustomerCartCoupons.id' => $kuponId,
+//                'Vouchers.status' => 1,
+            ])
+            ->contain([
+                'CustomerCarts',
+                'ProductCoupons',
+            ])
+            ->first();
+        if ($customerCartCouponEntity) {
+            $discount = 0;
+            $discount = $customerCartCouponEntity->product_coupon->price;
+            $total = $total - $discount;
+
+            if (is_callable($callback)) {
+                call_user_func_array($callback, [$customerCartCouponEntity, $discount]);
+            }
+        }
+        return $total;
+    }
+
+    protected function usingVoucher($customer_id, $total, $voucherID, $dataCart, callable $callback = null)
     {
         /**
          * @var \App\Model\Entity\CustomerVoucher $customerVoucherEntity
@@ -500,14 +566,16 @@ class CheckoutController extends AppController
             ->where([
                 'CustomerVouchers.customer_id' => $customer_id,
                 'CustomerVouchers.status' => 1,
-                'Vouchers.status' => 1
+                'CustomerVouchers.id' => $voucherID,
+//                'Vouchers.status' => 1,
             ])
             ->contain([
-                'Vouchers'
+                'Vouchers' => [
+                    'VoucherDetails'
+                ]
             ])
             ->orderDesc('CustomerVouchers.id')
             ->first();
-
         if ($customerVoucherEntity) {
             $discount = 0;
             switch($customerVoucherEntity->voucher->type) {
@@ -517,8 +585,25 @@ class CheckoutController extends AppController
                     $total = $total - $discount;
                     break;
                 case '2':
-                    //$discount = $customerVoucherEntity->voucher->value;
-                    //$total = $total - $discount;
+                    $keyCategoryInVoucher = [];
+                    foreach($customerVoucherEntity->voucher->voucher_details as $vals){
+                        $keyCategoryInVoucher[] = $vals['product_category_id'];
+                    }
+                    $totalInCategory = 0;
+                    foreach($dataCart[1]['data'] as $vals){
+                        if(in_array($vals['product_category_id'], $keyCategoryInVoucher )){
+                            $totalInCategory += $vals['price'];
+                        }
+                    }
+
+                    $discount = $customerVoucherEntity->voucher->percent / 100 * $totalInCategory;
+                    $discount = $discount > $customerVoucherEntity->voucher->value ? $customerVoucherEntity->voucher->value : $discount;
+                    $total = $total - $discount;
+                    break;
+                case '3': // private voucher
+                    $discount = $customerVoucherEntity->voucher->percent / 100 * $total;
+                    $discount = $discount > $customerVoucherEntity->voucher->value ? $customerVoucherEntity->voucher->value : $discount;
+                    $total = $total - $discount;
                     break;
             }
 

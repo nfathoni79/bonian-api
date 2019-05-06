@@ -10,6 +10,7 @@ use Cake\Validation\Validator;
  * CustomerCarts Model
  *
  * @property \App\Model\Table\CustomersTable|\Cake\ORM\Association\BelongsTo $Customers
+ * @property \App\Model\Table\CustomerCartCouponsTable|\Cake\ORM\Association\HasMany $CustomerCartCoupons
  * @property \App\Model\Table\CustomerCartDetailsTable|\Cake\ORM\Association\HasMany $CustomerCartDetails
  *
  * @method \App\Model\Entity\CustomerCart get($primaryKey, $options = [])
@@ -45,6 +46,9 @@ class CustomerCartsTable extends Table
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id',
             'joinType' => 'INNER'
+        ]);
+        $this->hasMany('CustomerCartCoupons', [
+            'foreignKey' => 'customer_cart_id'
         ]);
         $this->hasMany('CustomerCartDetails', [
             'foreignKey' => 'customer_cart_id'
