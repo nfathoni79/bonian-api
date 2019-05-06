@@ -64,7 +64,7 @@ class TransactionListener implements EventListenerInterface
 
             if ($orderEntity && $orderEntity->order_digital instanceof \App\Model\Entity\OrderDigital) {
                 if ($orderEntity->order_digital->digital_detail instanceof \App\Model\Entity\DigitalDetail) {
-                    
+
                     try {
                         $pulsa = $this->Sepulsa->createMobileTransaction(
                             $orderEntity->order_digital->customer_number,
