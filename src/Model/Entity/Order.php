@@ -60,5 +60,8 @@ class Order extends Entity
         'product_promotion' => true,
         'order_details' => true,
         'order_digitals' => true,
+        'discount_voucher' => true,
+        'discount_kupon' => true,
+        'product_coupon_id' => true,
     ];
 }
