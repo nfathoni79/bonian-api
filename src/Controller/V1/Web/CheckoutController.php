@@ -1338,14 +1338,14 @@ class CheckoutController extends AppController
                         }
 
                         //process mutation point here
-                        if ($this->request->getData('use_point') > 0) {
+                        if ($use_point > 0) {
                             $this
                                 ->Customers
                                 ->CustomerMutationPoints
                                 ->saving(
                                     $customer_id,
                                     1,
-                                    - intval($this->request->getData('use_point')),
+                                    - intval($use_point),
                                     'penggunaan point untuk belanja'
                                 );
                         }
