@@ -16,6 +16,7 @@ namespace App\Controller;
 
 use Cake\Controller\Controller;
 use Cake\Event\Event;
+use App\Event\TransactionListener;
 
 /**
  * Application Controller
@@ -29,13 +30,7 @@ class AppController extends Controller
 {
 
     /**
-     * Initialization hook method.
-     *
-     * Use this method to add common initialization code like loading components.
-     *
-     * e.g. `$this->loadComponent('Security');`
-     *
-     * @return void
+     * @throws \Exception
      */
     public function initialize()
     {
@@ -65,5 +60,11 @@ class AppController extends Controller
         //$this->viewBuilder()->setClassName('App.Json');
         //return null;
 
+    }
+
+    public function beforeFilter(Event $event)
+    {
+        $this->getEventManager()->on(new TransactionListener());
+        return parent::beforeFilter($event);
     }
 }
