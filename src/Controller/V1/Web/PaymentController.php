@@ -521,7 +521,8 @@ class PaymentController extends AppController
                 $data = $this->CustomerDigitalInquiry->find()
                     ->where([
                         'id' => $this->request->getQuery('inquiry_id'),
-                        'customer_id' => $this->Authenticate->getId()
+                        'customer_id' => $this->Authenticate->getId(),
+                        'status' => 0
                     ])
                     ->map(function(\App\Model\Entity\CustomerDigitalInquiry $row) {
 
@@ -549,6 +550,10 @@ class PaymentController extends AppController
                         return $row;
                     })
                     ->first();
+
+                if (!$data) {
+                    $this->setResponse($this->response->withStatus(406, 'Inquiry not found'));
+                }
 
                 break;
 
