@@ -1357,7 +1357,6 @@ class CheckoutController extends AppController
                     $process_save_order = false;
                 }
 
-
                 if ($process_save_order) {
 
                     //process charge exception credit card
@@ -1416,6 +1415,8 @@ class CheckoutController extends AppController
                         $transactionEntity->set('raw_response', json_encode($charge));
                         $transactionEntity->set('order_id', $orderEntity->get('id'));
                         $this->Transactions->save($transactionEntity);
+
+                        Cache::delete($this->getStorageKey(), 'checkout');
                     }
 
                     $this->Orders->getConnection()->commit();
