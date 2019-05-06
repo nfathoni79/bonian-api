@@ -292,6 +292,7 @@ class CheckoutController extends AppController
         $validator->numeric('voucher')
             ->numeric('point')
             ->allowEmptyString('point')
+            ->allowEmptyString('kupon')
             ->allowEmptyString('voucher');
 
         //validation point
@@ -406,7 +407,7 @@ class CheckoutController extends AppController
             if ($storage_key = $this->getStorageKey()) {
                 //save storage
                 Cache::write($storage_key, [
-                    'point' => $this->request->getData('point'),
+                    'point' => !empty($this->request->getData('point')) ? $this->request->getData('point') : 0,
                     'voucher' => $this->request->getData('voucher'),
                     'kupon' => $this->request->getData('kupon'),
                     'step' => 1
