@@ -476,31 +476,18 @@ class PaymentController extends AppController
                     //process save sepulsa
                     switch($this->request->getData('type')) {
                         case 'pulsa':
-                            try {
-                                $pulsa = $this->Sepulsa->createMobileTransaction(
-                                    $inquiryEntity->customer_number,
-                                    $inquiryEntity->code,
-                                    $invoice
-                                );
-                                $inquiryEntity->set('status', true);
-                                //$inquiryEntity->set('raw_response', json_encode($pulsa));
-                                $this->CustomerDigitalInquiry->save($inquiryEntity);
 
-                                $orderDigitalEntity = $this->Orders->OrderDigitals->newEntity([
-                                    'order_id' => $orderEntity->get('id'),
-                                    'digital_detail_id' => $digitalDetailEntity->get('id'),
-                                    'customer_number' => $inquiryEntity->get('customer_number'),
-                                    'price' => $digitalDetailEntity->get('price'),
-                                    'raw_response' => json_encode($pulsa)
-                                ]);
+                            $inquiryEntity->set('status', true);
+                            $this->CustomerDigitalInquiry->save($inquiryEntity);
 
-                                $this->Orders->OrderDigitals->save($orderDigitalEntity);
+                            $orderDigitalEntity = $this->Orders->OrderDigitals->newEntity([
+                                'order_id' => $orderEntity->get('id'),
+                                'digital_detail_id' => $digitalDetailEntity->get('id'),
+                                'customer_number' => $inquiryEntity->get('customer_number'),
+                                'price' => $digitalDetailEntity->get('price')
+                            ]);
 
-
-                            } catch(\GuzzleHttp\Exception\ClientException $e) {
-                                $this->setResponse($this->response->withStatus(406, $e->getResponse()->getBody()->getContents()));
-                                //TODO sebaiknya dana yg sudah masuk ke midtrans di balikin jika menggunakan kartu kredit atau gopay
-                            }
+                            $this->Orders->OrderDigitals->save($orderDigitalEntity);
 
                             break;
                     }

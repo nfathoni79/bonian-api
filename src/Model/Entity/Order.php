@@ -26,7 +26,7 @@ use Cake\ORM\Entity;
  * @property \App\Model\Entity\Voucher $voucher
  * @property \App\Model\Entity\ProductPromotion $product_promotion
  * @property \App\Model\Entity\OrderDetail[] $order_details
- * @property \App\Model\Entity\OrderDigital[] $order_digitals
+ * @property \App\Model\Entity\OrderDigital $order_digital
  */
 class Order extends Entity
 {
@@ -59,6 +59,6 @@ class Order extends Entity
         'voucher' => true,
         'product_promotion' => true,
         'order_details' => true,
-        'order_digitals' => true,
+        'order_digital' => true,
     ];
 }

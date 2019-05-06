@@ -13,7 +13,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\VouchersTable|\Cake\ORM\Association\BelongsTo $Vouchers
  * @property \App\Model\Table\ProductPromotionsTable|\Cake\ORM\Association\BelongsTo $ProductPromotions
  * @property \App\Model\Table\OrderDetailsTable|\Cake\ORM\Association\HasMany $OrderDetails
- * @property \App\Model\Table\OrderDigitalsTable|\Cake\ORM\Association\HasMany $OrderDigitals
+ * @property \App\Model\Table\OrderDigitalsTable|\Cake\ORM\Association\hasOne $OrderDigitals
  *
  * @method \App\Model\Entity\Order get($primaryKey, $options = [])
  * @method \App\Model\Entity\Order newEntity($data = null, array $options = [])

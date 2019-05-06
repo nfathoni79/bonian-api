@@ -32,6 +32,19 @@ class IpnController extends AppController
 	public function index() {
 		$this->disableAutoRender();
 
+
+		//hook for testing only
+        /*
+         * $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
+            'transactionEntity' => $this->Transactions->newEntity([
+                'id' => 26,
+                'order_id' => 149,
+                'status_code' => 200
+            ])
+        ]));
+        */
+
+
         if ($this->request->is('post')) {
             $content = $this->request->getBody()->getContents();
             Log::notice($content, ['scope' => ['midtrans']]);
@@ -78,10 +91,14 @@ class IpnController extends AppController
                             if ($content['status_code'] == 200) {
                                 $orderEntity->set('payment_status', 2);
                                 //sent event to listener
-                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $transactionEntity));
+                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
+                                    'transactionEntity' => $transactionEntity
+                                ]));
                             } else if (strtolower($content['transaction_status']) == 'expire') {
                                 $orderEntity->set('payment_status', 4); // 4: expired
-                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $transactionEntity));
+                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $this, [
+                                    'transactionEntity' => $transactionEntity
+                                ]));
                             }
 
                             $this->Orders->save($orderEntity);
