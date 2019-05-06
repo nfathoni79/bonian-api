@@ -289,13 +289,15 @@ class CheckoutController extends AppController
         $this->request->allowMethod('post');
         $validator = new Validator();
 
+        $getData = $this->request->getData();
+
         $validator->numeric('voucher')
             ->numeric('point')
             ->allowEmptyString('point')
             ->allowEmptyString('kupon')
             ->allowEmptyString('voucher');
 
-        //validation point
+
         $validator->add('point', 'valid_point', [
             'rule' => function($value) {
                 $currentPoint = $this->Customers->CustomerBalances->find()
@@ -401,7 +403,7 @@ class CheckoutController extends AppController
 
 
 
-        $error = $validator->errors($this->request->getData());
+        $error = $validator->errors($getData);
 
         if (!$error) {
             if ($storage_key = $this->getStorageKey()) {
