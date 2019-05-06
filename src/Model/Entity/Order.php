@@ -8,6 +8,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $invoice
+ * @property int $order_type
  * @property int $customer_id
  * @property int $province_id
  * @property int $city_id
@@ -25,6 +26,7 @@ use Cake\ORM\Entity;
  * @property \App\Model\Entity\Voucher $voucher
  * @property \App\Model\Entity\ProductPromotion $product_promotion
  * @property \App\Model\Entity\OrderDetail[] $order_details
+ * @property \App\Model\Entity\OrderDigital[] $order_digitals
  */
 class Order extends Entity
 {
@@ -40,6 +42,7 @@ class Order extends Entity
      */
     protected $_accessible = [
         'invoice' => true,
+        'order_type' => true,
         'customer_id' => true,
         'province_id' => true,
         'city_id' => true,
@@ -55,6 +58,7 @@ class Order extends Entity
         'customer' => true,
         'voucher' => true,
         'product_promotion' => true,
-        'order_details' => true
+        'order_details' => true,
+        'order_digitals' => true,
     ];
 }

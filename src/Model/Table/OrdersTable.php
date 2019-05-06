@@ -13,6 +13,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\VouchersTable|\Cake\ORM\Association\BelongsTo $Vouchers
  * @property \App\Model\Table\ProductPromotionsTable|\Cake\ORM\Association\BelongsTo $ProductPromotions
  * @property \App\Model\Table\OrderDetailsTable|\Cake\ORM\Association\HasMany $OrderDetails
+ * @property \App\Model\Table\OrderDigitalsTable|\Cake\ORM\Association\HasMany $OrderDigitals
  *
  * @method \App\Model\Entity\Order get($primaryKey, $options = [])
  * @method \App\Model\Entity\Order newEntity($data = null, array $options = [])
@@ -74,6 +75,9 @@ class OrdersTable extends Table
         $this->hasMany('Transactions', [
             'foreignKey' => 'order_id'
         ]);
+        $this->hasMany('OrderDigitals', [
+            'foreignKey' => 'order_id'
+        ]);
     }
 
     /**
@@ -94,10 +98,10 @@ class OrdersTable extends Table
             ->requirePresence('invoice', 'create')
             ->allowEmptyString('invoice', false);
 
-        $validator
+        /*$validator
             ->scalar('address')
             ->requirePresence('address', 'create')
-            ->allowEmptyString('address', false);
+            ->allowEmptyString('address', false);*/
 
         $validator
             ->numeric('total')

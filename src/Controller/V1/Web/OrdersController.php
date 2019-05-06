@@ -63,6 +63,7 @@ class OrdersController extends AppController
                 'OrderDetails' => [
                     'Branches'
                 ],
+                'OrderDigitals',
                 'Vouchers' => [
                     'fields' => [
                         'id',
