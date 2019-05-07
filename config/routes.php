@@ -165,6 +165,10 @@ Router::scope('/ipn', function (RouteBuilder $routes) {
     $routes->connect('/', ['controller' => 'Ipn', 'action' => 'index']);
 });
 
+Router::scope('/sepulsa', function (RouteBuilder $routes) {
+    $routes->connect('/', ['controller' => 'Sepulsa', 'action' => 'index']);
+});
+
 
 /**
  * If you need a different set of middleware or none at all,
