@@ -593,9 +593,11 @@ class CheckoutController extends AppController
                         $keyCategoryInVoucher[] = $vals['product_category_id'];
                     }
                     $totalInCategory = 0;
-                    foreach($dataCart[1]['data'] as $vals){
-                        if(in_array($vals['product_category_id'], $keyCategoryInVoucher )){
-                            $totalInCategory += $vals['price'];
+                    foreach($dataCart as $branch_id => $value) {
+                        foreach($value['data'] as $vals) {
+                            if(in_array($vals['product_category_id'], $keyCategoryInVoucher )){
+                                $totalInCategory += $vals['price'];
+                            }
                         }
                     }
 
@@ -1110,7 +1112,7 @@ class CheckoutController extends AppController
                 $discountVoucher = 0;
                 $total = $this->usingVoucher($customer_id, $total, $cache['voucher'], $cart, function(\App\Model\Entity\CustomerVoucher $voucherEntity, $discount) use (&$trx, &$customerVoucherEntity, &$discountVoucher) {
                     $trx->addItem(
-                        'vocher' . $voucherEntity->get('id'),
+                        'voucher-' . $voucherEntity->get('id'),
                         -$discount,
                         1,
                         'Using voucher ' . $voucherEntity->voucher->code_voucher
@@ -1121,7 +1123,13 @@ class CheckoutController extends AppController
 
                 $customerCouponEntity = null;
                 $discountCoupon = 0;
-                $total = $this->usingKupon($customer_id, $total, $cache['kupon'], function(\App\Model\Entity\CustomerCartCoupon $couponEntity, $discount) use (&$discountCoupon, &$customerCouponEntity) {
+                $total = $this->usingKupon($customer_id, $total, $cache['kupon'], function(\App\Model\Entity\CustomerCartCoupon $couponEntity, $discount) use (&$trx, &$discountCoupon, &$customerCouponEntity) {
+                    $trx->addItem(
+                        'coupon' . $couponEntity->get('id'),
+                        -$discount,
+                        1,
+                        'Using coupon product_id: ' . $couponEntity->product_coupon_id
+                    );
                     $discountCoupon = $discount;
                     $customerCouponEntity = $couponEntity;
                 });
