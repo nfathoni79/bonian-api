@@ -487,7 +487,7 @@ class CheckoutController extends AppController
                 $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
             }, function (\App\Model\Entity\CustomerCart $row) use (&$total) {
                 foreach ($row['customer_cart_details'] as $val) {
-                    $total += (float)$val['price'] * intval($val['qty']);
+                    $total += $val['total'];
                 }
             });
 
@@ -1023,7 +1023,7 @@ class CheckoutController extends AppController
                 foreach ($cart as $origin_id => $item) {
                     $subtotal = 0;
                     foreach ($item['data'] as $val) {
-                        $trx->addItem($val['product_id'], $val['price'], $val['qty'], $val['name']);
+                        $trx->addItem($val['product_id'], $val['price'] + $val['add_price'], $val['qty'], $val['name']);
                         $subtotal += $val['price'] * $val['qty'];
                         $gross_total += $val['price'] * $val['qty'];
                         //debug($val);
@@ -1034,13 +1034,15 @@ class CheckoutController extends AppController
                             ->newEntity([
                                 'product_id' => $val['product_id'],
                                 'qty' => $val['qty'],
-                                'price' => $val['price'],
-                                'total' => $val['price'] * $val['qty'],
+                                'price' => $val['price'] + $val['add_price'],
+                                'total' => ($val['price'] + $val['add_price']) * $val['qty'],
                                 'in_flashsale' => $val['in_flashsale'],
                                 'in_groupsale' => $val['in_groupsale'],
                                 'product_option_stock_id' => $val['stock_id'],
                                 'product_option_price_id' => $val['price_id'],
-                                'comment' => $val['comment']
+                                'comment' => $val['comment'],
+                                'bonus_point' => $val['totalpoint'],
+                                'product_category_id' => $val['product_category_id']
                             ]);
                     }
 
@@ -1128,7 +1130,7 @@ class CheckoutController extends AppController
                         'coupon-' . $couponEntity->get('id'),
                         -$discount,
                         1,
-                        'Using coupon product_id: ' . $couponEntity->product_coupon_id
+                        'Using coupon product_id: ' . $couponEntity->product_coupon->product_id
                     );
                     $discountCoupon = $discount;
                     $customerCouponEntity = $couponEntity;
@@ -1321,6 +1323,17 @@ class CheckoutController extends AppController
                                             -$detailProductEntity->get('qty'),
                                             ''
                                         );
+
+                                        $this
+                                            ->Customers
+                                            ->CustomerMutationPoints
+                                            ->saving(
+                                                $customer_id,
+                                                3,
+                                                intval($detailProductEntity->bonus_point),
+                                                'bonus point belanja'
+                                            );
+
                                     } else {
                                         $process_save_order = false;
                                     }
