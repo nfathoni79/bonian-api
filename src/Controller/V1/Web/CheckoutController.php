@@ -1125,7 +1125,7 @@ class CheckoutController extends AppController
                 $discountCoupon = 0;
                 $total = $this->usingKupon($customer_id, $total, $cache['kupon'], function(\App\Model\Entity\CustomerCartCoupon $couponEntity, $discount) use (&$trx, &$discountCoupon, &$customerCouponEntity) {
                     $trx->addItem(
-                        'coupon' . $couponEntity->get('id'),
+                        'coupon-' . $couponEntity->get('id'),
                         -$discount,
                         1,
                         'Using coupon product_id: ' . $couponEntity->product_coupon_id
