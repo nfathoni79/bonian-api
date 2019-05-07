@@ -66,20 +66,24 @@ class TransactionListener implements EventListenerInterface
             if ($orderEntity && $orderEntity->order_digital instanceof \App\Model\Entity\OrderDigital) {
                 if ($orderEntity->order_digital->digital_detail instanceof \App\Model\Entity\DigitalDetail) {
 
-                    try {
-                        $pulsa = $this->Sepulsa->createMobileTransaction(
-                            $orderEntity->order_digital->customer_number,
-                            $orderEntity->order_digital->digital_detail->code,
-                            $orderEntity->invoice
-                        );
+                    switch ($orderEntity->order_digital->digital_detail->type) {
+                        case 'mobile':
+                            try {
+                                $pulsa = $this->Sepulsa->createMobileTransaction(
+                                    $orderEntity->order_digital->customer_number,
+                                    $orderEntity->order_digital->digital_detail->code,
+                                    $orderEntity->invoice
+                                );
 
-                        $orderEntity->order_digital->set('raw_response', json_encode($pulsa));
-                        $this->Orders->OrderDigitals->save($orderEntity->order_digital);
+                                $orderEntity->order_digital->set('raw_response', json_encode($pulsa));
+                                $this->Orders->OrderDigitals->save($orderEntity->order_digital);
 
 
-                    } catch(\GuzzleHttp\Exception\ClientException $e) {
-                        //debug($e->getMessage());
-						Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
+                            } catch(\GuzzleHttp\Exception\ClientException $e) {
+                                //debug($e->getMessage());
+                                Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
+                            }
+                            break;
                     }
                 }
 
