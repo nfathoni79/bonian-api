@@ -29,6 +29,7 @@ class SepulsaController extends AppController
 	public function index()
     {
 		$this->disableAutoRender();
+        Log::info(json_encode($this->request->getData()), ['scope' => ['sepulsa']]);
         Log::notice($this->request->getBody()->getContents(), ['scope' => ['sepulsa']]);
 	}
 	
