@@ -63,6 +63,7 @@ class ProductsController extends Controller
                 'sku',
                 'point',
                 'rating',
+                'rating_count',
                 'created'
             ])
             ->where([

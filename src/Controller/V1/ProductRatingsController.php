@@ -38,11 +38,14 @@ class ProductRatingsController extends Controller
                         'username',
                         'first_name',
                         'last_name',
+                        'avatar',
                     ]
-                ]
+                ],
+                'ProductRatingImages'
             ])
             ->where([
-                'ProductRatings.product_id' => $product_id
+                'ProductRatings.product_id' => $product_id,
+                'ProductRatings.status' => 1,
             ]);
 
         if ($rating = $this->request->getQuery('rating')) {
@@ -61,7 +64,7 @@ class ProductRatingsController extends Controller
         $product_ratings = $this->paginate($product_ratings);
 
         $product_ratings = $product_ratings->map(function(\App\Model\Entity\ProductRating $row) {
-            $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
+//            $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
             unset($row->product_id);
             unset($row->customer_id);
             unset($row->modified);

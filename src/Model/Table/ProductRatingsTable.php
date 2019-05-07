@@ -51,6 +51,9 @@ class ProductRatingsTable extends Table
         $this->belongsTo('OrderDetailProducts', [
             'foreignKey' => 'order_detail_product_id'
         ]);
+        $this->hasMany('ProductRatingImages', [
+            'foreignKey' => 'product_rating_id'
+        ]);
     }
 
     /**
