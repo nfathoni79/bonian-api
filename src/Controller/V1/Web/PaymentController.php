@@ -78,26 +78,90 @@ class PaymentController extends AppController
 
     public function createToken()
     {
-        $this->isCreateToken = true;
-        $amount = 1000;
-        $customer_id = $this->Authenticate->getId();
-        $customer_card_entity = $this->CustomerCards->find()
-            ->where([
-                'customer_id' => $customer_id,
-                'id' => $this->request->getData('card_id')
-            ])
-            ->first();
+        $this->request->allowMethod('post');
 
-        if ($customer_card_entity) {
-            $credit_card_token = new CreditCardToken();
-            $token = $credit_card_token->setToken($customer_card_entity->get('token'))
-                ->setCvv($this->request->getData('cvv'))
-                ->setSecure(true)
-                ->request($amount);
+        $validator = new Validator();
+        $amount = 0;
+        $validator->requirePresence('type');
+
+        $type = $this->request->getData('type');
+        switch($type) {
+            case 'pulsa':
+                $validator->requirePresence('inquiry_id')
+                    ->add('inquiry_id', 'check_inquiry', [
+                        'rule' => function($value)  {
+                            return $this->CustomerDigitalInquiry->find()
+                                    ->where([
+                                        'customer_id' => $this->Authenticate->getId(),
+                                        'id' => $value,
+                                        'status' => 0
+                                    ])
+                                    ->count() > 0;
+                        },
+                        'message' => 'Invalid inquiry id'
+                    ]);
+
+                //check is inquiry_id
+                if ($inquiry_id = $this->request->getData('inquiry_id')) {
+                    $inquiryEntity = $this->CustomerDigitalInquiry->find()
+                        ->where([
+                            'customer_id' => $this->Authenticate->getId(),
+                            'id' => $inquiry_id,
+                            'status' => 0
+                        ])
+                        ->first();
+                    if ($inquiryEntity) {
+                        if ($code = $inquiryEntity->get('code')) {
+                            $digitalDetailEntity = $this->DigitalDetails->find()
+                                ->where([
+                                    'code' => $code
+                                ])
+                                ->contain([
+                                    'Digitals'
+                                ])
+                                ->first();
+                            if ($digitalDetailEntity) {
+                                $amount = $digitalDetailEntity->get('price');
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                break;
         }
 
 
+        $error = $validator->errors($this->request->getData());
 
+        if (!$error) {
+
+            if ($amount > 0) {
+                $customer_id = $this->Authenticate->getId();
+                $customer_card_entity = $this->CustomerCards->find()
+                    ->where([
+                        'customer_id' => $customer_id,
+                        'id' => $this->request->getData('card_id')
+                    ])
+                    ->first();
+
+                if ($customer_card_entity) {
+                    $credit_card_token = new CreditCardToken();
+                    $token = $credit_card_token->setToken($customer_card_entity->get('token'))
+                        ->setCvv($this->request->getData('cvv'))
+                        ->setSecure(true)
+                        ->request($amount);
+                }
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'Invalid amount'));
+            }
+
+
+        } else {
+            $this->setResponse($this->response->withStatus(404, 'Failed to create token'));
+        }
 
 
         $this->set(compact('token', 'amount'));
