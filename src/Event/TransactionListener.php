@@ -11,6 +11,7 @@ use Cake\Event\EventListenerInterface;
 use Cake\Event\Event;
 use App\Controller\Component\SepulsaComponent;
 use Cake\Controller\ComponentRegistry;
+use Cake\Log\Log;
 
 /**
  * Class TransactionListener
@@ -78,6 +79,7 @@ class TransactionListener implements EventListenerInterface
 
                     } catch(\GuzzleHttp\Exception\ClientException $e) {
                         //debug($e->getMessage());
+						Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
                     }
                 }
 
