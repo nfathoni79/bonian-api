@@ -80,7 +80,7 @@ class TransactionListener implements EventListenerInterface
                                 );
 
                                 $orderEntity->order_digital->set('raw_response', json_encode($pulsa));
-                                $orderEntity->order_digital->set('status', 1);
+                                $orderEntity->order_digital->set('status', 99);
                                 $this->Orders->OrderDigitals->save($orderEntity->order_digital);
 
 

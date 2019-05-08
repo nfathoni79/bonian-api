@@ -93,7 +93,7 @@ class SepulsaController extends AppController
                     switch($json['status']) {
                         case 'success':
                             //processing bonus point
-                            if ($orderEntity->order_digital->bonus_point > 0 && $orderEntity->order_digital->status == 0) {
+                            if ($orderEntity->order_digital->bonus_point > 0 && $orderEntity->order_digital->status == 99) {
                                 $point_status = $this->Orders
                                     ->Customers
                                     ->CustomerMutationPoints
