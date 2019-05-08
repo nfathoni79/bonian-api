@@ -29,11 +29,7 @@ class DiscussionController extends Controller
         $data = $data->orderAsc('ProductDiscussions.id');
         $data = $this->paginate($data, [
             'limit' => (int) $this->request->getQuery('limit', 5)
-        ])->map(function(\App\Model\Entity\ProductDiscussion $row){
-//            unset($row->customer->first_name);
-//            unset($row->customer->last_name);
-            return $row;
-            });
+        ]);
         $this->set(compact('data'));
     }
 
