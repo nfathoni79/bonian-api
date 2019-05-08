@@ -406,8 +406,10 @@ class PaymentController extends AppController
 
                 case 'permata_va':
                     //for permata
+                    $full_name = trim($customerEntity->get('first_name') . ' ' . $customerEntity->get('last_name'));
+                    $full_name = empty($full_name) ? $customerEntity->get('username') : $full_name;
                     $payment = (new PermataVirtualAccount())
-                        ->setRecipientName($customerEntity->get('first_name'));
+                        ->setRecipientName($full_name);
                     break;
 
                 case 'bni_va':
@@ -437,10 +439,10 @@ class PaymentController extends AppController
             }
 
 
-
-
             $request = new Request($payment);
             $request->addTransaction($trx);
+
+
 
 
             if (!$request->isCreditCard()) {
@@ -452,6 +454,7 @@ class PaymentController extends AppController
                 );
             }
 
+            //debug(json_encode($request->toObject()));
 
             $orderEntity = $this->Orders->newEntity([
                 'invoice' => $invoice,
@@ -482,6 +485,8 @@ class PaymentController extends AppController
                 $process_save_order = false;
             }
 
+
+
             if ($process_save_order) {
                 //process charge exception credit card
                 try {
@@ -509,18 +514,24 @@ class PaymentController extends AppController
                                 break;
                         }
 
-                        switch($charge['payment_type']) {
-                            case 'bank_transfer':
-                                if (isset($charge['va_numbers'])) {
-                                    foreach($charge['va_numbers'] as $va) {
-                                        $charge['va_number'] = $va['va_number'];
-                                        $charge['bank'] = $va['bank'];
+
+                        if (isset($charge['payment_type'])) {
+                            switch($charge['payment_type']) {
+                                case 'bank_transfer':
+                                    if (isset($charge['va_numbers'])) {
+                                        foreach($charge['va_numbers'] as $va) {
+                                            $charge['va_number'] = $va['va_number'];
+                                            $charge['bank'] = $va['bank'];
+                                        }
+                                    } else if (isset($charge['permata_va_number'])) {
+                                        $charge['va_number'] = $charge['permata_va_number'];
+                                        $charge['bank'] = 'permata';
                                     }
-                                }
-                                break;
+                                    break;
+                            }
                         }
 
-
+                        //debug($charge);
                     }
 
                 } catch(\Exception $e) {
