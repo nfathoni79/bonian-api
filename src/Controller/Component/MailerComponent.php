@@ -60,7 +60,7 @@ class MailerComponent extends Component
     public function send($destination, $subject, $template, $send_later = false)
     {
         if (!filter_var($destination, FILTER_VALIDATE_EMAIL)) {
-            $this->Customers = TableRegistry::get('AdminPanel.Customers');
+            $this->Customers = TableRegistry::get('Customers');
             $data = $this->Customers->find()
                 ->select(['email', 'username'])
                 ->where(['id' => $destination])

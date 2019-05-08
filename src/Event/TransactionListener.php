@@ -82,20 +82,6 @@ class TransactionListener implements EventListenerInterface
                                 $orderEntity->order_digital->set('status', 1);
                                 $this->Orders->OrderDigitals->save($orderEntity->order_digital);
 
-                                //processing bonus point
-                                if ($orderEntity->order_digital->bonus_point > 0) {
-                                    $this->Orders
-                                        ->Customers
-                                        ->CustomerMutationPoints
-                                        ->saving(
-                                            $orderEntity->get('customer_id'),
-                                            3,
-                                            intval($orderEntity->order_digital->bonus_point),
-                                            'bonus point pembelian pulsa'
-                                        );
-                                }
-
-
 
                             } catch(\GuzzleHttp\Exception\ClientException $e) {
                                 //debug($e->getMessage());
