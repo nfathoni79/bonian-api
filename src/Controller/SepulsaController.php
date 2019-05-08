@@ -90,6 +90,7 @@ class SepulsaController extends AppController
             if ($orderEntity) {
                 //debug($orderEntity);exit;
                 if ($orderEntity->order_digital instanceof \App\Model\Entity\OrderDigital) {
+                    $this->Orders->getConnection()->begin();
                     switch($json['status']) {
                         case 'success':
                             //processing bonus point
@@ -115,6 +116,7 @@ class SepulsaController extends AppController
 
                     $orderEntity->order_digital->set('raw_response', $raw_response);
                     $this->Orders->OrderDigitals->save($orderEntity->order_digital);
+                    $this->Orders->getConnection()->commit();
 
                     $this->Mailer
                         ->setVar([

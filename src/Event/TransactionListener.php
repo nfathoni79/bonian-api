@@ -111,6 +111,8 @@ class TransactionListener implements EventListenerInterface
                 }
 
             } else if ($orderEntity && count($orderEntity->order_details) > 0) {
+                //transaction for mutation point
+                $this->Orders->getConnection()->begin();
                 foreach($orderEntity->order_details as $detail) {
                     if (is_array($detail->order_detail_products)) {
                         foreach($detail->order_detail_products as $detail_product) {
@@ -132,6 +134,7 @@ class TransactionListener implements EventListenerInterface
                         }
                     }
                 }
+                $this->Orders->getConnection()->commit();
             }
         }
 
