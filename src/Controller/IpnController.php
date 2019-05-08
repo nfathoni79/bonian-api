@@ -17,7 +17,8 @@ class IpnController extends AppController
 {
 
     public function initialize()
-    { 
+    {
+        parent::initialize();
         $config = Configure::read('Midtrans');
         $this->merchant_id = $config['merchantid'];
         $this->client_key = $config['clientKey'];

@@ -19,6 +19,7 @@ use Cake\Log\Log;
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\TransactionsTable $Transactions
  *
+ * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\SepulsaComponent $Sepulsa
  */
 class TransactionListener implements EventListenerInterface
@@ -86,6 +87,24 @@ class TransactionListener implements EventListenerInterface
                             } catch(\GuzzleHttp\Exception\ClientException $e) {
                                 //debug($e->getMessage());
                                 Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
+
+                                if (property_exists($subject, 'Mailer')) {
+                                    $this->Mailer = $subject->Mailer;
+                                    $this->Mailer
+                                        ->setVar([
+                                            'invoice' => $orderEntity->invoice,
+                                            'customer_number' => $orderEntity->order_digital->customer_number,
+                                            'product_digital_name' => $orderEntity->order_digital->digital_detail->name,
+                                            'status' => $e->getMessage()
+                                        ])
+                                        ->send(
+                                            $orderEntity->customer->email,
+                                            "Status transaksi mobile untuk invoice: " . $orderEntity->invoice,
+                                            'transaction_mobile'
+                                        );
+
+                                }
+
                             }
                             break;
                     }
