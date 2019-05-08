@@ -32,17 +32,18 @@ class IpnController extends AppController
 	public function index() {
 		$this->disableAutoRender();
 
+		$responseText = '';
+
 
 		//hook for testing only
-        /*
-         * $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
+        /*$this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
             'transactionEntity' => $this->Transactions->newEntity([
-                'id' => 26,
-                'order_id' => 149,
+                'id' => 34,
+                'order_id' => 191,
                 'status_code' => 200
             ])
-        ]));
-        */
+        ]));*/
+
 
 
         if ($this->request->is('post')) {
@@ -81,24 +82,34 @@ class IpnController extends AppController
 
                     if ($transactionEntity) {
                         $this->Transactions->patchEntity($transactionEntity, $content);
+
                         //patch again with order_id relations to table orders
                         $this->Transactions->patchEntity($transactionEntity, [
-                            'order_id' => $orderEntity->get('id')
+                            'order_id' => $orderEntity->get('id'),
+                            'is_called' => true
                         ]);
 
+                        $is_update = ($transactionEntity->isDirty('transaction_status') &&
+                            $transactionEntity->isDirty('status_code')) ||
+                            ($transactionEntity->get('payment_type') == 'credit_card' && $transactionEntity->isDirty('is_called'));
+
                         if ($this->Transactions->save($transactionEntity)) {
-                            //$content['status_code'] == 200
-                            if ($content['status_code'] == 200) {
-                                $orderEntity->set('payment_status', 2);
-                                //sent event to listener
-                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
-                                    'transactionEntity' => $transactionEntity
-                                ]));
-                            } else if (strtolower($content['transaction_status']) == 'expire') {
-                                $orderEntity->set('payment_status', 4); // 4: expired
-                                $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $this, [
-                                    'transactionEntity' => $transactionEntity
-                                ]));
+
+                            if ($is_update) {
+                                //$content['status_code'] == 200
+                                if ($content['status_code'] == 200) {
+                                    $orderEntity->set('payment_status', 2);
+                                    //sent event to listener
+                                    $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
+                                        'transactionEntity' => $transactionEntity
+                                    ]));
+                                } else if (strtolower($content['transaction_status']) == 'expire') {
+                                    $orderEntity->set('payment_status', 4); // 4: expired
+                                    $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $this, [
+                                        'transactionEntity' => $transactionEntity
+                                    ]));
+                                }
+                                $responseText = "OK";
                             }
 
                             $this->Orders->save($orderEntity);
@@ -111,6 +122,8 @@ class IpnController extends AppController
             }
 
 		}
+
+        return $this->response->withStringBody($responseText);
 	}
 	
 	

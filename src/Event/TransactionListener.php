@@ -59,6 +59,9 @@ class TransactionListener implements EventListenerInterface
                 ->contain([
                     'OrderDigitals' => [
                         'DigitalDetails'
+                    ],
+                    'OrderDetails' => [
+                        'OrderDetailProducts'
                     ]
                 ])
                 ->first();
@@ -102,6 +105,28 @@ class TransactionListener implements EventListenerInterface
                     }
                 }
 
+            } else if ($orderEntity && count($orderEntity->order_details) > 0) {
+                foreach($orderEntity->order_details as $detail) {
+                    if (is_array($detail->order_detail_products)) {
+                        foreach($detail->order_detail_products as $detail_product) {
+                            if ($detail_product instanceof \App\Model\Entity\OrderDetailProduct) {
+                                if ($detail_product->bonus_point > 0) {
+                                    $this->Orders
+                                        ->Customers
+                                        ->CustomerMutationPoints
+                                        ->saving(
+                                            $orderEntity->customer_id,
+                                            3,
+                                            intval($detail_product->bonus_point),
+                                            'bonus point belanja'
+                                        );
+                                }
+
+                            }
+
+                        }
+                    }
+                }
             }
         }
 

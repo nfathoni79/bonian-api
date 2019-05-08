@@ -12,6 +12,7 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\FrozenTime|null $transaction_time
  * @property string|null $transaction_code
  * @property string|null $transaction_status
+ * @property int|null $status_code
  * @property string|null $fraud_status
  * @property float|null $gross_amount
  * @property string|null $currency
@@ -20,6 +21,8 @@ use Cake\ORM\Entity;
  * @property string|null $va_number
  * @property string|null $masked_card
  * @property string|null $card_type
+ * @property string|null $eci
+ * @property boolean $is_called
  * @property string|null $approval_code
  * @property string|null $raw_response
  * @property \Cake\I18n\FrozenTime $created
@@ -45,6 +48,7 @@ class Transaction extends Entity
         'transaction_time' => true,
         'transaction_code' => true,
         'transaction_status' => true,
+        'status_code' => true,
         'fraud_status' => true,
         'gross_amount' => true,
         'currency' => true,
@@ -53,6 +57,8 @@ class Transaction extends Entity
         'va_number' => true,
         'masked_card' => true,
         'card_type' => true,
+        'eci' => true,
+        'is_called' => true,
         'approval_code' => true,
         'raw_response' => true,
         'created' => true,

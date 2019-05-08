@@ -1326,7 +1326,7 @@ class CheckoutController extends AppController
                                             ''
                                         );
 
-                                        $this
+                                        /*$this
                                             ->Customers
                                             ->CustomerMutationPoints
                                             ->saving(
@@ -1334,7 +1334,7 @@ class CheckoutController extends AppController
                                                 3,
                                                 intval($detailProductEntity->bonus_point),
                                                 'bonus point belanja'
-                                            );
+                                            );*/
 
                                     } else {
                                         $process_save_order = false;
