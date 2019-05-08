@@ -94,7 +94,7 @@ class SepulsaController extends AppController
                         case 'success':
                             //processing bonus point
                             if ($orderEntity->order_digital->bonus_point > 0 && $orderEntity->order_digital->status == 0) {
-                                $this->Orders
+                                $point_status = $this->Orders
                                     ->Customers
                                     ->CustomerMutationPoints
                                     ->saving(
@@ -103,6 +103,7 @@ class SepulsaController extends AppController
                                         intval($orderEntity->order_digital->bonus_point),
                                         'bonus point pembelian pulsa'
                                     );
+                                Log::notice("set bonus point: $point_status", ['scope' => ['sepulsa']]);
                             }
                             $orderEntity->order_digital->set('status', 1);
                         break;
@@ -110,6 +111,10 @@ class SepulsaController extends AppController
                             $orderEntity->order_digital->set('status', 2);
                         break;
                     }
+
+
+                    $orderEntity->order_digital->set('raw_response', $raw_response);
+                    $this->Orders->OrderDigitals->save($orderEntity->order_digital);
 
                     $this->Mailer
                         ->setVar([
@@ -123,10 +128,6 @@ class SepulsaController extends AppController
                             "Status transaksi mobile untuk invoice: " . $orderEntity->invoice,
                             'transaction_mobile'
                         );
-
-                    $orderEntity->order_digital->set('raw_response', $raw_response);
-
-                    $this->Orders->OrderDigitals->save($orderEntity->order_digital);
                 }
             }
 
