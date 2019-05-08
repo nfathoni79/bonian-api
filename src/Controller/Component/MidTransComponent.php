@@ -193,7 +193,10 @@ class MidTransComponent extends Component
     public function charge(\App\Lib\MidTrans\Request $request)
     {
         $this->_response = $this->makeRequest()->post('v2/charge', [
-            RequestOptions::JSON =>  $request->toObject()
+            RequestOptions::JSON =>  $request->toObject(),
+            'headers' => [
+                'accept' => 'application/json'
+            ]
         ])->getBody();
         return $this->_getResponse();
     }
