@@ -548,7 +548,9 @@ class PaymentController extends AppController
                                 'order_id' => $orderEntity->get('id'),
                                 'digital_detail_id' => $digitalDetailEntity->get('id'),
                                 'customer_number' => $inquiryEntity->get('customer_number'),
-                                'price' => $digitalDetailEntity->get('price')
+                                'price' => $digitalDetailEntity->get('price'),
+                                'bonus_point' => $digitalDetailEntity->get('point'),
+                                'status' => 0
                             ]);
 
                             $this->Orders->OrderDigitals->save($orderDigitalEntity);

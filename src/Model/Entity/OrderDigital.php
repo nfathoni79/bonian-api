@@ -12,6 +12,8 @@ use Cake\ORM\Entity;
  * @property string|null $customer_number
  * @property float|null $price
  * @property string|null $raw_response
+ * @property int $bonus_point
+ * @property int status
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
  *
@@ -36,6 +38,8 @@ class OrderDigital extends Entity
         'customer_number' => true,
         'price' => true,
         'raw_response' => true,
+        'bonus_point' => true,
+        'status' => true,
         'created' => true,
         'modified' => true,
         'digital_detail' => true,
