@@ -1020,12 +1020,13 @@ class CheckoutController extends AppController
 
                 $order_detail_entities = [];
                 $order_detail_product_entities = [];
+                $shipping_cost = 0;
                 foreach ($cart as $origin_id => $item) {
                     $subtotal = 0;
                     foreach ($item['data'] as $val) {
                         $trx->addItem($val['product_id'], $val['price'] + $val['add_price'], $val['qty'], $val['name']);
                         $subtotal += $val['price'] * $val['qty'];
-                        $gross_total += $val['price'] * $val['qty'];
+                        $gross_total += ($val['price'] + $val['add_price']) * $val['qty'];
                         //debug($val);
                         $order_detail_product_entities[$origin_id][] = $this
                             ->Orders
@@ -1067,7 +1068,8 @@ class CheckoutController extends AppController
                                         ->first();
 
 
-                                    $gross_total += $shipping_option['cost'];
+                                    //$gross_total += $shipping_option['cost'];
+                                    $shipping_cost += $shipping_option['cost']; // division shipping later
                                     $order_detail_entities[$origin_id] = $this->Orders->OrderDetails->newEntity([
                                         'branch_id' => $origin_id,
                                         'courrier_id' => $courierEntity->get('id'),
@@ -1135,6 +1137,9 @@ class CheckoutController extends AppController
                     $discountCoupon = $discount;
                     $customerCouponEntity = $couponEntity;
                 });
+
+                $total += $shipping_cost;
+                $gross_total += $shipping_cost;
 
 
                 $orderEntity = $this->Orders->newEntity([
