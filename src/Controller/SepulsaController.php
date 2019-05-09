@@ -119,6 +119,7 @@ class SepulsaController extends AppController
                             )) {
                                 //1: pending, 2: success, 3: failed, 4: expired, 5: refund, 6: cancel
                                 $orderEntity->set('payment_status', 5);
+                                $this->Orders->save($orderEntity);
                             }
                         break;
                     }

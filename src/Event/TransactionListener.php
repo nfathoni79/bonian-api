@@ -89,6 +89,7 @@ class TransactionListener implements EventListenerInterface
                                 Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
 
                                 //refund to saldo
+                                $this->Orders->getConnection()->begin();
                                 if ($this->Orders->Customers->CustomerMutationAmounts->saving(
                                     $orderEntity->customer_id,
                                     2,
@@ -97,7 +98,9 @@ class TransactionListener implements EventListenerInterface
                                 )) {
                                     //1: pending, 2: success, 3: failed, 4: expired, 5: refund, 6: cancel
                                     $orderEntity->set('payment_status', 5);
+                                    $this->Orders->save($orderEntity);
                                 }
+                                $this->Orders->getConnection()->commit();
 
                                 if (property_exists($subject, 'Mailer')) {
                                     $this->Mailer = $subject->Mailer;
