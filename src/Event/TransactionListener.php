@@ -88,6 +88,17 @@ class TransactionListener implements EventListenerInterface
                                 //debug($e->getMessage());
                                 Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
 
+                                //refund to saldo
+                                if ($this->Orders->Customers->CustomerMutationAmounts->saving(
+                                    $orderEntity->customer_id,
+                                    2,
+                                    $orderEntity->total,
+                                    'Refund transaksi untuk invoice: ' . $orderEntity->invoice
+                                )) {
+                                    //1: pending, 2: success, 3: failed, 4: expired, 5: refund, 6: cancel
+                                    $orderEntity->set('payment_status', 5);
+                                }
+
                                 if (property_exists($subject, 'Mailer')) {
                                     $this->Mailer = $subject->Mailer;
                                     $this->Mailer
