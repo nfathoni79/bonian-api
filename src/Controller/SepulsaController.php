@@ -110,6 +110,16 @@ class SepulsaController extends AppController
                         break;
                         case 'failed':
                             $orderEntity->order_digital->set('status', 2);
+                            //refund to saldo
+                            if ($this->Orders->Customers->CustomerMutationAmounts->saving(
+                                $orderEntity->customer_id,
+                                2,
+                                $orderEntity->total,
+                                'Refund transaksi untuk invoice: ' . $orderEntity->invoice
+                            )) {
+                                //1: pending, 2: success, 3: failed, 4: expired, 5: refund, 6: cancel
+                                $orderEntity->set('payment_status', 5);
+                            }
                         break;
                     }
 
