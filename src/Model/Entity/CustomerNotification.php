@@ -9,8 +9,13 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $customer_id
  * @property int $customer_notification_type_id
- * @property string|null $content
- * @property int|null $status
+ * @property string|null $message
+ * @property string|null $model
+ * @property int|null $foreign_key
+ * @property string|null $controller
+ * @property string|null $action
+ * @property bool|null $is_read
+ * @property string|null $template
  * @property \Cake\I18n\FrozenTime|null $created
  * @property \Cake\I18n\FrozenTime|null $modified
  *
@@ -32,8 +37,13 @@ class CustomerNotification extends Entity
     protected $_accessible = [
         'customer_id' => true,
         'customer_notification_type_id' => true,
-        'content' => true,
-        'status' => true,
+        'message' => true,
+        'model' => true,
+        'foreign_key' => true,
+        'controller' => true,
+        'action' => true,
+        'is_read' => true,
+        'template' => true,
         'created' => true,
         'modified' => true,
         'customer' => true,

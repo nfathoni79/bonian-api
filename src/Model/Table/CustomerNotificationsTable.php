@@ -65,12 +65,36 @@ class CustomerNotificationsTable extends Table
             ->allowEmptyString('id', 'create');
 
         $validator
-            ->scalar('content')
-            ->allowEmptyString('content');
+            ->scalar('message')
+            ->allowEmptyString('message');
 
         $validator
-            ->integer('status')
-            ->allowEmptyString('status');
+            ->scalar('model')
+            ->maxLength('model', 255)
+            ->allowEmptyString('model');
+
+        $validator
+            ->integer('foreign_key')
+            ->allowEmptyString('foreign_key');
+
+        $validator
+            ->scalar('controller')
+            ->maxLength('controller', 50)
+            ->allowEmptyString('controller');
+
+        $validator
+            ->scalar('action')
+            ->maxLength('action', 50)
+            ->allowEmptyString('action');
+
+        $validator
+            ->boolean('is_read')
+            ->allowEmptyString('is_read');
+
+        $validator
+            ->scalar('template')
+            ->maxLength('template', 50)
+            ->allowEmptyString('template');
 
         return $validator;
     }
