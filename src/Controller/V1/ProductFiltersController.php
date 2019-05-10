@@ -12,6 +12,7 @@ use App\Controller\V1\AppController as Controller;
 use Cake\Database\Expression\QueryExpression;
 use Cake\Utility\Hash;
 use Cake\Validation\Validator;
+use Cake\I18n\Time;
 
 /**
  * Class ProductFiltersController
@@ -23,6 +24,7 @@ use Cake\Validation\Validator;
 
 class ProductFiltersController extends Controller
 {
+    protected $is_new_rules = -30; //in days
 
     public function initialize()
     {
@@ -634,6 +636,7 @@ class ProductFiltersController extends Controller
                     $images[] = $vl['name'];
                 }
                 $row->images = $images;
+                $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 return $row;
             });
         } else {
