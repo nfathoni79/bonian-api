@@ -37,6 +37,7 @@ class CustomerNotification extends Entity
     protected $_accessible = [
         'customer_id' => true,
         'customer_notification_type_id' => true,
+        'title' => true,
         'message' => true,
         'model' => true,
         'foreign_key' => true,
