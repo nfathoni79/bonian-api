@@ -1149,6 +1149,8 @@ class CheckoutController extends AppController
                     'city_id' => $addresses->get('city_id'),
                     'subdistrict_id' => $addresses->get('subdistrict_id'),
                     'address' => $addresses->get('address'),
+                    'recipient_name' => $addresses->get('recipient_name'),
+                    'recipient_phone' => $addresses->get('recipient_phone'),
                     'use_point' => $use_point,
                     'gross_total' => $gross_total,
                     'discount_voucher' => $discountVoucher,

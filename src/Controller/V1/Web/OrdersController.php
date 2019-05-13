@@ -98,7 +98,7 @@ class OrdersController extends AppController
         $this->set(compact('data'));
     }
 
-    public function view($id)
+    public function view($invoice)
     {
         $data = $this->Orders->find()
             ->contain([
@@ -112,6 +112,7 @@ class OrdersController extends AppController
                         'currency',
                         'payment_type',
                         'va_number',
+                        'bank',
                         'masked_card',
                         'card_type',
                     ]
@@ -146,7 +147,7 @@ class OrdersController extends AppController
             ])
             ->where([
                 'Orders.customer_id' => $this->Authenticate->getId(),
-                'Orders.id' => $id
+                'Orders.invoice' => $invoice
             ])
             ->map(function(\App\Model\Entity\Order $row) {
                 $row->details = [];
@@ -176,6 +177,7 @@ class OrdersController extends AppController
                             'slug' => $product['product']['slug'],
                             'model' => $product['product']['model'],
                             'code' => $product['product']['code'],
+                            'point' => $product['product']['point'],
                             'sku' => $product['product_option_price']['sku'],
                             'qty' => $product['qty'],
                             'price' => $product['price'],

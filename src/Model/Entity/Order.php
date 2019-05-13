@@ -48,6 +48,8 @@ class Order extends Entity
         'city_id' => true,
         'subdistrict_id' => true,
         'address' => true,
+        'recipient_name' => true,
+        'recipient_phone' => true,
         'voucher_id' => true,
         'product_promotion_id' => true,
         'use_point' => true,
