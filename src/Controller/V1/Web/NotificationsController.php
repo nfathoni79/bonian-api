@@ -49,25 +49,32 @@ class NotificationsController extends AppController
         $data = $this->paginate($data, [
             'limit' => (int) $this->request->getQuery('limit', 5)
         ])
-            ->map(function (\App\Model\Entity\CustomerNotification $row) {
+        ->map(function (\App\Model\Entity\CustomerNotification $row) {
 
-                if ($row->model && $row->foreign_key) {
-                    $model = $row->model;
+            if ($row->model && $row->foreign_key) {
+                $model = $row->model;
 
-                    $table = (new TableLocator())->get($row->model);
-                    $data = $table->find()
-                        ->where([
-                            $row->model . '.id' => $row->foreign_key
-                        ])
-                        ->first();
+                $table = (new TableLocator())->get($row->model);
+                $data = $table->find()
+                    ->where([
+                        $row->model . '.id' => $row->foreign_key
+                    ])
+                    ->first();
 
-                    $row->{$model} = $data;
+                $row->{$model} = $data;
 
-                }
+            }
 
-                return $row;
-            });
+            return $row;
+        });
 
-        $this->set(compact('data'));
+        $count = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'is_read' => 0
+            ])->count();
+
+        
+        $this->set(compact('data', 'count'));
     }
 }
