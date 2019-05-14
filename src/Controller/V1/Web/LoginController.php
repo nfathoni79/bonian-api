@@ -35,6 +35,25 @@ class LoginController extends AppController
         $this->loadModel('CustomerAuthenticates');
     }
 
+    public function endPoint()
+    {
+        $this->request->allowMethod('post');
+        $pusher = $this->Pusher->Pusher();
+        try {
+            $token = $pusher->socket_auth(
+                $this->request->getData('channel_name'),
+                $this->request->getData('socket_id')
+            );
+            $token = json_decode($token);
+            $auth = $token->auth;
+        } catch(\Exception $e) {
+            $this->setResponse($this->response->withStatus(406, 'failed authenticate socket'));
+        }
+
+
+        $this->set(compact('auth'));
+    }
+
     /**
      * index login
      */

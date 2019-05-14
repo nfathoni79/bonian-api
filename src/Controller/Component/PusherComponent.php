@@ -10,12 +10,8 @@ use Pusher\Pusher;
 use Cake\Log\Log;
 use Cake\Core\Configure;
 /**
- * @property \MemberPanel\Controller\Component\NevixCoinComponent $NevixCoin
- * @property \MemberPanel\Controller\Component\CoinPaymentComponent $CoinPayment
- * @property \MemberPanel\Model\Table\CoinsTable $Coins
- * @property \MemberPanel\Model\Table\ClientCurrencyAddressTable $ClientCurrencyAddress
- * @property \MemberPanel\Model\Table\ClientBalancesTable $ClientBalances
- * Wallet component
+
+ * Pusher component
  */
 
 class PusherComponent extends Component
@@ -28,6 +24,30 @@ class PusherComponent extends Component
         $this->_appKey = $config['appKey'];
         $this->_appSecret = $config['appSecret'];
         $this->_appId = $config['appId'];
+    }
+
+    /**
+     * @return Pusher|null
+     */
+    public function Pusher()
+    {
+        $options = array(
+            'cluster' => 'ap1',
+            'useTLS' => true
+        );
+
+        $pusher = null;
+
+        try {
+            $pusher =  new Pusher(
+                $this->_appKey,
+                $this->_appSecret,
+                $this->_appId,
+                $options
+            );
+        } catch(\Exception $e) {}
+
+        return $pusher;
     }
 
 

@@ -77,4 +77,50 @@ class NotificationsController extends AppController
 
         $this->set(compact('data', 'count'));
     }
+
+    public function count()
+    {
+        $count = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'is_read' => 0
+            ])->count();
+        $this->set(compact('count'));
+    }
+
+    public function head()
+    {
+        $count = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'is_read' => 0
+            ])->count();
+
+        $data = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId()
+            ]);
+
+
+        $data = $data->orderDesc('CustomerNotifications.id')
+            ->map(function (\App\Model\Entity\CustomerNotification $row) {
+
+                unset($row->customer_id);
+                unset($row->model);
+                unset($row->foreign_key);
+                unset($row->controller);
+                unset($row->action);
+
+                $row->time_ago = $row->created->timeAgoInWords([
+                    'end' => '+10 year',
+                    'format' => 'F jS, Y',
+                    'accuracy' => array('second' => 'second')
+                ]);
+
+                return $row;
+            });
+
+
+        $this->set(compact('data', 'count'));
+    }
 }
