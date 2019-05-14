@@ -92,7 +92,7 @@ class VouchersController extends AppController
                     ->first()
                     ->toArray();
                 foreach($query['customer_cart_details'] as $vals){
-                    if($vals['status'] == 1){
+                    if(in_array($vals['status'], [1,5])){
                         if(in_array($vals['product_category_id'],$categoryIn )){
                             $row->active = true;
                             break;

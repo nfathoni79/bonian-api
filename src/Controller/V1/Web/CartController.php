@@ -175,8 +175,10 @@ class CartController extends AppController
                                 if(empty($findCartCoupon)){
                                     $newEntity = $this->CustomerCartCoupons->newEntity();
                                     $setNewEntity = [
-                                        'customer_cart_id' => $cartId,
-                                        'product_coupon_id' => $findCoupon->get('id')
+//                                        'customer_cart_id' => $cartId,
+                                        'customer_id' => $customerId,
+                                        'product_coupon_id' => $findCoupon->get('id'),
+                                        'product_id' => $newEntityDetails->get('product_id')
                                     ];
                                     $this->CustomerCartCoupons->patchEntity($newEntity,$setNewEntity);
                                     $this->CustomerCartCoupons->save($newEntity);
@@ -255,7 +257,8 @@ class CartController extends AppController
                     if(empty($findCartCoupon)){
                         $newEntity = $this->CustomerCartCoupons->newEntity();
                         $setNewEntity = [
-                            'customer_cart_id' => $findCart->get('customer_cart_id'),
+//                            'customer_cart_id' => $findCart->get('customer_cart_id'),
+                            'customer_id' => $customerId,
                             'product_coupon_id' => $findCoupon->get('id'),
                             'product_id' => $productId
                         ];
@@ -299,7 +302,8 @@ class CartController extends AppController
                     ]
                 ])
                 ->where([
-                    'CustomerCartCoupons.customer_cart_id' => $cart->get('customer_cart_id'),
+                    'CustomerCartCoupons.customer_cart_id IS NULL',
+                    'CustomerCartCoupons.customer_id' => $customerId,
                     'CustomerCartCoupons.product_id' => $cart->get('product_id'),
                 ]);
             $data = $couponList;

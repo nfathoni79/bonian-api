@@ -357,7 +357,7 @@ class CheckoutController extends AppController
                                 ->toArray();
 
                             foreach($query['customer_cart_details'] as $vals){
-                                if($vals['status'] == 1){
+                                if(in_array($vals['status'], [1,5])){
                                     if(in_array($vals['product_category_id'],$categoryIn )){
                                         return true;
                                         break;
@@ -383,12 +383,12 @@ class CheckoutController extends AppController
             'rule' => function($value) {
                 $kupon = $this->CustomerCartCoupons->find()
                     ->contain([
-                        'CustomerCarts',
+//                        'CustomerCarts',
                         'ProductCoupons',
                     ])
                     ->where([
-                        'CustomerCarts.customer_id' => $this->Authenticate->getId(),
-                        'CustomerCarts.status' => 1,
+                        'CustomerCartCoupons.customer_cart_id IS NULL',
+                        'CustomerCartCoupons.customer_id' => $this->Authenticate->getId(),
                         'CustomerCartCoupons.id' => $value,
                     ])
                     ->first();
@@ -566,7 +566,7 @@ class CheckoutController extends AppController
             $this->setResponse($this->response->withStatus(406, 'invalid step checkout'));
         }
 
-
+//        debug($data);
         $this->set(compact('data', 'error'));
 
     }
@@ -584,13 +584,13 @@ class CheckoutController extends AppController
          */
         $customerCartCouponEntity = $this->CustomerCartCoupons->find()
             ->where([
-                'CustomerCarts.customer_id' => $customer_id,
-                'CustomerCarts.status' => 1,
+                'CustomerCartCoupons.customer_id' => $customer_id,
+//                'CustomerCarts.status' => 1,
                 'CustomerCartCoupons.id' => $kuponId,
 //                'Vouchers.status' => 1,
             ])
             ->contain([
-                'CustomerCarts',
+//                'CustomerCarts',
                 'ProductCoupons',
             ])
             ->first();
@@ -642,19 +642,18 @@ class CheckoutController extends AppController
                     foreach($dataCart as $branch_id => $value) {
                         foreach($value['data'] as $vals) {
                             if(in_array($vals['product_category_id'], $keyCategoryInVoucher )){
-                                $totalInCategory += $vals['price'];
+                                $totalInCategory += $vals['total'];
                             }
                         }
                     }
-
                     $discount = $customerVoucherEntity->voucher->percent / 100 * $totalInCategory;
                     $discount = $discount > $customerVoucherEntity->voucher->value ? $customerVoucherEntity->voucher->value : $discount;
-                    $total = $total - $discount;
+                     $total = $total - $discount;
                     break;
                 case '3': // private voucher
                     $discount = $customerVoucherEntity->voucher->percent / 100 * $total;
                     $discount = $discount > $customerVoucherEntity->voucher->value ? $customerVoucherEntity->voucher->value : $discount;
-                    $total = $total - $discount;
+                     $total = $total - $discount;
                     break;
             }
 
@@ -1139,20 +1138,6 @@ class CheckoutController extends AppController
 
                 $total = $gross_total;
 
-                if ($use_point > 0) {
-
-                    $pointRateEntity = $this->CustomerPointRates->find()
-                        ->orderDesc('CustomerPointRates.id')
-                        ->first();
-
-                    if ($pointRateEntity) {
-                        $use_point = ($use_point / intval($pointRateEntity->get('point'))) * intval($pointRateEntity->get('value'));
-                    }
-
-                    $total = $total - $use_point;
-                    $trx->addItem('point', -$use_point, 1, 'Using Point Customer');
-                }
-
                 /**
                  * @var \App\Model\Entity\CustomerVoucher $customerVoucherEntity
                  */
@@ -1183,6 +1168,20 @@ class CheckoutController extends AppController
                     $discountCoupon = $discount;
                     $customerCouponEntity = $couponEntity;
                 });
+
+                if ($use_point > 0) {
+
+                    $pointRateEntity = $this->CustomerPointRates->find()
+                        ->orderDesc('CustomerPointRates.id')
+                        ->first();
+
+                    if ($pointRateEntity) {
+                        $use_point = ($use_point / intval($pointRateEntity->get('point'))) * intval($pointRateEntity->get('value'));
+                    }
+
+                    $total = $total - $use_point;
+                    $trx->addItem('point', -$use_point, 1, 'Using Point Customer');
+                }
 
                 $total += $shipping_cost;
                 $gross_total += $shipping_cost;
@@ -1218,6 +1217,7 @@ class CheckoutController extends AppController
 
                 $data['payment_method'] = $payment_method;
                 $data['payment_amount'] = $trx->getAmount();
+                $data['trx'] = $trx->toObject();
 
                 if ($this->isCreateToken) {
                     return $trx->getAmount();
@@ -1413,6 +1413,10 @@ class CheckoutController extends AppController
                             }
                         }
 
+                        if ($customerCouponEntity instanceof \App\Model\Entity\CustomerCartCoupon) {
+                            $customerCouponEntity->set('customer_cart_id', $cartEntity->get('id'));
+                            $this->CustomerCartCoupons->save($customerCouponEntity);
+                        }
                         //process mutation point here
                         if ($use_point > 0) {
                             $this

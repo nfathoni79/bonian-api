@@ -101,7 +101,10 @@ class MidTransComponent extends Component
         $token['gross_amount'] = $amount;
 
         $this->_response = $this->makeRequest()->get('v2/token', [
-            'query' => $token
+            'query' => $token,
+            'headers' => [
+                'accept' => 'application/json'
+            ]
         ])->getBody();
 
         return $this->_getResponse();
