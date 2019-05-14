@@ -149,11 +149,11 @@ class RajaOngkirComponent extends Component
         }
     }
 
-    public function waybill($invoice, $courier){
+    public function waybill($awb, $courier){
 
         $http = new Client($this->defaultRequest);
         $request = [
-            'waybill' => $invoice,
+            'waybill' => $awb,
             'courier' => $courier,
         ];
         $response = $http->post($this->setPath('/waybill'), $request);

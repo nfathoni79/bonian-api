@@ -233,8 +233,8 @@ class OrdersController extends AppController
         $this->set(compact('data'));
     }
 
-    public function getShipping($invoice, $courier){
-        $data = $this->RajaOngkir->waybill($invoice,$courier);
+    public function getShipping(){
+        $data = $this->RajaOngkir->waybill($this->request->getData('awb'),$this->request->getData('courier'));
 
         $this->set(compact('data'));
 
