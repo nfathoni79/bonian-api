@@ -24,6 +24,7 @@ use Cake\Utility\Hash;
  *
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\TransactionsTable $Transactions
+ * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class OrdersController extends AppController
@@ -34,6 +35,7 @@ class OrdersController extends AppController
         parent::initialize();
         $this->loadModel('Orders');
         $this->loadModel('Transactions');
+        $this->loadComponent('RajaOngkir');
     }
 
     /**
@@ -231,6 +233,11 @@ class OrdersController extends AppController
         $this->set(compact('data'));
     }
 
+    public function getShipping($invoice, $courier){
+        $data = $this->RajaOngkir->waybill($invoice,$courier);
 
+        $this->set(compact('data'));
+
+    }
 
 }

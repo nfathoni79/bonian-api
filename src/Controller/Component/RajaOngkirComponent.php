@@ -148,4 +148,18 @@ class RajaOngkirComponent extends Component
             return json_decode($response->getBody()->getContents(), true);
         }
     }
+
+    public function waybill($invoice, $courier){
+
+        $http = new Client($this->defaultRequest);
+        $request = [
+            'waybill' => $invoice,
+            'courier' => $courier,
+        ];
+        $response = $http->post($this->setPath('/waybill'), $request);
+        if ($response->getStatusCode() == 200) {
+            return json_decode($response->getBody()->getContents(), true);
+        }
+    }
+
 }
