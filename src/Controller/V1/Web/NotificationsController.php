@@ -74,7 +74,7 @@ class NotificationsController extends AppController
                 'is_read' => 0
             ])->count();
 
-        
+
         $this->set(compact('data', 'count'));
     }
 }
