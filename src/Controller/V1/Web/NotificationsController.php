@@ -33,6 +33,7 @@ class NotificationsController extends AppController
         $this->loadModel('CustomerNotifications');
     }
 
+
     /**
      * list all notification
      */

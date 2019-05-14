@@ -29,6 +29,14 @@ class NotificationComponent extends Component
     }
 
     /**
+     * @return \App\Model\Table\CustomerNotificationsTable
+     */
+    public function getTable()
+    {
+        return $this->CustomerNotifications;
+    }
+
+    /**
      * @param $customer_id
      * @param $type_id 1: text, 2: html
      * @param $title

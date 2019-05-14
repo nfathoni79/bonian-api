@@ -25,6 +25,7 @@ use App\Event\TransactionListener;
  * will inherit them.
  * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\NotificationComponent $Notification
+ * @property \App\Controller\Component\PusherComponent $Pusher
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
@@ -44,6 +45,7 @@ class AppController extends Controller
         $this->loadComponent('Flash');
         $this->loadComponent('Mailer', ['transport' => 'default']);
         $this->loadComponent('Notification');
+        $this->loadComponent('Pusher');
 
         /*
          * Enable the following component for recommended CakePHP security settings.

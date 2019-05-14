@@ -71,6 +71,9 @@ class IpnController extends AppController
                  * @var \App\Model\Entity\Order $orderEntity
                  */
                 $orderEntity = $this->Orders->find()
+                    ->contain([
+                        'Customers'
+                    ])
                     ->where([
                         'invoice' => $content['order_id']
                     ])
@@ -110,14 +113,36 @@ class IpnController extends AppController
                                     ]));
 
                                     //sent notification
-                                    $this->Notification->create(
+                                    if ($this->Notification->create(
                                         $orderEntity->customer_id,
                                         '1',
                                         'Pembayaran telah dikonfirmasi',
                                         vsprintf('Konfirmasi pembayaran sebesar %s', [Number::format($orderEntity->total)]),
                                         'Orders',
                                         $orderEntity->id
-                                    );
+                                    )) {
+                                        $pusher = $this->Pusher->Pusher();
+                                        $total = $this->Notification->getTable()->find()
+                                            ->where([
+                                                'customer_id' => $orderEntity->customer_id,
+                                                'is_read' => 0
+                                            ])->count();
+                                        
+                                        try {
+                                            $pusher->trigger(
+                                                'private-notification',
+                                                'my-event-' . $orderEntity->customer->reffcode,
+                                                ['total' => $total]
+                                            );
+                                        } catch (\Exception $e) {
+
+                                        }
+
+                                    }
+
+
+
+
 
                                 } else if (strtolower($content['transaction_status']) == 'expire') {
                                     $orderEntity->set('payment_status', 4); // 4: expired
