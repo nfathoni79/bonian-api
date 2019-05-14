@@ -24,6 +24,7 @@ use Cake\Event\Event;
  * will inherit them.
  * @property \App\Controller\Component\MidTransComponent $MidTrans
  * @property \App\Controller\Component\SendAuthComponent $SendAuth
+ * @property \App\Controller\Component\NotificationComponent $Notification
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
@@ -51,6 +52,7 @@ class AppController extends Controller
         $this->loadComponent('SendAuth');
         $this->loadComponent('MidTrans');
         $this->loadComponent('Mailer', ['transport' => 'default']);
+        $this->loadComponent('Notification');
         /*
          * Enable the following component for recommended CakePHP security settings.
          * see https://book.cakephp.org/3.0/en/controllers/components/security.html

@@ -24,6 +24,8 @@ use App\Event\TransactionListener;
  * Add your application-wide methods in the class below, your controllers
  * will inherit them.
  * @property \App\Controller\Component\MailerComponent $Mailer
+ * @property \App\Controller\Component\NotificationComponent $Notification
+ *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller
@@ -41,6 +43,7 @@ class AppController extends Controller
         ]);
         $this->loadComponent('Flash');
         $this->loadComponent('Mailer', ['transport' => 'default']);
+        $this->loadComponent('Notification');
 
         /*
          * Enable the following component for recommended CakePHP security settings.

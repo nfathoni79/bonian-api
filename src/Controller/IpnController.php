@@ -4,6 +4,7 @@ namespace App\Controller;
 use Cake\Event\Event;
 use Cake\Core\Configure;
 use Cake\Log\Log;
+use Cake\I18n\Number;
 
 
 /**
@@ -66,6 +67,9 @@ class IpnController extends AppController
                         break;
                 }
 
+                /**
+                 * @var \App\Model\Entity\Order $orderEntity
+                 */
                 $orderEntity = $this->Orders->find()
                     ->where([
                         'invoice' => $content['order_id']
@@ -104,11 +108,32 @@ class IpnController extends AppController
                                     $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
                                         'transactionEntity' => $transactionEntity
                                     ]));
+
+                                    //sent notification
+                                    $this->Notification->create(
+                                        $orderEntity->customer_id,
+                                        '1',
+                                        'Pembayaran telah dikonfirmasi',
+                                        vsprintf('Konfirmasi pembayaran sebesar %d', [Number::format($orderEntity->total)]),
+                                        'Orders',
+                                        $orderEntity->id
+                                    );
+
                                 } else if (strtolower($content['transaction_status']) == 'expire') {
                                     $orderEntity->set('payment_status', 4); // 4: expired
                                     $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $this, [
                                         'transactionEntity' => $transactionEntity
                                     ]));
+
+                                    //sent notification
+                                    $this->Notification->create(
+                                        $orderEntity->customer_id,
+                                        '1',
+                                        'Pembayaran telah melebihi batas ketentuan',
+                                        vsprintf('Pesanan sebesar %d telah dibatalkan', [Number::format($orderEntity->total)]),
+                                        'Orders',
+                                        $orderEntity->id
+                                    );
                                 }
                                 $responseText = "OK";
                             }
