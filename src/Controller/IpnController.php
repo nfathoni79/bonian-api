@@ -114,7 +114,7 @@ class IpnController extends AppController
                                         $orderEntity->customer_id,
                                         '1',
                                         'Pembayaran telah dikonfirmasi',
-                                        vsprintf('Konfirmasi pembayaran sebesar %d', [Number::format($orderEntity->total)]),
+                                        vsprintf('Konfirmasi pembayaran sebesar %s', [Number::format($orderEntity->total)]),
                                         'Orders',
                                         $orderEntity->id
                                     );
@@ -130,7 +130,7 @@ class IpnController extends AppController
                                         $orderEntity->customer_id,
                                         '1',
                                         'Pembayaran telah melebihi batas ketentuan',
-                                        vsprintf('Pesanan sebesar %d telah dibatalkan', [Number::format($orderEntity->total)]),
+                                        vsprintf('Pesanan sebesar %s telah dibatalkan', [Number::format($orderEntity->total)]),
                                         'Orders',
                                         $orderEntity->id
                                     );
