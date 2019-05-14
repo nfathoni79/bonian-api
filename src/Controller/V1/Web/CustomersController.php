@@ -60,7 +60,7 @@ class CustomersController extends AppController
                 'IpLocations.ip = CustomerAuthenticates.ip'
             ])
             ->orderDesc('CustomerAuthenticates.modified')
-            ->limit(30)
+            ->limit(5)
             ->map(function($row) {
                 $ua = parse_user_agent($row->browser);
                 $row->device = $ua;
