@@ -16,6 +16,7 @@
         "josegonzalez/cakephp-upload": "^4.0",
         "mobiledetect/mobiledetectlib": "2.*",
         "narendravaghela/cakephp-mailgun": "^4.0",
+        "pusher/pusher-php-server": "^3.4",
         "socialconnect/auth": "^2.1",
         "veritrans/veritrans-php": "^1.2"
     },
