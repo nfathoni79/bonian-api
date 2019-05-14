@@ -94,7 +94,7 @@ class CartController extends AppController
                             'CustomerCartDetails.product_id' => $this->request->getData('product_id'),
                             'CustomerCartDetails.product_option_price_id' => $this->request->getData('price_id'),
                             'CustomerCartDetails.product_option_stock_id' => $this->request->getData('stock_id'),
-                            'CustomerCartDetails.status' => 1,
+                            'CustomerCartDetails.status IN ' => [1,5],
                         ])
                         ->first();
                     if($findCart){
@@ -216,7 +216,7 @@ class CartController extends AppController
                 'CustomerCartDetails.product_id' => $productId,
                 'CustomerCartDetails.product_option_price_id' => $priceId,
                 'CustomerCartDetails.product_option_stock_id' => $stockId,
-                'CustomerCartDetails.status' => 1,
+                'CustomerCartDetails.status IN ' => [1,5],
             ])
             ->first();
         if($findCart){
@@ -256,7 +256,8 @@ class CartController extends AppController
                         $newEntity = $this->CustomerCartCoupons->newEntity();
                         $setNewEntity = [
                             'customer_cart_id' => $findCart->get('customer_cart_id'),
-                            'product_coupon_id' => $findCoupon->get('id')
+                            'product_coupon_id' => $findCoupon->get('id'),
+                            'product_id' => $productId
                         ];
                         $this->CustomerCartCoupons->patchEntity($newEntity,$setNewEntity);
                         $this->CustomerCartCoupons->save($newEntity);
@@ -275,19 +276,17 @@ class CartController extends AppController
 
     public function coupon(){
 
-        $this->request->allowMethod(['get']);
+        $this->request->allowMethod(['post', 'put']);
+
         $customerId = $this->Authenticate->getId();
-
-        $cart = $this->CustomerCarts->find()
-            ->contain(
-                'CustomerCartDetails', function (\Cake\ORM\Query $q) {
-                    return $q
-                        ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
-                }
-            )
-            ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
+        $cart =  $this->CustomerCartDetails->find()
+            ->contain(['CustomerCarts'])
+            ->where([
+                'CustomerCarts.customer_id' => $customerId,
+                'CustomerCartDetails.id' => $this->request->getData('cartid'),
+                'CustomerCartDetails.status IN ' => [1,5]
+            ])
             ->first();
-
         if($cart){
             $couponList = $this->CustomerCartCoupons->find()
                 ->contain([
@@ -299,10 +298,15 @@ class CartController extends AppController
                         ]
                     ]
                 ])
-                ->where(['CustomerCartCoupons.customer_cart_id' => $cart->get('id')]);
+                ->where([
+                    'CustomerCartCoupons.customer_cart_id' => $cart->get('customer_cart_id'),
+                    'CustomerCartCoupons.product_id' => $cart->get('product_id'),
+                ]);
             $data = $couponList;
+//            $data =  $cart->get('customer_cart_id');
             $this->set(compact('data'));
         }
+
     }
 
     public function view(){
@@ -313,7 +317,7 @@ class CartController extends AppController
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
-                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
                 }
             )
             ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
@@ -347,7 +351,7 @@ class CartController extends AppController
                         'Branches'
                     ]
                 ])
-                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3]]);
+                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
             $cartList->orderDesc('CustomerCartDetails.id');
             $data = $this->paginate($cartList, [
                 'limit' => (int) $this->request->getQuery('limit',100)

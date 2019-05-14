@@ -45,6 +45,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\CustomerCartsTable $CustomerCarts
  * @property \App\Model\Table\CustomerPointRatesTable $CustomerPointRates
  * @property \App\Model\Table\CustomerVouchersTable $CustomerVouchers
+ * @property \App\Model\Table\ProductOptionStocksTable $ProductOptionStocks
  * @property \App\Model\Table\CustomerCartCouponsTable $CustomerCartCoupons
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\CourriersTable $Courriers
@@ -61,7 +62,7 @@ class CheckoutController extends AppController
      * available status = 1
      * @var array
      */
-    protected $customerDetailStatuses = [1];
+    protected $customerDetailStatuses = [5];
     protected $cacheKey = null;
     protected $isCreateToken = false;
 
@@ -74,6 +75,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerPointRates');
         $this->loadModel('CustomerVouchers');
         $this->loadModel('CustomerCartCoupons');
+        $this->loadModel('ProductOptionStocks');
         $this->loadModel('Orders');
         $this->loadModel('Courriers');
         $this->loadModel('Products');
@@ -399,8 +401,41 @@ class CheckoutController extends AppController
             'message' => 'kupon yang di input tidak valid.'
         ]);
 
+        //validation cardid
+        $validator
+            ->requirePresence('cart', 'create', 'Silahan pilih produk')
+            ->hasAtLeast('cart', 1, 'Silahan pilih produk');
+
+        $carts = new Validator();
+        $data = [];
+        if ($this->request->getData('cart')) {
+            foreach($this->request->getData('cart') as $k => $vals){
+                $field = new Validator();
+                $field
+                    ->notBlank('id', 'Silahan pilih produk');
+                $field
+                    ->notBlank('stock_id', 'Silahan pilih produk');
+                $field
+                    ->notBlank('qty', 'Silahan pilih produk')
+                    ->add('qty', 'valid_qty', [
+                        'rule' => function($value,$form) use(&$data){
+
+                            $stockId = $form['data']['stock_id'];
+
+                            $cekStock = $this->ProductOptionStocks->find()
+                                ->where(['id' => $stockId])->first();
+                            return $cekStock->get('stock') >= $value;
+
+                        },
+                        'message' => 'Quantity tidak tersedia'
+                    ]);
+
+                $carts->addNested($k, $field);
+            }
+        }
 
 
+        $validator->addNested('cart', $carts);
 
 
         $error = $validator->errors($getData);
@@ -425,6 +460,16 @@ class CheckoutController extends AppController
                         ->execute();
                 }
 
+                foreach($this->request->getData('cart') as $k => $val){
+                    $query = $this->CustomerCartDetails->query();
+                    $query->update()
+                        ->set(['status' => 5])
+                        ->where([
+                            'id' => $val['id']
+                        ])
+                        ->execute();
+                }
+
 
             } else {
                 $this->setResponse($this->response->withStatus(406, 'Invalid cart'));
@@ -433,6 +478,7 @@ class CheckoutController extends AppController
         } else {
             $this->setResponse($this->response->withStatus(406, 'Cannot process checkout'));
         }
+        $this->set(compact('error', 'data'));
     }
 
 

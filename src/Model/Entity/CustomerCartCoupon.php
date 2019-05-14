@@ -28,6 +28,7 @@ class CustomerCartCoupon extends Entity
     protected $_accessible = [
         'customer_cart_id' => true,
         'product_coupon_id' => true,
+        'product_id' => true,
         'customer_cart' => true,
         'product_coupon' => true
     ];
