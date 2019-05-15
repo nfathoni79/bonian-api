@@ -330,6 +330,7 @@ class ProductFiltersController extends Controller
     {
         $search = $this->getQuery('q');
         $category_id = $this->getQuery('category_id');
+        $brands = $this->getQuery('brands');
         $min_price = $this->getQuery('min_price', '0');
         $max_price = $this->getQuery('max_price');
 
@@ -385,6 +386,13 @@ class ProductFiltersController extends Controller
                         'ProductToCategories.product_category_id' => $category_id
                     ]);
                 }
+            }
+
+            if ($brands && is_array($brands)) {
+                $brands = array_values($brands);
+                $subquery->where([
+                    'Products.brand_id IN' => $brands
+                ]);
             }
 
 
