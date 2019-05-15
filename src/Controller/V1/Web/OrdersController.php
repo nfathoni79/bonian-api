@@ -63,9 +63,12 @@ class OrdersController extends AppController
                     ]
                 ],
                 'OrderDetails' => [
-                    'Branches'
+                    'Branches',
+                    'OrderStatuses'
                 ],
-                'OrderDigitals',
+                'OrderDigitals' => [
+//                    'OrderStatuses'
+                ],
                 'Vouchers' => [
                     'fields' => [
                         'id',
@@ -102,6 +105,12 @@ class OrdersController extends AppController
 
     public function view($invoice)
     {
+        $shipping_status = [
+          '1' => 'Menunggu Pembayaran',
+          '2' => 'Diproses',
+          '3' => 'Dikirim',
+          '4' => 'Selesai',
+        ];
         $data = $this->Orders->find()
             ->contain([
                 'Transactions' => [
@@ -142,8 +151,10 @@ class OrdersController extends AppController
                                 'Options',
                                 'OptionValues'
                             ],
+                            'ProductOptionStocks'
                         ],
-                    ]
+                    ],
+                    'OrderShippingDetails'
                 ]
 
             ])
@@ -151,10 +162,11 @@ class OrdersController extends AppController
                 'Orders.customer_id' => $this->Authenticate->getId(),
                 'Orders.invoice' => $invoice
             ])
-            ->map(function(\App\Model\Entity\Order $row) {
+            ->map(function(\App\Model\Entity\Order $row) use(&$shipping_status) {
                 $row->details = [];
                 foreach($row->order_details as $key => $val) {
                     $row->details[$key] = [
+                        'id' => $val['id'],
                         'awb' => $val['awb'],
                         'shipping_code' => $val['shipping_code'],
                         'shipping_service' => $val['shipping_service'],
@@ -166,11 +178,21 @@ class OrdersController extends AppController
                         'origin_address' => $val['branch']['address'],
                         'products' => []
                     ];
+
+                    foreach($val->order_shipping_details as  $k => $shipping){
+                        $row->details[$key]['shipping_status']['code'] = $shipping['status'];
+                        $row->details[$key]['shipping_status']['name'] = $shipping_status[$shipping['status']];
+                    }
+
                     foreach($val->order_detail_products as $k => $product) {
 
                         $variant = [];
                         foreach($product['product_option_price']['product_option_value_lists'] as $list){
                             $variant[] = $list['option']['name'] .' : '. $list['option_value']['name'];
+                        }
+                        $weight = 0;
+                        foreach($product['product_option_price']['product_option_stocks'] as $list){
+                            $weight =  $list['weight'];
                         }
 
                         $row->details[$key]['products'][$k] = [
@@ -181,6 +203,7 @@ class OrdersController extends AppController
                             'code' => $product['product']['code'],
                             'point' => $product['product']['point'],
                             'sku' => $product['product_option_price']['sku'],
+                            'weight' => $weight,
                             'qty' => $product['qty'],
                             'price' => $product['price'],
                             'total' => $product['total'],

@@ -11,6 +11,7 @@ use Cake\I18n\Number;
  * Static content controller
  *  @property \App\Model\Table\OrdersTable $Orders
  *  @property \App\Model\Table\TransactionsTable $Transactions
+ *  @property \App\Model\Table\OrderShippingDetailsTable $OrderShippingDetails
  * This controller will render views from Template/Ipn/
  * 
  */
@@ -27,6 +28,7 @@ class IpnController extends AppController
 
         $this->loadModel('Orders');
         $this->loadModel('Transactions');
+        $this->loadModel('OrderShippingDetails');
     }
 
 
@@ -72,7 +74,10 @@ class IpnController extends AppController
                  */
                 $orderEntity = $this->Orders->find()
                     ->contain([
-                        'Customers'
+                        'Customers',
+                        'OrderDetails' => [
+                            'OrderShippingDetails'
+                        ]
                     ])
                     ->where([
                         'invoice' => $content['order_id']
@@ -107,6 +112,20 @@ class IpnController extends AppController
                                 //$content['status_code'] == 200
                                 if ($content['status_code'] == 200) {
                                     $orderEntity->set('payment_status', 2);
+
+                                    foreach($orderEntity->order_details as $vals){
+                                        foreach($vals->order_shipping_details as $value){
+                                            $query = $this->OrderShippingDetails->query();
+                                            $query->update()
+                                                ->set(['status' => 2])
+                                                ->where([
+                                                    'order_detail_id' => $value['order_detail_id'],
+                                                    'status' => 1,
+                                                ])
+                                                ->execute();
+                                        }
+                                    }
+
                                     //sent event to listener
                                     $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
                                         'transactionEntity' => $transactionEntity
