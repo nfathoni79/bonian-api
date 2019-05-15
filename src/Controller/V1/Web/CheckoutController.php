@@ -339,7 +339,7 @@ class CheckoutController extends AppController
                              * @var \Cake\I18n\FrozenTime $expired
                              */
                             $expired = $voucher->get('expired');
-                            return $expired->gte(Time::now());
+                            return ($expired instanceof \Cake\I18n\FrozenTime) ? $expired->gte(Time::now()) : $expired;
                             break;
                         case '2':
                             // CATEGORY IN LIST CART ONLY
