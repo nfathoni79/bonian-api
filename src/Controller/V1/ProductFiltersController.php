@@ -419,9 +419,8 @@ class ProductFiltersController extends Controller
                     'ProductOptionValueLists.option_value_id',
 
                 ])
-                ->having([
-                    'total >' => 10
-                ]);
+                ->orderDesc('total')
+                ->limit(20);
 
 
             if ($is_filter_products && $subquery instanceof \Cake\ORM\Query) {
