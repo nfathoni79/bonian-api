@@ -121,23 +121,10 @@ class IpnController extends AppController
                                         'Orders',
                                         $orderEntity->id
                                     )) {
-                                        $pusher = $this->Pusher->Pusher();
-                                        $total = $this->Notification->getTable()->find()
-                                            ->where([
-                                                'customer_id' => $orderEntity->customer_id,
-                                                'is_read' => 0
-                                            ])->count();
-                                        
-                                        try {
-                                            $pusher->trigger(
-                                                'private-notification',
-                                                'my-event-' . $orderEntity->customer->reffcode,
-                                                ['total' => $total]
-                                            );
-                                        } catch (\Exception $e) {
-
-                                        }
-
+                                        $this->Notification->triggerCount(
+                                            $orderEntity->customer_id,
+                                            $orderEntity->customer->reffcode
+                                        );
                                     }
 
 
@@ -155,9 +142,16 @@ class IpnController extends AppController
                                         $orderEntity->customer_id,
                                         '1',
                                         'Pembayaran telah melebihi batas ketentuan',
-                                        vsprintf('Pesanan sebesar %s telah dibatalkan', [Number::format($orderEntity->total)]),
+                                        vsprintf('Pesanan dengan nomor invoice %s sebesar %s telah dibatalkan', [
+                                            $orderEntity->invoice,
+                                            Number::format($orderEntity->total)
+                                        ]),
                                         'Orders',
                                         $orderEntity->id
+                                    );
+                                    $this->Notification->triggerCount(
+                                        $orderEntity->customer_id,
+                                        $orderEntity->customer->reffcode
                                     );
                                 }
                                 $responseText = "OK";

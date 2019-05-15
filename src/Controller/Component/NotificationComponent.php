@@ -8,9 +8,11 @@ use Cake\ORM\Locator\TableLocator;
 /**
  * Notification component
  * @property \App\Model\Table\CustomerNotificationsTable $CustomerNotifications
+ * @property \App\Controller\Component\PusherComponent $Pusher
  */
 class NotificationComponent extends Component
 {
+    public $components = ['Pusher'];
 
     /**
      * Default configuration.
@@ -34,6 +36,31 @@ class NotificationComponent extends Component
     public function getTable()
     {
         return $this->CustomerNotifications;
+    }
+
+    /**
+     * @param $customer_id
+     * @param $reffcode
+     * @param string $prefix
+     */
+    public function triggerCount($customer_id, $reffcode, $prefix = 'my-event-')
+    {
+        $pusher = $this->Pusher->Pusher();
+        $total = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $customer_id,
+                'is_read' => 0
+            ])->count();
+
+        try {
+            $pusher->trigger(
+                'private-notification',
+                $prefix . $reffcode,
+                ['total' => $total]
+            );
+        } catch (\Exception $e) {
+
+        }
     }
 
     /**

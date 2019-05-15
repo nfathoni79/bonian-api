@@ -21,6 +21,7 @@ use Cake\Log\Log;
  *
  * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\SepulsaComponent $Sepulsa
+ * @property \App\Controller\Component\NotificationComponent $Notification
  */
 class TransactionListener implements EventListenerInterface
 {
@@ -63,7 +64,8 @@ class TransactionListener implements EventListenerInterface
                     ],
                     'OrderDetails' => [
                         'OrderDetailProducts'
-                    ]
+                    ],
+                    'Customers'
                 ])
                 ->first();
 
@@ -117,6 +119,26 @@ class TransactionListener implements EventListenerInterface
                                             'transaction_mobile'
                                         );
 
+                                }
+
+                                if (property_exists($subject, 'Notification')) {
+                                    $this->Notification = $subject->Notification;
+                                    $this->Notification->create(
+                                        $orderEntity->customer_id,
+                                        '1',
+                                        'Transaksi digital gagal',
+                                        vsprintf('Pembelian %s untuk %s dengan invoice %s gagal', [
+                                            $orderEntity->order_digital->customer_number,
+                                            $orderEntity->order_digital->digital_detail->name,
+                                            $orderEntity->invoice
+                                        ]),
+                                        'Orders',
+                                        $orderEntity->id
+                                    );
+                                    $this->Notification->triggerCount(
+                                        $orderEntity->customer_id,
+                                        $orderEntity->customer->reffcode
+                                    );
                                 }
 
                             }
