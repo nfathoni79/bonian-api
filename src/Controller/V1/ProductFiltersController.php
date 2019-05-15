@@ -338,22 +338,74 @@ class ProductFiltersController extends Controller
         $error = $validator->errors($this->request->getQueryParams());
 
         if (!$error) {
+
+            $is_filter_products = false;
+
+            $subquery = $this->Products->find()
+                ->select([
+                    'Products.id'
+                ])
+                ->where([
+                    'product_status_id' => 1,
+                    'Product.id = Products.id'
+                ])
+                ->group([
+                    'Products.id'
+                ]);
+
+            if ($search) {
+                $is_filter_products = true;
+                $subquery->where([
+                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
+                ])
+                    ->bind(':search', $search, 'string');
+            }
+
+            if ($min_price >= 0 && $max_price) {
+                $is_filter_products = true;
+                $subquery->where(function(QueryExpression $exp) use ($min_price, $max_price) {
+                    return $exp->between('price_sale', $min_price, $max_price);
+                });
+            }
+
+            if ($category_id) {
+                $subquery->leftJoin(['ProductToCategories' => 'product_to_categories'], [
+                    'Products.id = ProductToCategories.product_id'
+                ]);
+                $is_filter_products = true;
+                $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
+                    ->toArray();
+                $children = Hash::extract($descendants, '{n}.id');
+                if ($children) {
+                    $subquery->where([
+                        'ProductToCategories.product_category_id IN' => $children
+                    ]);
+                } else {
+                    $subquery->where([
+                        'ProductToCategories.product_category_id' => $category_id
+                    ]);
+                }
+            }
+
+
+
+
             $data = $this->ProductOptionValueLists->find();
 
             $data = $data
                 ->select([
-                    'option_values' => "GROUP_CONCAT(ProductOptionValueLists.option_value_id)",
+                    //'option_values' => "GROUP_CONCAT(ProductOptionValueLists.option_value_id)",
                     'Options.id',
-                    'Options.name'
+                    'Options.name',
+                    'OptionValues.id',
+                    'OptionValues.name',
+                    'total' => $data->func()->count('ProductOptionPrices.product_id')
                 ])
                 ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
-                    'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
+                    'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id',
                 ])
-                ->leftJoin(['Products' => 'products'], [
-                    'ProductOptionPrices.product_id = Products.id'
-                ])
-                ->leftJoin(['ProductToCategories' => 'product_to_categories'], [
-                    'ProductOptionPrices.product_id = ProductToCategories.product_id'
+                ->leftJoin(['Product' => 'products'], [
+                    'ProductOptionPrices.product_id = Product.id'
                 ])
                 ->leftJoin(['Options' => 'options'], [
                     'ProductOptionValueLists.option_id = Options.id'
@@ -362,41 +414,25 @@ class ProductFiltersController extends Controller
                     'ProductOptionValueLists.option_value_id = OptionValues.id'
                 ])
                 ->group([
-                    'ProductOptionValueLists.option_id'
-                ])
-                ->where([]);
+                    //'ProductOptionPrices.product_id',
+                    //'ProductOptionValueLists.option_id',
+                    'ProductOptionValueLists.option_value_id',
 
-            if ($search) {
-                $data->where([
-                    'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
                 ])
-                    ->bind(':search', $search, 'string');
-            }
+                ->having([
+                    'total >' => 10
+                ]);
 
-            if ($min_price >= 0 && $max_price) {
-                $data->where(function(QueryExpression $exp) use ($min_price, $max_price) {
-                    return $exp->between('price_sale', $min_price, $max_price);
+
+            if ($is_filter_products && $subquery instanceof \Cake\ORM\Query) {
+                $data->where(function (QueryExpression $exp) use ($subquery) {
+                    return $exp->exists($subquery);
                 });
-            }
-
-            if ($category_id) {
-                $descendants = $this->ProductCategories->find('children', ['for' => $category_id])
-                    ->toArray();
-                $children = Hash::extract($descendants, '{n}.id');
-                if ($children) {
-                    $data->where([
-                        'ProductToCategories.product_category_id IN' => $children
-                    ]);
-                } else {
-                    $data->where([
-                        'ProductToCategories.product_category_id' => $category_id
-                    ]);
-                }
             }
 
             $data = $data
                 ->map(function(\App\Model\Entity\ProductOptionValueList $row) {
-                    $values = array_unique(explode(',', $row->option_values));
+                    /*$values = array_unique(explode(',', $row->option_values));
                     $value_lists = [];
                     if (is_array($values)) {
                         $valueEntities = $this->ProductOptionValueLists->OptionValues->find()
@@ -415,10 +451,33 @@ class ProductFiltersController extends Controller
                     }
 
                     $row->values = $value_lists;
-                    unset($row->option_values);
+                    unset($row->option_values);*/
+                    if ($row->OptionValues) {
+                        $row->OptionValues['option_value_id'] = $row->OptionValues['id'];
+                        unset($row->OptionValues['id']);
+                    }
                     return $row;
                 })
                 ->toArray();
+            $collections = [];
+            foreach($data as $key => $val) {
+                if(!array_key_exists($val['Options']['id'], $collections)) {
+                    $collections[$val['Options']['id']] = [
+                        'Options' => $val['Options'],
+                        'values' => [
+                            array_merge($val['OptionValues'], ['total' => $val['total']])
+                        ]
+                    ];
+                } else {
+                    $collections[$val['Options']['id']]['values'][] = array_merge(
+                        $val['OptionValues'],
+                        ['total' => $val['total']]
+                    );
+                }
+            }
+
+            $data = array_values($collections);
+            //debug($data);exit;
         } else {
             $this->setResponse($this->response->withStatus(406, 'Request failed'));
         }
@@ -428,6 +487,8 @@ class ProductFiltersController extends Controller
 
         $this->set(compact('data', 'error'));
     }
+
+
 
     public function priceRange()
     {
