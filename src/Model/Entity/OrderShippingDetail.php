@@ -8,6 +8,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property int $order_detail_id
+ * @property int $status
  * @property string $note
  * @property \Cake\I18n\FrozenTime $created
  *
