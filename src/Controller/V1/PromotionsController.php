@@ -26,12 +26,9 @@ class PromotionsController extends Controller
     }
 
     public function index($slug = null)
-    {
-        if($this->request->getQuery('limit')){
-            $limit = $this->request->getQuery('limit');
-        }else{
-            $limit = 10;
-        }
+    { 
+		$limit = $this->request->getQuery('limit', '10');
+    
         $find = $this->Vouchers->find()
             ->contain([
                 'VoucherDetails' => [
@@ -64,12 +61,12 @@ class PromotionsController extends Controller
                                     'point',
                                     'price',
                                     'price_sale',
-                                    'rating',
-                                    'created',
-
+                                    'rating', 
+                                    'product_status_id', 
+                                    'created',  
                                 ],
                                 'queryBuilder' => function (Query $q) {
-                                    return $q->where(['name !=' => '']); // Full conditions for filtering
+                                    return $q->where(['name !=' => '', 'product_status_id' => 1]); // Full conditions for filtering
                                 },
                                 'ProductImages' => [
                                     'fields' => [
@@ -81,11 +78,14 @@ class PromotionsController extends Controller
 							]
 						])
 						->where(['product_category_id' => $vals->product_category->id])->limit($limit)->toArray();
-					$vals->product_category->products = 	$query; 
+					$vals->product_category->products = $query; 
                     foreach($vals->product_category->products as $kk => $val){
-                        $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
-                        $val->product->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
-                        $val->product->images = Hash::extract( $val->product->product_images, '{n}.name');
+						// debug($val->product->created); 
+                        // $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp; 
+						if($val->product){ 
+							$val->product->is_new = (Time::parse($val->product->created))->gte((Time::now())->addDay($this->is_new_rules)); 
+							$val->product->images = Hash::extract( $val->product->product_images, '{n}.name');
+						}
                         unset($val->product->product_images);
                     }
                 }
@@ -118,7 +118,7 @@ class PromotionsController extends Controller
 //        }
 
         $data = $find;
-
+		// debug($data);
         $this->set(compact('data'));
        // print_r($find);
        // exit;
