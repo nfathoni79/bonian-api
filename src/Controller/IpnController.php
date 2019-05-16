@@ -154,7 +154,7 @@ class IpnController extends AppController
                                     }
 
 
-                                } else if (strtolower($content['transaction_status']) == 'pending' && $content['transaction_type'] == 'bank_transfer') {
+                                } else if (strtolower($content['transaction_status']) == 'pending' && $content['payment_type'] == 'bank_transfer') {
                                     //sent notification
 
                                     if ($this->Notification->create(
