@@ -1356,6 +1356,15 @@ class CheckoutController extends AppController
                                     ['validate' => false]
                                 );
                             if ($this->Orders->OrderDetails->save($detailEntity)) {
+
+                                //process order shipping detail
+                                $shippingDetailEntity = $this->Orders->OrderDetails->OrderShippingDetails->newEntity([
+                                    'order_detail_id' => $detailEntity->id,
+                                    'status' => 1
+                                ]);
+
+                                $this->Orders->OrderDetails->OrderShippingDetails->save($shippingDetailEntity);
+
                                 foreach ($order_detail_product_entities[$origin_id] as $detailProductEntity) {
                                     $detailProductEntity = $this
                                         ->Orders
@@ -1366,6 +1375,7 @@ class CheckoutController extends AppController
                                         ],
                                             ['validate' => false]
                                         );
+
 
                                     if ($this
                                         ->Orders
