@@ -127,6 +127,37 @@ class NotificationsController extends AppController
         $this->set(compact('count'));
     }
 
+    public function mark()
+    {
+        $this->request->allowMethod('post');
+        if ($notification_id = $this->request->getData('notification_id')) {
+            /**
+             * @var \App\Model\Entity\Customer $customerEntity
+             */
+            $customerEntity = $this->CustomerNotifications->Customers->find()
+                ->select([
+                    'reffcode'
+                ])
+                ->where([
+                    'customer_id' => $this->Authenticate->getId()
+                ])
+                ->first();
+
+            $this->CustomerNotifications->query()
+                ->update()
+                ->set('is_read', 1)
+                ->where([
+                    'customer_id' => $this->Authenticate->getId(),
+                    'id' => $notification_id
+                ])
+                ->execute();
+
+            if ($customerEntity) {
+                $this->Notification->triggerCount($customerEntity->id, $customerEntity->reffcode);
+            }
+        }
+    }
+
     public function head()
     {
         $count = $this->CustomerNotifications->find()
@@ -142,6 +173,7 @@ class NotificationsController extends AppController
 
 
         $data = $data->orderDesc('CustomerNotifications.id')
+            ->limit(15)
             ->map(function (\App\Model\Entity\CustomerNotification $row) {
 
                 unset($row->customer_id);
