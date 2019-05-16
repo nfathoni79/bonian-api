@@ -57,5 +57,17 @@ class BannerController extends Controller
         $this->set(compact('banner'));
     }
 
+    public function promotion(){
+        $banner = $this->Banners->find()
+            ->select([
+                'image' => 'Banners.name',
+                'url' => 'Banners.url',
+            ])
+            ->where(['Banners.status' => 1, 'Banners.url LIKE ' => '%'.$this->request->getData('slug').'%'])
+            ->order('Banners.created DESC')
+            ->first();
+        $this->set(compact('banner'));
+    }
+
 
 }
