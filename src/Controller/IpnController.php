@@ -138,16 +138,16 @@ class IpnController extends AppController
                                         'Pembayaran telah dikonfirmasi',
                                         vsprintf('Konfirmasi pembayaran sebesar %s', [Number::format($orderEntity->total)]),
                                         'Orders',
-                                        $orderEntity->id
+                                        $orderEntity->id,
+                                        1,
+                                        $this->Notification->getImageConfirmationPath()
                                     )) {
+
                                         $this->Notification->triggerCount(
                                             $orderEntity->customer_id,
                                             $orderEntity->customer->reffcode
                                         );
                                     }
-
-
-
 
 
                                 } else if (strtolower($content['transaction_status']) == 'expire') {
@@ -166,7 +166,9 @@ class IpnController extends AppController
                                             Number::format($orderEntity->total)
                                         ]),
                                         'Orders',
-                                        $orderEntity->id
+                                        $orderEntity->id,
+                                        1,
+                                        $this->Notification->getImageWarningPath()
                                     );
                                     $this->Notification->triggerCount(
                                         $orderEntity->customer_id,

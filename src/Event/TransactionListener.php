@@ -133,8 +133,12 @@ class TransactionListener implements EventListenerInterface
                                             $orderEntity->invoice
                                         ]),
                                         'Orders',
-                                        $orderEntity->id
+                                        $orderEntity->id,
+                                        1,
+                                        $this->Notification->getImageDigitalProductPath()
                                     );
+
+
                                     $this->Notification->triggerCount(
                                         $orderEntity->customer_id,
                                         $orderEntity->customer->reffcode
