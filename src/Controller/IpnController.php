@@ -139,7 +139,10 @@ class IpnController extends AppController
                                         $orderEntity->customer_id,
                                         '1',
                                         'Pembayaran telah dikonfirmasi',
-                                        vsprintf('Konfirmasi pembayaran sebesar %s', [Number::format($orderEntity->total)]),
+                                        vsprintf('Konfirmasi pembayaran sebesar %s dengan nomor invoice %s telah diterima, silahkan menunggu kiriman barang', [
+                                            Number::format($orderEntity->total),
+                                            $orderEntity->invoice
+                                        ]),
                                         'Orders',
                                         $orderEntity->id,
                                         1,
@@ -170,7 +173,7 @@ class IpnController extends AppController
                                         'Orders',
                                         $orderEntity->id,
                                         1,
-                                        $this->Notification->getImageConfirmationPath(),
+                                        $this->Notification->getImageWaitingPath(),
                                         '/user/history/detail/' . $orderEntity->invoice
                                     )) {
 

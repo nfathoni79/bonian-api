@@ -56,6 +56,11 @@ class NotificationComponent extends Component
         return '/img/notifications/warning.png';
     }
 
+    public function getImageWaitingPath()
+    {
+        return '/img/notifications/waiting.png';
+    }
+
     public function setImageNotification($type, $imagePath)
     {
         if ($this->notificationEntity instanceof \App\Model\Entity\CustomerNotification) {
