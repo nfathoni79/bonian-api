@@ -22,6 +22,7 @@ use Cake\Utility\Inflector;
  * Customers controller
  *
  * @property \App\Model\Table\CustomerNotificationsTable $CustomerNotifications
+ * @property \App\Model\Table\CustomerNotificationTypesTable $CustomerNotificationTypes
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
 class NotificationsController extends AppController
@@ -31,19 +32,39 @@ class NotificationsController extends AppController
     {
         parent::initialize();
         $this->loadModel('CustomerNotifications');
+        $this->loadModel('CustomerNotificationTypes');
     }
+
+    public function categories()
+    {
+        $data = $this->CustomerNotifications->find()
+            ->toArray();
+
+        $this->set(compact('data'));
+    }
+
 
 
     /**
      * list all notification
+     * @param null $type
      */
-    public function index()
+    public function index($type = null)
     {
 
         $data = $this->CustomerNotifications->find()
+            ->contain([
+                'CustomerNotificationTypes'
+            ])
             ->where([
                 'customer_id' => $this->Authenticate->getId()
             ]);
+
+        if ($type) {
+            $data->where([
+                'customer_notification_type_id' => $type
+            ]);
+        }
 
 
         $data->orderDesc('CustomerNotifications.id');
@@ -75,8 +96,19 @@ class NotificationsController extends AppController
                 'is_read' => 0
             ])->count();
 
+        $categories = $this->CustomerNotificationTypes->find()
+            ->toArray();
 
-        $this->set(compact('data', 'count'));
+        $title = null;
+        foreach($categories as $val) {
+            if ($val['id'] == $type) {
+                $title = $val['name'];
+                break;
+            }
+        }
+
+
+        $this->set(compact('data', 'count', 'categories', 'title'));
     }
 
     public function count()
