@@ -43,6 +43,15 @@ class OrdersController extends AppController
      */
     public function index()
     {
+        $status_payment = [
+            'semua' => '0',
+            'pending' => '1',
+            'success' => '2',
+            'failed' => '3',
+            'expired' => '4',
+            'refunde' => '5',
+            'cancel' => '6',
+        ];
 
         $orders = $this->Orders->find()
             ->contain([
@@ -64,7 +73,8 @@ class OrdersController extends AppController
                 ],
                 'OrderDetails' => [
                     'Branches',
-                    'OrderStatuses'
+                    'OrderStatuses',
+                    'OrderShippingDetails'
                 ],
                 'OrderDigitals' => [
 //                    'OrderStatuses'
@@ -88,6 +98,24 @@ class OrdersController extends AppController
         $orders
             ->orderDesc('Orders.id')
             ;
+
+        if(!empty($this->request->getQuery('search'))){
+            $orders->where(['Orders.invoice' => $this->request->getQuery('search')]);
+        }
+
+        if(($this->request->getQuery('status') != 'semua') && ($this->request->getQuery('status'))){
+            $orders->where([
+                'Orders.payment_status' => $status_payment[$this->request->getQuery('status')]
+            ]);
+        }
+
+        if(!empty($this->request->getQuery('start')) && !empty($this->request->getQuery('end'))){
+            $orders->where(function (\Cake\Database\Expression\QueryExpression $exp) {
+                return $exp->gte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('start'))).' 00:00:00')
+                    ->lte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('end'))).' 23:59:59');
+            });
+        }
+
 
         $data = $this->paginate($orders, [
             'limit' => (int) $this->request->getQuery('limit', 5)
