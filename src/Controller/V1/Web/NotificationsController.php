@@ -131,17 +131,6 @@ class NotificationsController extends AppController
     {
         $this->request->allowMethod('post');
         if ($notification_id = $this->request->getData('notification_id')) {
-            /**
-             * @var \App\Model\Entity\Customer $customerEntity
-             */
-            $customerEntity = $this->CustomerNotifications->Customers->find()
-                ->select([
-                    'reffcode'
-                ])
-                ->where([
-                    'id' => $this->Authenticate->getId()
-                ])
-                ->first();
 
             $this->CustomerNotifications->query()
                 ->update()
@@ -152,9 +141,13 @@ class NotificationsController extends AppController
                 ])
                 ->execute();
 
-            if ($customerEntity) {
-                $this->Notification->triggerCount($customerEntity->id, $customerEntity->reffcode);
-            }
+            $total = $this->CustomerNotifications->find()
+                ->where([
+                    'customer_id' => $this->Authenticate->getId(),
+                    'is_read' => 0
+                ])->count();
+
+            $this->set(compact('total'));
         }
     }
 
