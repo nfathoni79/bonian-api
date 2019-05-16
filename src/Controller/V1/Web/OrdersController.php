@@ -77,6 +77,7 @@ class OrdersController extends AppController
                     'OrderShippingDetails'
                 ],
                 'OrderDigitals' => [
+                    'DigitalDetails'
 //                    'OrderStatuses'
                 ],
                 'Vouchers' => [
@@ -183,6 +184,9 @@ class OrdersController extends AppController
                         ],
                     ],
                     'OrderShippingDetails'
+                ],
+                'OrderDigitals' => [
+                    'DigitalDetails'
                 ]
 
             ])
