@@ -427,8 +427,8 @@ class ProductFiltersController extends Controller
                     'ProductOptionValueLists.option_value_id',
 
                 ])
-                ->orderDesc('total')
-                ->limit(20);
+                ->orderAsc('Options.id')
+                ->orderDesc('total');
 
 
             if ($is_filter_products && $subquery instanceof \Cake\ORM\Query) {
