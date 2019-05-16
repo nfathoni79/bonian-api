@@ -139,7 +139,7 @@ class NotificationsController extends AppController
                     'reffcode'
                 ])
                 ->where([
-                    'customer_id' => $this->Authenticate->getId()
+                    'id' => $this->Authenticate->getId()
                 ])
                 ->first();
 
