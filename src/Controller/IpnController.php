@@ -106,7 +106,7 @@ class IpnController extends AppController
                         ]);
 
                         $is_update = ($transactionEntity->isDirty('transaction_status') &&
-                            $transactionEntity->isDirty('status_code')) ||
+                            $transactionEntity->isDirty('status_code') || $transactionEntity->isDirty('is_called')) ||
                             ($transactionEntity->get('payment_type') == 'credit_card' && $transactionEntity->isDirty('is_called'));
 
                         if ($this->Transactions->save($transactionEntity)) {
