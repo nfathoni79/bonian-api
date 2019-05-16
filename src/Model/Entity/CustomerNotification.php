@@ -14,6 +14,9 @@ use Cake\ORM\Entity;
  * @property int|null $foreign_key
  * @property string|null $controller
  * @property string|null $action
+ * @property string|null $static_url
+ * @property int|null $image_type
+ * @property string|null $image
  * @property bool|null $is_read
  * @property string|null $template
  * @property \Cake\I18n\FrozenTime|null $created
@@ -43,6 +46,9 @@ class CustomerNotification extends Entity
         'foreign_key' => true,
         'controller' => true,
         'action' => true,
+        'static_url' => true,
+        'image_type' => true,
+        'image' => true,
         'is_read' => true,
         'template' => true,
         'created' => true,

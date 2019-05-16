@@ -87,6 +87,12 @@ class NotificationsController extends AppController
 
             }
 
+            $row->time_ago = $row->created instanceof \Cake\I18n\FrozenTime ? $row->created->timeAgoInWords([
+                'end' => '+10 year',
+                'format' => 'F jS, Y',
+                'accuracy' => array('second' => 'second')
+            ]) : $row->created;
+
             return $row;
         });
 
@@ -144,11 +150,11 @@ class NotificationsController extends AppController
                 unset($row->controller);
                 unset($row->action);
 
-                $row->time_ago = $row->created->timeAgoInWords([
+                $row->time_ago = $row->created instanceof \Cake\I18n\FrozenTime ? $row->created->timeAgoInWords([
                     'end' => '+10 year',
                     'format' => 'F jS, Y',
                     'accuracy' => array('second' => 'second')
-                ]);
+                ]) : $row->created;
 
                 return $row;
             });
