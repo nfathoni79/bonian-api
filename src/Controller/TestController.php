@@ -40,15 +40,15 @@ class TestController extends AppController
 
     public function shippingDetail()
     {
-        $this->disableAutoRender();
-        $shippingDetailEntity = $this->Orders->OrderDetails->OrderShippingDetails->newEntity([
-            'order_detail_id' => 5,
-            'status' => 1,
-            'note' => 'oke'
-        ]);
-
-        $this->Orders->OrderDetails->OrderShippingDetails->save($shippingDetailEntity);
-        debug($shippingDetailEntity);
+//        $this->disableAutoRender();
+//        $shippingDetailEntity = $this->Orders->OrderDetails->OrderShippingDetails->newEntity([
+//            'order_detail_id' => 5,
+//            'status' => 1,
+//            'note' => 'oke'
+//        ]);
+//
+//        $this->Orders->OrderDetails->OrderShippingDetails->save($shippingDetailEntity);
+//        debug($shippingDetailEntity);
     }
     public function mutasi(){
 
