@@ -1126,6 +1126,7 @@ class CheckoutController extends AppController
                                         'shipping_weight' => $item['total_weight'],
                                         'total' => $subtotal + $shipping_option['cost'],
                                         'shipping_cost' => $shipping_option['cost'],
+                                        'shipping_etd' => $shipping_option['etd'],
                                         'order_status_id' => 1,
                                         'awb' => ''
                                     ]);
@@ -1356,11 +1357,11 @@ class CheckoutController extends AppController
                                     ['validate' => false]
                                 );
                             if ($this->Orders->OrderDetails->save($detailEntity)) {
-
                                 //process order shipping detail
                                 $shippingDetailEntity = $this->Orders->OrderDetails->OrderShippingDetails->newEntity([
                                     'order_detail_id' => $detailEntity->id,
-                                    'status' => 1
+                                    'status' => 1,
+                                    'note' => ''
                                 ]);
 
                                 $this->Orders->OrderDetails->OrderShippingDetails->save($shippingDetailEntity);

@@ -59,10 +59,10 @@ class OrderShippingDetailsTable extends Table
             ->integer('id')
             ->allowEmptyString('id', 'create');
 
-        $validator
+        /*$validator
             ->scalar('note')
             ->requirePresence('note', 'create')
-            ->allowEmptyString('note', false);
+            ->allowEmptyString('note', false);*/
 
         return $validator;
     }

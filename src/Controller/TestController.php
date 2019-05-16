@@ -29,12 +29,26 @@ class TestController extends AppController
         $this->loadComponent('GenerationsTree');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerMutationAmounts');
+        $this->loadModel('Orders');
     }
     public function sponsor(){
         // $this->autoRender = false;
 
         // $this->GenerationsTree->save('D5FLFTBQDT', 'RWAMGKBSZV');
         // exit;
+    }
+
+    public function shippingDetail()
+    {
+        $this->disableAutoRender();
+        $shippingDetailEntity = $this->Orders->OrderDetails->OrderShippingDetails->newEntity([
+            'order_detail_id' => 5,
+            'status' => 1,
+            'note' => 'oke'
+        ]);
+
+        $this->Orders->OrderDetails->OrderShippingDetails->save($shippingDetailEntity);
+        debug($shippingDetailEntity);
     }
     public function mutasi(){
 
