@@ -99,12 +99,13 @@ class NotificationComponent extends Component
      * @param null $foreign_key
      * @param int $image_type
      * @param null $image
+     * @param null $static_url
      * @param null $controller
      * @param null $action
      * @param null $template
      * @return \App\Model\Entity\CustomerNotification|bool
      */
-    public function create($customer_id, $type_id, $title, $message, $model = null, $foreign_key = null, $image_type = 1, $image = null, $controller = null, $action = null, $template = null)
+    public function create($customer_id, $type_id, $title, $message, $model = null, $foreign_key = null, $image_type = 1, $image = null, $static_url = null, $controller = null, $action = null, $template = null)
     {
         $entity = $this->CustomerNotifications->newEntity([
            'customer_id' => $customer_id,
@@ -115,6 +116,7 @@ class NotificationComponent extends Component
             'foreign_key' => $foreign_key,
             'image_type' => $image_type,
             'image' => $image,
+            'static_url' => $static_url,
             'controller' => $controller,
             'action' => $action,
             'template' => $template

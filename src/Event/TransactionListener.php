@@ -135,7 +135,8 @@ class TransactionListener implements EventListenerInterface
                                         'Orders',
                                         $orderEntity->id,
                                         1,
-                                        $this->Notification->getImageDigitalProductPath()
+                                        $this->Notification->getImageDigitalProductPath(),
+                                        '/user/history/detail/' . $orderEntity->invoice
                                     );
 
 

@@ -86,6 +86,9 @@ class IpnController extends AppController
 
                 if ($orderEntity) {
 
+                    /**
+                     * @var \App\Model\Entity\Transaction $transactionEntity
+                     */
                     $transactionEntity = $this->Transactions->find()
                         ->where([
                             'order_id' => $orderEntity->get('id'),
@@ -140,7 +143,8 @@ class IpnController extends AppController
                                         'Orders',
                                         $orderEntity->id,
                                         1,
-                                        $this->Notification->getImageConfirmationPath()
+                                        $this->Notification->getImageConfirmationPath(),
+                                        '/user/history/detail/' . $orderEntity->invoice
                                     )) {
 
                                         $this->Notification->triggerCount(
@@ -149,6 +153,32 @@ class IpnController extends AppController
                                         );
                                     }
 
+
+                                } else if (strtolower($content['transaction_status']) == 'pending' && $content['transaction_type'] == 'bank_transfer') {
+                                    //sent notification
+
+                                    if ($this->Notification->create(
+                                        $orderEntity->customer_id,
+                                        '1',
+                                        'Menunggu pembayaran',
+                                        vsprintf('Anda memiliki waktu 24 jam untuk membayar pesanan sebesar %s ke nomor virtual akun %s %s dengan nomor invoice %s', [
+                                            Number::format($orderEntity->total),
+                                            $transactionEntity->bank,
+                                            $transactionEntity->va_number,
+                                            $orderEntity->invoice
+                                        ]),
+                                        'Orders',
+                                        $orderEntity->id,
+                                        1,
+                                        $this->Notification->getImageConfirmationPath(),
+                                        '/user/history/detail/' . $orderEntity->invoice
+                                    )) {
+
+                                        $this->Notification->triggerCount(
+                                            $orderEntity->customer_id,
+                                            $orderEntity->customer->reffcode
+                                        );
+                                    }
 
                                 } else if (strtolower($content['transaction_status']) == 'expire') {
                                     $orderEntity->set('payment_status', 4); // 4: expired
@@ -168,7 +198,8 @@ class IpnController extends AppController
                                         'Orders',
                                         $orderEntity->id,
                                         1,
-                                        $this->Notification->getImageWarningPath()
+                                        $this->Notification->getImageWarningPath(),
+                                        '/user/history/detail/' . $orderEntity->invoice
                                     );
                                     $this->Notification->triggerCount(
                                         $orderEntity->customer_id,
