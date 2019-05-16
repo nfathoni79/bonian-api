@@ -27,6 +27,7 @@ class OrderShippingDetail extends Entity
      */
     protected $_accessible = [
         'order_detail_id' => true,
+        'status' => true,
         'note' => true,
         'created' => true,
         'order_detail' => true
