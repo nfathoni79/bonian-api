@@ -389,6 +389,7 @@ class ProductFiltersController extends Controller
             }
 
             if ($brands && is_array($brands)) {
+                $is_filter_products = true;
                 $brands = array_values($brands);
                 $subquery->where([
                     'Products.brand_id IN' => $brands
