@@ -2,6 +2,7 @@
 namespace App\Controller\V1;
 
 use App\Controller\V1\AppController as Controller;
+use Cake\Core\Configure;
 use Cake\Utility\Hash;
 use Cake\I18n\Time;
 use Cake\ORM\Query;
@@ -26,7 +27,7 @@ class PromotionsController extends Controller
     }
 
     public function index($slug = null)
-    { 
+    {
 		$limit = $this->request->getQuery('limit', '10');
     
         $find = $this->Vouchers->find()

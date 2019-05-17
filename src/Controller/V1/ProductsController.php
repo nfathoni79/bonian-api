@@ -18,6 +18,7 @@ use Cake\Utility\Text;
  * @property \App\Model\Table\SearchCategoriesTable $SearchCategories
  * @property \App\Model\Table\BrowsersTable $Browsers
  * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
+ * @property \App\Model\Table\ProductToCategoriesTable $ProductToCategories
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
@@ -38,6 +39,7 @@ class ProductsController extends Controller
         $this->loadModel('Browsers');
         $this->loadModel('CustomerAuthenticates');
         $this->loadModel('ProductCategories');
+        $this->loadModel('ProductToCategories');
     }
 
     /**
@@ -443,6 +445,45 @@ class ProductsController extends Controller
                 $new_rows = clone $row;
                 unset($row);
                 return $new_rows->product;
+            });
+        $this->set(compact('data'));
+    }
+
+    public function releted($category_id = null)
+    {
+        $data = $this->ProductToCategories->find()
+            ->contain([
+                'Products' => [
+                    'fields' => [
+                        'Products.id',
+                        'Products.name',
+                        'Products.slug',
+                        'Products.price',
+                        'Products.price_sale',
+                        'Products.point',
+                        'Products.rating',
+                        'Products.created'
+                    ],
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
+                    ]
+                ]
+            ])
+            ->where(['ProductToCategories.product_category_id' => $category_id])
+            ->limit(10)
+            ->map(function(\App\Model\Entity\ProductToCategory $row) {
+                $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
+                unset($row->product->product_images);
+
+                $percent = ( $row->product->price - $row->product->price_sale) / $row->product->price * 100;
+                $row->product->percent = round($percent);
+
+                $row->product->is_new = (Time::parse($row->product->created))->gte((Time::now())->addDay($this->is_new_rules));
+                return $row;
             });
         $this->set(compact('data'));
     }
