@@ -432,7 +432,7 @@ class ProductFiltersController extends Controller
                 ->orderDesc('total');
 
 
-            if ($is_filter_products && $subquery instanceof \Cake\ORM\Query) {
+            if ($subquery instanceof \Cake\ORM\Query) {
                 $data->where(function (QueryExpression $exp) use ($subquery) {
                     return $exp->exists($subquery);
                 });
