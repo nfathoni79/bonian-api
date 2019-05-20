@@ -474,7 +474,10 @@ class ProductsController extends Controller
                     ]
                 ]
             ])
-            ->where(['ProductToCategories.product_category_id' => $category_id])
+            ->where([
+                'ProductToCategories.product_category_id' => $category_id,
+                'Products.product_status_id' => 1
+            ])
             ->limit(10)
             ->map(function(\App\Model\Entity\ProductToCategory $row) {
                 $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
