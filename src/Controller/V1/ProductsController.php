@@ -342,6 +342,7 @@ class ProductsController extends Controller
                     'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                 ]
             ])
+            ->orderDesc('Products.created')
             ->limit(10)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
