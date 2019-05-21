@@ -49,6 +49,13 @@ class RegistersController extends Controller
 
     public function index()
     {
+        $sourceUrl = $this->request->getHeader('source-url');
+
+        if(count($sourceUrl) > 0) {
+            $sourceUrl = $sourceUrl[0];
+        } else {
+            $sourceUrl = null;
+        }
 
         $this->SendAuth->register('register', $this->request->getData('phone'));
         $validator = new Validator();
@@ -83,7 +90,7 @@ class RegistersController extends Controller
             $register->set('reffcode', strtoupper($this->reffcode('10')));
             $register->set('customer_group_id', 1);
             $register->set('customer_status_id', 1);
-            $register->set('is_verified', $register->phone ? 1 : 0);
+            $register->set('is_verified', 0);
             $register->set('avatar', 'avatar.jpg');
             $register->set('platforrm', 'Android');
             $register->set('activation', \Cake\Utility\Text::uuid());
@@ -106,6 +113,7 @@ class RegistersController extends Controller
                             'code' => $save->get('activation'),
                             'name' => $save->get('username'),
                             'email' => $save->get('email'),
+                            'activation_url' => $this->request->getData('activation_url', '')
                         ])
                         ->send(
                             $save->get('id'),
