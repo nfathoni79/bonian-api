@@ -252,6 +252,8 @@ class ProductFiltersController extends Controller
         $category_id = $this->getQuery('category_id');
         $min_price = $this->getQuery('min_price', '0');
         $max_price = $this->getQuery('max_price');
+        $brands = $this->getQuery('brands');
+        $source = $this->getQuery('source');
 
         $validator = $this->_validator();
 
@@ -276,6 +278,17 @@ class ProductFiltersController extends Controller
                     'Products.product_status_id' => 1,
                     'Products.brand_id >' => 0
                 ]);
+
+            switch($source) {
+                case 'top-brand':
+                    if (is_array($brands) && count($brands) > 0) {
+                        $data->where([
+                            'Brands.id' => $brands[0]
+                        ]);
+                    }
+
+                    break;
+            }
 
             if ($search) {
                 $data->where([
