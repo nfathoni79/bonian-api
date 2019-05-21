@@ -12,6 +12,12 @@ use Cake\ORM\Entity;
  * @property int $lft
  * @property int $rght
  * @property string $name
+ * @property string $logo
+ * @property string $dir
+ * @property int $size
+ * @property string $type
+ * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\FrozenTime|null $modified
  *
  * @property \App\Model\Entity\ProductCategory $product_category
  * @property \App\Model\Entity\ParentBrand $parent_brand
@@ -36,6 +42,12 @@ class Brand extends Entity
         'lft' => true,
         'rght' => true,
         'name' => true,
+        'logo' => true,
+        'dir' => true,
+        'size' => true,
+        'type' => true,
+        'created' => true,
+        'modified' => true,
         'product_category' => true,
         'parent_brand' => true,
         'child_brands' => true,

@@ -52,6 +52,8 @@ class BrandsController extends Controller
                         'fields' => [
                             'Brands.id',
                             'Brands.name',
+                            'Brands.logo',
+                            'Brands.dir',
                         ]
                     ]
                 ]
@@ -66,6 +68,7 @@ class BrandsController extends Controller
 
                 if ($row->product) {
                     $brand = $row->product->brand;
+                    $brand->dir = preg_replace('/^webroot/i', '', str_replace('\\', '/', $brand->dir));
                     $brand->total = $row->total_count;
                     return $brand;
                 }
