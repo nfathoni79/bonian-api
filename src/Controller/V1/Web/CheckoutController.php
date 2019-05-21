@@ -293,11 +293,27 @@ class CheckoutController extends AppController
 
         $getData = $this->request->getData();
 
+        //set customer id
+        $getData['customer_id'] = $this->Authenticate->getId();
+
         $validator->numeric('voucher')
             ->numeric('point')
             ->allowEmptyString('point')
             ->allowEmptyString('kupon')
             ->allowEmptyString('voucher');
+
+
+        $validator->add('customer_id', 'verify_only', [
+            'rule' => function($value) {
+               return $this->Customers->find()
+                    ->where([
+                        'Customers.id' => $value,
+                        'Customers.is_verified' => 1,
+                    ])
+                    ->count() == 1;
+            },
+            'message' => 'Maaf akun anda belum terverifikasi, silahkan verifikasi akun terlebih dahulu'
+        ]);
 
 
         $validator->add('point', 'valid_point', [

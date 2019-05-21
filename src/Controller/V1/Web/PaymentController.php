@@ -213,13 +213,29 @@ class PaymentController extends AppController
 
         $this->request->allowMethod('post');
 
+        $getData = $this->request->getData();
+
         $customer_id = $this->Authenticate->getId();
         $payment_method = $this->request->getData('payment_method');
         $gross_total = 0;
         $total = 0;
 
+        $getData['customer_id'] = $customer_id;
+
         $validator = new Validator();
         $validator->requirePresence('type');
+
+        $validator->add('customer_id', 'verify_only', [
+            'rule' => function($value) {
+                return $this->Customers->find()
+                        ->where([
+                            'Customers.id' => $value,
+                            'Customers.is_verified' => 1,
+                        ])
+                        ->count() == 1;
+            },
+            'message' => 'Maaf akun anda belum terverifikasi, silahkan verifikasi akun terlebih dahulu'
+        ]);
 
         $invoice = strtoupper(date('ymdHs') . Security::randomString(4));
         $trx = new Transaction($invoice);
@@ -297,7 +313,7 @@ class PaymentController extends AppController
                 ->minLength('cvv', 3);
         }
 
-        $error = $validator->errors($this->request->getData());
+        $error = $validator->errors($getData);
         if (!$error) {
 
             $payment = null;
