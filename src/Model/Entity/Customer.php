@@ -66,6 +66,7 @@ class Customer extends Entity
         'customer_group_id' => true,
         'customer_status_id' => true,
         'is_verified' => true,
+        'is_email_verified' => true,
         'activation' => true,
         'platforrm' => true,
         'created' => true,

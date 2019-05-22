@@ -162,12 +162,12 @@ class RegistersController extends Controller
         if(!empty($code)){
 
             $customers = $this->Customers->find()
-                ->where(['activation' => $code, 'is_verified' => 0])
+                ->where(['activation' => $code, 'is_verified' => 1,'is_email_verified' => 0,])
                 ->first();
             if($customers){
 
                 $update = $this->Customers->get($customers->id);
-                $update->is_verified = 1;
+                $update->is_email_verified = 1;
                 $update->activation = null;
                 if($this->Customers->save($update)){
                     $this->Mailer

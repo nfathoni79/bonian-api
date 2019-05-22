@@ -198,7 +198,7 @@ class CartController extends AppController
                     }
 
                 }else{
-                    $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi pilihan'));
+                    $this->setResponse($this->response->withStatus(406, 'Silahkan pilih lokasi, stock dan atribut yang tersedia'));
                     $errors = $newEntityDetails->getErrors();
                 }
 
