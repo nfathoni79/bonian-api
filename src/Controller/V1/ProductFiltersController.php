@@ -25,6 +25,7 @@ use Cake\I18n\Time;
 class ProductFiltersController extends Controller
 {
     protected $is_new_rules = -30; //in days
+    protected $wish_customer_id = null;
 
     public function initialize()
     {
@@ -32,6 +33,32 @@ class ProductFiltersController extends Controller
         $this->loadModel('Products');
         $this->loadModel('ProductCategories');
         $this->loadModel('ProductOptionValueLists');
+
+        if ($customer_id = $this->request->getHeader('customer-id')) {
+            if (count($customer_id) > 0) {
+                $this->wish_customer_id = $customer_id[0];
+            }
+        }
+    }
+
+    protected function getWishList($product_id)
+    {
+
+        if ($this->wish_customer_id) {
+            $wish = $this->Products->CustomerWishes->find()
+                ->select([
+                    'CustomerWishes.id'
+                ])
+                ->where([
+                    'product_id' => $product_id,
+                    'customer_id' => $this->wish_customer_id
+                ])->first();
+            if ($wish) {
+                return $wish->id;
+            }
+        }
+
+        return null;
     }
 
 
@@ -719,6 +746,7 @@ class ProductFiltersController extends Controller
                 }
                 $row->images = $images;
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
+                $row->wishlist_id = $this->getWishList($row->id);
                 return $row;
             });
         } else {
