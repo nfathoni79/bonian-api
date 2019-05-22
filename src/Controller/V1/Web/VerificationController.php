@@ -37,7 +37,7 @@ class VerificationController extends AppController
     public function email()
     {
         $customers = $this->Customers->find()
-            ->select(['id', 'email','is_email_verified'])
+            ->select(['id', 'email','is_email_verified','activation','username'])
             ->where(['email' => $this->request->getData('email'), 'is_email_verified' => 0])
             ->first();
         if($customers){
