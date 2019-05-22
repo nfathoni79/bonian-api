@@ -52,8 +52,7 @@ class VerificationController extends AppController
                 ->send(
                     $customers->get('id'),
                     'Verifikasi Alamat Email Kamu Di Zolaku',
-                    'verification',
-                    true
+                    'verification', 
                 );
 
         }else{
