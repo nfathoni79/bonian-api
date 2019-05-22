@@ -240,7 +240,8 @@ class ProductsController extends Controller
                 unset($row->product_to_categories);
 
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
-                $row->wish_id = $this->getWishList($row->id);
+                $row->wishlist_id = $this->getWishList($row->id);
+                $row->wishlist_count = $this->getWishCount($row->id);
 //                $row->images = $images;
 
                 unset($row->product_option_prices, $row->product_images);
@@ -383,6 +384,14 @@ class ProductsController extends Controller
         }
 
         return null;
+    }
+
+    public function getWishCount($product_id)
+    {
+        return $this->Products->CustomerWishes->find()
+            ->where([
+                'product_id' => $product_id
+            ])->count();
     }
 
     public function popularProducts()
