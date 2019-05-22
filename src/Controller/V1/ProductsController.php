@@ -26,6 +26,7 @@ class ProductsController extends Controller
 {
 
     protected $is_new_rules = -30; //in days
+    protected $wish_customer_id = null;
 
     public function initialize()
     {
@@ -40,6 +41,13 @@ class ProductsController extends Controller
         $this->loadModel('CustomerAuthenticates');
         $this->loadModel('ProductCategories');
         $this->loadModel('ProductToCategories');
+
+
+        if ($customer_id = $this->request->getHeader('customer-id')) {
+            if (count($customer_id) > 0) {
+                $this->wish_customer_id = $customer_id[0];
+            }
+        }
     }
 
     /**
@@ -232,6 +240,7 @@ class ProductsController extends Controller
                 unset($row->product_to_categories);
 
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+                $row->wish_id = $this->getWishList($row->id);
 //                $row->images = $images;
 
                 unset($row->product_option_prices, $row->product_images);
@@ -348,6 +357,7 @@ class ProductsController extends Controller
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
+                $row->wishlist_id = $this->getWishList($row->id);
                 unset($row->product_images);
                 return $row;
             });
@@ -355,8 +365,30 @@ class ProductsController extends Controller
         $this->set(compact('data'));
     }
 
+    protected function getWishList($product_id)
+    {
+
+        if ($this->wish_customer_id) {
+            $wish = $this->Products->CustomerWishes->find()
+                    ->select([
+                        'CustomerWishes.id'
+                    ])
+                    ->where([
+                        'product_id' => $product_id,
+                        'customer_id' => $this->wish_customer_id
+                    ])->first();
+            if ($wish) {
+                return $wish->id;
+            }
+        }
+
+        return null;
+    }
+
     public function popularProducts()
     {
+
+
         $data = $this->Products->find()
             ->select([
                 'id',
@@ -390,11 +422,13 @@ class ProductsController extends Controller
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 $row->images = Hash::extract($row->get('product_images'), '{n}.name');
                 unset($row->product_images);
+                $row->wishlist_id = $this->getWishList($row->id);
                 return $row;
             });
 
         $this->set(compact('data'));
     }
+
 
     public function bestSellers()
     {
@@ -410,7 +444,11 @@ class ProductsController extends Controller
             ->where([
                 'Orders.payment_status' => 2,
                 'Products.product_status_id' => 1
-            ])
+            ]);
+
+
+
+        $data = $data
             ->contain([
                 'Products' => [
                     'fields' => [
@@ -421,7 +459,7 @@ class ProductsController extends Controller
                         'Products.price_sale',
                         'Products.point',
                         'Products.rating',
-                        'Products.created'
+                        'Products.created',
                     ],
                     'ProductImages' => [
                         'fields' => [
@@ -443,6 +481,8 @@ class ProductsController extends Controller
                 $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
                 unset($row->product->product_images);
                 $row->product->is_new = (Time::parse($row->product->created))->gte((Time::now())->addDay($this->is_new_rules));
+                $row->product->wishlist_id = $this->getWishList($row->product->id);
+
                 $new_rows = clone $row;
                 unset($row);
                 return $new_rows->product;

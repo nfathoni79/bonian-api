@@ -31,6 +31,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\ProductTagsTable|\Cake\ORM\Association\HasMany $ProductTags
  * @property \App\Model\Table\ProductToCategoriesTable|\Cake\ORM\Association\HasMany $ProductToCategories
  * @property \App\Model\Table\ProductToCourriersTable|\Cake\ORM\Association\HasMany $ProductToCourriers
+ * @property \App\Model\Table\ProductToCourriersTable|\Cake\ORM\Association\HasOne $CustomerWishes
  *
  * @method \App\Model\Entity\Product get($primaryKey, $options = [])
  * @method \App\Model\Entity\Product newEntity($data = null, array $options = [])
@@ -132,6 +133,9 @@ class ProductsTable extends Table
             'foreignKey' => 'product_id'
         ]);
         $this->hasMany('ProductDiscussions', [
+            'foreignKey' => 'product_id'
+        ]);
+        $this->hasOne('CustomerWishes', [
             'foreignKey' => 'product_id'
         ]);
     }

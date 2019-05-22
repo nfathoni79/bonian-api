@@ -120,7 +120,9 @@ class WishlistsController extends AppController
         if ($this->CustomerWishes->save($entity)) {
             //success
             if ($product) {
-                $data = [];
+                $data = [
+                    'wishlist_id' => $entity->id
+                ];
                 $allowed_fields = [
                     'id',
                     'name',

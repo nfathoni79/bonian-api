@@ -57,6 +57,7 @@ use Cake\ORM\Entity;
  * @property \App\Model\Entity\ProductTag[] $product_tags
  * @property \App\Model\Entity\ProductToCategory[] $product_to_categories
  * @property \App\Model\Entity\ProductToCourrier[] $product_to_courriers
+ * @property \App\Model\Entity\CustomerWish $customer_wish
  */
 class Product extends Entity
 {
@@ -119,6 +120,7 @@ class Product extends Entity
         'product_stock_mutations' => true,
         'product_tags' => true,
         'product_to_categories' => true,
-        'product_to_courriers' => true
+        'product_to_courriers' => true,
+        'customer_wish' => true
     ];
 }

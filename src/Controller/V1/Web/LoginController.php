@@ -213,6 +213,7 @@ class LoginController extends AppController
                 $this->CustomerAuthenticates->save($find);
 
                 $data = [
+                    'id' => $user->get('id'),
                     'email' => $user->get('email'),
                     'first_name' => $user->get('first_name'),
                     'last_name' => $user->get('last_name'),
