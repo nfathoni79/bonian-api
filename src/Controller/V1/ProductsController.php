@@ -526,7 +526,15 @@ class ProductsController extends Controller
             ->where([
                 'ProductToCategories.product_category_id' => $category_id,
                 'Products.product_status_id' => 1
-            ])
+            ]);
+
+        if (($except_product_id = $this->request->getQuery('except_product_id')) && is_string($except_product_id)) {
+            $data->where([
+                'Products.id !=' => $except_product_id
+            ]);
+        }
+
+        $data = $data
             ->limit(10)
             ->map(function(\App\Model\Entity\ProductToCategory $row) {
                 $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
