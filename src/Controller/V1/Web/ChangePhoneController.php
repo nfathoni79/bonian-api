@@ -23,6 +23,7 @@ use Cake\Cache\Cache;
 /**
  * Customers controller
  *
+ * @property \App\Controller\Component\SmsComponent $Sms
  * @property \App\Model\Table\CustomersTable $Customers
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
  */
@@ -33,6 +34,7 @@ class ChangePhoneController extends AppController
     {
         parent::initialize();
         $this->loadModel('Customers');
+        $this->loadComponent('Sms');
     }
 
     public function index()
