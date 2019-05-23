@@ -115,7 +115,7 @@ class ChangePhoneController extends AppController
                     $code = $this->SendAuth->generates();
 
                     if (!$code) {
-                        $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Request perubahan handphone, Kode berlaku 15 mnt : '. $code;
+                        $text = 'mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Request perubahan handphone, Kode berlaku 15 mnt : '. $code;
                         $this->Sms->send($cache['phone'], $text);
                     }
 
@@ -129,7 +129,7 @@ class ChangePhoneController extends AppController
                 }
 
             } else {
-                $this->response = $this->response->withStatus(406, 'No session id');
+                $this->response = $this->response->withStatus(404, 'No session id');
             }
         }
 
@@ -181,6 +181,8 @@ class ChangePhoneController extends AppController
                 } else {
                     $this->response = $this->response->withStatus(406);
                 }
+            } else {
+                $this->response = $this->response->withStatus(404, 'No session id');
             }
         }
         $this->set(compact('error', 'data'));
