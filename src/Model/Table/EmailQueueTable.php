@@ -79,11 +79,11 @@ class EmailQueueTable extends Table
             ->requirePresence('template', 'create')
             ->allowEmptyString('template', false);
 
-        $validator
+        /*$validator
             ->scalar('layout')
             ->maxLength('layout', 50)
             ->requirePresence('layout', 'create')
-            ->allowEmptyString('layout', false);
+            ->allowEmptyString('layout', false);*/
 
         $validator
             ->scalar('theme')
@@ -108,7 +108,7 @@ class EmailQueueTable extends Table
             ->scalar('headers')
             ->allowEmptyString('headers');
 
-        $validator
+        /*$validator
             ->integer('sent')
             ->requirePresence('sent', 'create')
             ->allowEmptyString('sent', false);
@@ -116,16 +116,16 @@ class EmailQueueTable extends Table
         $validator
             ->integer('locked')
             ->requirePresence('locked', 'create')
-            ->allowEmptyString('locked', false);
+            ->allowEmptyString('locked', false);*/
 
         $validator
             ->scalar('attachments')
             ->allowEmptyString('attachments');
 
-        $validator
+        /*$validator
             ->integer('send_tries')
             ->requirePresence('send_tries', 'create')
-            ->allowEmptyString('send_tries', false);
+            ->allowEmptyString('send_tries', false);*/
 
         $validator
             ->scalar('error')
@@ -147,7 +147,7 @@ class EmailQueueTable extends Table
      */
     public function buildRules(RulesChecker $rules)
     {
-        $rules->add($rules->isUnique(['email']));
+        //$rules->add($rules->isUnique(['email']));
 
         return $rules;
     }

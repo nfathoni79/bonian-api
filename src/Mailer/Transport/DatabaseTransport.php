@@ -4,13 +4,15 @@ namespace App\Mailer\Transport;
 
 use Cake\Mailer\AbstractTransport;
 use Cake\Mailer\Email;
+use Cake\ORM\Locator\TableLocator;
 use Cake\ORM\TableRegistry;
 use Cake\Core\Configure;
+use Cake\Log\Log;
 
 /**
  * Class DatabaseTransport
  * @package MemberPanel\Mailer\Transport
- * @property \MemberPanel\Model\Table\EmailQueueTable $EmailQueue;
+ * @property \App\Model\Table\EmailQueueTable $EmailQueue;
  */
 class DatabaseTransport extends AbstractTransport
 {
@@ -19,7 +21,8 @@ class DatabaseTransport extends AbstractTransport
     public function __construct(array $config = [])
     {
         parent::__construct($config);
-        $this->EmailQueue = TableRegistry::get('EmailQueue');
+        //$this->EmailQueue = TableRegistry::get('EmailQueue');
+        $this->EmailQueue = (new TableLocator())->get('EmailQueue');
     }
 
     public function send(Email $email)
@@ -42,27 +45,33 @@ class DatabaseTransport extends AbstractTransport
             'from_email' => $from_email,
             'template' => $email->getTemplate(),
             'format' => $email->getEmailFormat(),
-            'theme' => $email->getTheme(),
+            'theme' => $email->viewBuilder()->getTheme(),
             'headers' => serialize($header),
             'text' => $email->message(Email::MESSAGE_TEXT),
             'html' => $email->message(Email::MESSAGE_HTML)
         ]);
 
-        foreach(Configure::read('Mailer.listen') as $network) {
-            list($host, $port) = explode(':', $network);
 
-            try {
-                $socket = new \Cake\Network\Socket([
-                    'host' => $host,
-                    'port' => $port,
-                    'timeout' => 10
-                ]);
-                if ($socket->connect()) {
-                    $socket->write('processing-mailer');
-                }
-            } catch(\Exception $e) {}
+        $email_queue = $this->EmailQueue->save($entity);
 
-            break;
+
+        if ($listen = Configure::read('Mailer.listen')) {
+            foreach($listen as $network) {
+                list($host, $port) = explode(':', $network);
+
+                try {
+                    $socket = new \Cake\Network\Socket([
+                        'host' => $host,
+                        'port' => $port,
+                        'timeout' => 10
+                    ]);
+                    if ($socket->connect()) {
+                        $socket->write('processing-mailer');
+                    }
+                } catch(\Exception $e) {}
+
+                break;
+            }
         }
 
 
@@ -71,6 +80,7 @@ class DatabaseTransport extends AbstractTransport
 
 
 
-        return $this->EmailQueue->save($entity);
+
+        return $email_queue;
     }
 }
