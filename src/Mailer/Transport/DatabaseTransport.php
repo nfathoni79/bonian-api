@@ -37,47 +37,50 @@ class DatabaseTransport extends AbstractTransport
             break;
         }
 
+        $find_que = $this->EmailQueue->find()
+            ->where(['EmailQueue.email' => $to_email, 'EmailQueue.template' => $email->getTemplate() ])
+            ->first();
+        if(empty($find_que)){
 
-        $entity = $this->EmailQueue->newEntity([
-            'email' => $to_email,
-            'subject' => $email->getSubject(),
-            'from_name' => $from_name,
-            'from_email' => $from_email,
-            'template' => $email->getTemplate(),
-            'format' => $email->getEmailFormat(),
-            'theme' => $email->viewBuilder()->getTheme(),
-            'headers' => serialize($header),
-            'text' => $email->message(Email::MESSAGE_TEXT),
-            'html' => $email->message(Email::MESSAGE_HTML)
-        ]);
+            $entity = $this->EmailQueue->newEntity([
+                'email' => $to_email,
+                'subject' => $email->getSubject(),
+                'from_name' => $from_name,
+                'from_email' => $from_email,
+                'template' => $email->getTemplate(),
+                'format' => $email->getEmailFormat(),
+                'theme' => $email->viewBuilder()->getTheme(),
+                'headers' => serialize($header),
+                'text' => $email->message(Email::MESSAGE_TEXT),
+                'html' => $email->message(Email::MESSAGE_HTML)
+            ]);
 
 
-        $email_queue = $this->EmailQueue->save($entity);
+            $email_queue = $this->EmailQueue->save($entity);
 
 
-        if ($listen = Configure::read('Mailer.listen')) {
-            foreach($listen as $network) {
-                list($host, $port) = explode(':', $network);
+            if ($listen = Configure::read('Mailer.listen')) {
+                foreach($listen as $network) {
+                    list($host, $port) = explode(':', $network);
 
-                try {
-                    $socket = new \Cake\Network\Socket([
-                        'host' => $host,
-                        'port' => $port,
-                        'timeout' => 10
-                    ]);
-                    if ($socket->connect()) {
-                        $socket->write('processing-mailer');
-                    }
-                } catch(\Exception $e) {}
+                    try {
+                        $socket = new \Cake\Network\Socket([
+                            'host' => $host,
+                            'port' => $port,
+                            'timeout' => 10
+                        ]);
+                        if ($socket->connect()) {
+                            $socket->write('processing-mailer');
+                        }
+                    } catch(\Exception $e) {}
 
-                break;
+                    break;
+                }
             }
+
+        } else{
+            $email_queue = true;
         }
-
-
-
-
-
 
 
 
