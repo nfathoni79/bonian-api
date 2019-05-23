@@ -139,7 +139,7 @@ class ChangePhoneController extends AppController
 
                         if (!$code) {
                             $text = 'Zolaku, Request perubahan handphone, Kode OTP berlaku 15 mnt : '. $code;
-                            //$this->Sms->send(preg_replace('/^\+62/i', '0', $cache['phone']), $text);
+                            $this->Sms->send(preg_replace('/^\+62/i', '0', $cache['phone']), $text);
                         }
 
                         $cache['otp'] = $code;
