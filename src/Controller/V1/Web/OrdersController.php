@@ -92,7 +92,8 @@ class OrdersController extends AppController
 
             ])
             ->where([
-                'Orders.customer_id' => $this->Authenticate->getId()
+                'Orders.customer_id' => $this->Authenticate->getId(),
+                'Transaction.transaction_status != ' => 'expired'
             ]);
 
 
