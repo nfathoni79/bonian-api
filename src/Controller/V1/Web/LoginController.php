@@ -186,7 +186,9 @@ class LoginController extends AppController
                 ]), Configure::read('Encrypt.salt')));
 
 
-
+                /**
+                 * @var \App\Model\Entity\CustomerAuthenticate $find
+                 */
                 $find = $this->CustomerAuthenticates->find()
                     ->contain([
                         'Browsers'
@@ -241,7 +243,9 @@ class LoginController extends AppController
                 }
 
                 if ($this->CustomerAuthenticates->save($find)) {
-                    $this->sendNotification($ip, $userAgent, $user);
+                    if ($find->isNew()) {
+                        $this->sendNotification($ip, $userAgent, $user);
+                    }
                 }
 
                 $data = [
