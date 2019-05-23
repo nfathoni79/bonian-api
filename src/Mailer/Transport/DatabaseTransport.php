@@ -47,7 +47,7 @@ class DatabaseTransport extends AbstractTransport
                 'subject' => $email->getSubject(),
                 'from_name' => $from_name,
                 'from_email' => $from_email,
-                'template' => $email->getTemplate(),
+                'template' => $email->viewBuilder()->getTemplate(),
                 'format' => $email->getEmailFormat(),
                 'theme' => $email->viewBuilder()->getTheme(),
                 'headers' => serialize($header),
