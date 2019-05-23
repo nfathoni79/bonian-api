@@ -85,7 +85,8 @@ class MailerCommand extends BaseCommand
                     $exec = $is_windows ? 'start "" /B ' : '';
                     $exec .= "cd " . ROOT . " && ";
                     $exec .= "$php bin/cake.php mailer_process --process {$mail->get('id')}";
-                    $exec .= $is_windows ? " | echo {$mail->get('id')}" : ' &';
+                    $exec .= $is_windows ? "" : ' &';
+                    //$exec .= $is_windows ? " | echo {$mail->get('id')}" : ' &';
                     $o = shell_exec($exec);
                     $io->info($o);
 
