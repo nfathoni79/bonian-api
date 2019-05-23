@@ -38,7 +38,7 @@ class DatabaseTransport extends AbstractTransport
         }
 
         $find_que = $this->EmailQueue->find()
-            ->where(['EmailQueue.email' => $to_email, 'EmailQueue.template' => $email->getTemplate() ])
+            ->where(['EmailQueue.email' => $to_email, 'EmailQueue.template' => $email->viewBuilder()->getTemplate() ])
             ->first();
         if(empty($find_que)){
 
