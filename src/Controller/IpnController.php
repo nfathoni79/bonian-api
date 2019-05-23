@@ -12,6 +12,7 @@ use Cake\I18n\Number;
  *  @property \App\Model\Table\OrdersTable $Orders
  *  @property \App\Model\Table\TransactionsTable $Transactions
  *  @property \App\Model\Table\OrderShippingDetailsTable $OrderShippingDetails
+ *  @property \App\Model\Table\ProductRatingsTable $ProductRatings
  * This controller will render views from Template/Ipn/
  * 
  */
@@ -29,6 +30,7 @@ class IpnController extends AppController
         $this->loadModel('Orders');
         $this->loadModel('Transactions');
         $this->loadModel('OrderShippingDetails');
+        $this->loadModel('ProductRatings');
     }
 
 
@@ -76,7 +78,8 @@ class IpnController extends AppController
                     ->contain([
                         'Customers',
                         'OrderDetails' => [
-                            'OrderShippingDetails'
+                            'OrderShippingDetails',
+                            'OrderDetailProducts'
                         ]
                     ])
                     ->where([
@@ -127,6 +130,20 @@ class IpnController extends AppController
                                                 ])
                                                 ->execute();
                                         }
+
+                                        /* trigger insert row product ratting */
+                                        foreach($vals->order_detail_products as $value){
+
+                                            $saveRatting = $this->ProductRatings->newEntity([
+                                                'order_detail_product_id' => $value->id,
+                                                'product_id' => $value->product_id,
+                                                'customer_id' => $orderEntity->get('customer_id'),
+                                                'rating' => 0,
+                                                'status' => 0,
+                                            ]);
+                                            $this->ProductRatings->save($saveRatting);
+                                        }
+
                                     }
 
                                     //sent event to listener
