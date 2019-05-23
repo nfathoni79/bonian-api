@@ -48,7 +48,7 @@ class OrdersController extends AppController
             'pending' => '1',
             'success' => '2',
             'failed' => '3',
-            'expired' => '4',
+//            'expired' => '4',
             'refunde' => '5',
             'cancel' => '6',
         ];
