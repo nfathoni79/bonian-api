@@ -68,10 +68,10 @@ class ProductRatingsTable extends Table
             ->integer('id')
             ->allowEmptyString('id', 'create');
 
-        $validator
-            ->integer('rating')
-            ->allowEmptyString('rating')
-            ->inList('rating', [1,2,3,4,5], 'Rating harus skala 1 - 5');
+//        $validator
+//            ->integer('rating')
+//            ->allowEmptyString('rating')
+//            ->inList('rating', [1,2,3,4,5], 'Rating harus skala 1 - 5');
 
         $validator
             ->scalar('comment')
