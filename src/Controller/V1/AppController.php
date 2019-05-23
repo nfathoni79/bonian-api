@@ -26,6 +26,7 @@ use Cake\Event\Event;
  * @property \App\Controller\Component\SendAuthComponent $SendAuth
  * @property \App\Controller\Component\NotificationComponent $Notification
  * @property \App\Controller\Component\PusherComponent $Pusher
+ * @property \App\Controller\Component\MailerComponent $Mailer
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */

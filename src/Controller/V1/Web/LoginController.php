@@ -54,6 +54,23 @@ class LoginController extends AppController
         $this->set(compact('auth'));
     }
 
+    protected function sendNotification($ip, $userAgent, \App\Model\Entity\Customer $user)
+    {
+        $ua = parse_user_agent($userAgent);
+        $this->Mailer
+            ->setVar([
+                'date' => date('Y-m-d H:i:s'),
+                'device' => vsprintf('%s di %s', [$ua['browser'], $ua['platform']]),
+                'ip' => $ip,
+                'email' => $user->get('email'),
+            ])
+            ->send(
+                $user->get('id'),
+                'Notifikasi keamanan',
+                'new_login_notification'
+            );
+    }
+
     /**
      * index login
      */
@@ -67,6 +84,7 @@ class LoginController extends AppController
         $password = $this->request->getData('password');
         $bid = $this->request->getHeader('bid');
         $userAgent = $this->request->getHeader('user-agent');
+        $ip = $this->request->getHeader('ip');
 
 
         if(count($bid) > 0) {
@@ -79,6 +97,12 @@ class LoginController extends AppController
             $userAgent = $userAgent[0];
         } else {
             $userAgent = null;
+        }
+
+        if(count($ip) > 0) {
+            $ip = $ip[0];
+        } else {
+            $ip = null;
         }
 
 
@@ -103,6 +127,9 @@ class LoginController extends AppController
         $error = $validator->errors($this->request->getData());
 
         if (empty($error)) {
+            /**
+             * @var \App\Model\Entity\Customer $user
+             */
             $user = $this->Customers->find()
                 ->select([
                     'id',
@@ -199,7 +226,10 @@ class LoginController extends AppController
                             'bid' => $bid,
                             'user_agent' => $userAgent
                         ]);
-                        $this->CustomerAuthenticates->Browsers->save($browserEntity);
+                        if ($this->CustomerAuthenticates->Browsers->save($browserEntity)) {
+                            $this->sendNotification($ip, $userAgent, $user);
+
+                        }
                     }
 
                     $find = $this->CustomerAuthenticates->newEntity([
@@ -210,7 +240,9 @@ class LoginController extends AppController
                     ]);
                 }
 
-                $this->CustomerAuthenticates->save($find);
+                if ($this->CustomerAuthenticates->save($find)) {
+                    $this->sendNotification($ip, $userAgent, $user);
+                }
 
                 $data = [
                     'id' => $user->get('id'),
