@@ -10,7 +10,7 @@ use Cake\Core\Configure;
 
 /**
  * Mailer command.
- * @property \MemberPanel\Model\Table\EmailQueueTable $EmailQueue
+ * @property \App\Model\Table\EmailQueueTable $EmailQueue
  */
 class MailerCommand extends BaseCommand
 {
@@ -61,21 +61,23 @@ class MailerCommand extends BaseCommand
                 $emails
                     ->extract('id')
                     ->through(function (\Cake\Collection\Iterator\ExtractIterator $ids) {
+
                         if (!$ids->isEmpty()) {
-                            $this->EmailQueue->updateAll(['locked' => true], ['id IN' => $ids->toList()]);
+                            $this->EmailQueue->updateAll(['locked' => 1], ['id IN' => $ids->toList()]);
                         }
                         return $ids;
                     });
 
                 $conn->commit();
 
+
                 /**
-                 * @var \MemberPanel\Model\Entity\EmailQueue $mail
+                 * @var \App\Model\Entity\EmailQueue $mail
                  */
                 foreach($emails->toList() as $mail) {
                     //process sending email using mailgun or other transport
 
-                    $io->info('processing mail entry...');
+                    $io->info('processing mail entry... ' . $mail->get('id'));
 
                     $is_windows = PHP_OS === 'WINNT';
                     $php = $is_windows ? 'php' : '/usr/bin/php';
@@ -83,7 +85,8 @@ class MailerCommand extends BaseCommand
                     $exec = $is_windows ? 'start "" /B ' : '';
                     $exec .= "cd " . ROOT . " && ";
                     $exec .= "$php bin/cake.php mailer_process --process {$mail->get('id')}";
-                    $exec .= $is_windows ? " | echo {$mail->get('id')}" : ' &';
+                    $exec .= $is_windows ? "" : ' &';
+                    //$exec .= $is_windows ? " | echo {$mail->get('id')}" : ' &';
                     $o = shell_exec($exec);
                     $io->info($o);
 
@@ -105,10 +108,13 @@ class MailerCommand extends BaseCommand
      */
     public function execute(Arguments $args, ConsoleIo $io)
     {
+
         if ($args->getOption('daemon') && !$args->getOption('process')) {
 
             //first check older
+
             $this->checkingData($io);
+
 
             $loop = \React\EventLoop\Factory::create();
 
