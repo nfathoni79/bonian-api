@@ -117,8 +117,8 @@ class ChangePhoneController extends AppController
                     $code = $this->SendAuth->generates();
 
                     if (!$code) {
-                        $text = 'mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Request perubahan handphone, Kode berlaku 15 mnt : '. $code;
-                        $this->Sms->send($cache['phone'], $text);
+                        $text = 'Zolaku, Request perubahan handphone, Kode OTP berlaku 15 mnt : '. $code;
+                        $this->Sms->send(preg_replace('/^\+62/i', '0', $cache['phone']), $text);
                     }
 
                     $cache['otp'] = $code;

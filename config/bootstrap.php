@@ -240,6 +240,14 @@ Log::setConfig('sepulsa', [
     'file' => 'sepulsa.log',
 ]);
 
+Log::setConfig('sms', [
+    'className' => 'File',
+    'path' => LOGS,
+    'levels' => [],
+    'scopes' => ['sms'],
+    'file' => 'sms.log',
+]);
+
 /*
  * Custom Inflector rules, can be set to correctly pluralize or singularize
  * table, model, controller names or whatever other string is passed to the

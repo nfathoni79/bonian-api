@@ -7,6 +7,7 @@ use Cake\Core\Configure;
 use Cake\Http\Client;
 use Cake\Utility\Xml;
 use SimpleXMLElement;
+use Cake\Log\Log;
 
 /**
  * Sms component
@@ -27,6 +28,7 @@ class SmsComponent extends Component
         $this->url = $config['url'];
         $this->user_key = $config['userkey'];
         $this->pass_key = $config['passkey'];
+
     }
 
 
@@ -39,6 +41,9 @@ class SmsComponent extends Component
             'nohp' => $phone,
             'pesan' => $message,
         ]);
+
+
+        Log::info($response->getBody()->getContents(), ['scope' => ['sms']]);
 
         /*
             0 Success
