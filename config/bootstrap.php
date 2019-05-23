@@ -172,6 +172,13 @@ Cache::setConfig('checkout', [
     'prefix' => 'customer_checkout_'
 ]);
 
+Cache::setConfig('change_phone', [
+    'className' => 'File',
+    'duration' => '+30 minutes',
+    'path' => CACHE  . 'change_phone' . DS,
+    'prefix' => 'change_phone_'
+]);
+
 Cache::setConfig('oauth', [
     'className' => 'File',
     'duration' => '+1 years',
