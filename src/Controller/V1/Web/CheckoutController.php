@@ -1533,7 +1533,7 @@ class CheckoutController extends AppController
 
                     $this->Orders->getConnection()->commit();
                 } else {
-                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 2'));
+                    $this->setResponse($this->response->withStatus(406, 'Proses pembayaran Gagal, pastikan anda menginput PIN yang tepat, Jika masih berlanjut silahkan hubungi Bank Kartu anda'));
                 }
 
             } else {
