@@ -68,7 +68,7 @@ class ChangePhoneController extends AppController
                 'step' => 2,
             ];
 
-            Cache::write($data['session_id'], ['step' => 1, 'entity' => $passwordEntity], 'change_phone');
+            Cache::write($data['session_id'], ['step' => 2, 'entity' => $passwordEntity], 'change_phone');
 
 
         } else {
@@ -82,58 +82,81 @@ class ChangePhoneController extends AppController
 
     public function setPhone()
     {
-        $this->request->allowMethod('post');
+        $data = ['phone' => null];
+        $find = $this->Customers->find()
+            ->select([
+                'phone'
+            ])
+            ->where([
+                'id' => $this->Authenticate->getId()
+            ])
+            ->first();
+        if ($find) {
+            $data['phone'] = $this->Tools->maskPhone($find->get('phone'));
+        }
 
-        if ($session_id = $this->request->getData('session_id')) {
-            if (($cache = Cache::read($session_id, 'change_phone'))) {
-                $validator = new Validator();
-                $validator
-                    ->regex('phone', '/^(\+\d{11,13}|0\d{9,11})$/', 'Nomor handphone tidak valid')
-                    ->add('phone', 'is_unique', [
-                        'rule' => function($value)   {
-                            $value = preg_replace('/^0/i', '+62', $value);
-                            return $this->Customers->find()
-                                ->where([
-                                    'phone' => $value,
-                                    //'id !=' => $this->Authenticate->getId()
-                                ])
-                                ->count() == 0;
-                        },
-                        'message' => 'Nomor handphone sudah terdaftar.'
-                    ]);
+        if ($this->request->is('post')) {
+            if ($session_id = $this->request->getData('session_id')) {
+                if ($cache = Cache::read($session_id, 'change_phone')) {
 
-                $error = $validator->errors($this->request->getData());
-
-                if (!$error) {
-                    $data = [
-                        'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
-                        'step' => 3,
-                    ];
-
-                    $cache['step'] = $data['step'];
-                    $cache['phone'] = preg_replace('/^0/i', '+62', $this->request->getData('phone'));
-
-                    $this->SendAuth->register('change-phone', $cache['phone']);
-                    $code = $this->SendAuth->generates();
-
-                    if (!$code) {
-                        $text = 'Zolaku, Request perubahan handphone, Kode OTP berlaku 15 mnt : '. $code;
-                        $this->Sms->send(preg_replace('/^\+62/i', '0', $cache['phone']), $text);
+                    //valid step
+                    if ($cache['step'] != 2) {
+                        return $this->response->withStatus(404,'failed step');
                     }
 
-                    $cache['otp'] = $code;
+                    $validator = new Validator();
+                    $validator
+                        ->equals('old_phone', $find->get('phone'), 'Nomor handphone lama salah')
+                        ->notBlank('phone', 'Silahkan isi nomor handphone baru')
+                        ->regex('phone', '/^(\+\d{11,13}|0\d{9,11})$/', 'Nomor handphone tidak valid')
+                        ->add('phone', 'is_unique', [
+                            'rule' => function($value)   {
+                                $value = preg_replace('/^0/i', '+62', $value);
+                                return $this->Customers->find()
+                                        ->where([
+                                            'phone' => $value,
+                                            //'id !=' => $this->Authenticate->getId()
+                                        ])
+                                        ->count() == 0;
+                            },
+                            'message' => 'Nomor handphone sudah terdaftar.'
+                        ]);
 
-                    Cache::write($data['session_id'], $cache, 'change_phone');
+                    $error = $validator->errors($this->request->getData());
+
+                    if (!$error) {
+                        $data = [
+                            'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                            'step' => 3,
+                            'phone' => $data['phone']
+                        ];
+
+                        $cache['step'] = $data['step'];
+                        $cache['phone'] = preg_replace('/^0/i', '+62', $this->request->getData('phone'));
+
+                        $this->SendAuth->register('change-phone', $cache['phone']);
+                        $code = $this->SendAuth->generates();
+
+                        if (!$code) {
+                            $text = 'Zolaku, Request perubahan handphone, Kode OTP berlaku 15 mnt : '. $code;
+                            //$this->Sms->send(preg_replace('/^\+62/i', '0', $cache['phone']), $text);
+                        }
+
+                        $cache['otp'] = $code;
+
+                        Cache::write($data['session_id'], $cache, 'change_phone');
+
+                    } else {
+
+                        $this->response = $this->response->withStatus(406);
+                    }
 
                 } else {
-
-                    $this->response = $this->response->withStatus(406);
+                    $this->response = $this->response->withStatus(404, 'No session id');
                 }
-
-            } else {
-                $this->response = $this->response->withStatus(404, 'No session id');
             }
         }
+
 
         $this->set(compact('error', 'data'));
     }
@@ -146,7 +169,12 @@ class ChangePhoneController extends AppController
     {
         $this->request->allowMethod('post');
         if ($session_id = $this->request->getData('session_id')) {
-            if (($cache = Cache::read($session_id, 'change_phone'))) {
+            if ($cache = Cache::read($session_id, 'change_phone')) {
+
+                //valid step
+                if ($cache['step'] != 3) {
+                    return $this->response->withStatus(404,'failed step');
+                }
 
                 $this->SendAuth->register('change-phone', $cache['phone']);
 

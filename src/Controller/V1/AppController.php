@@ -27,6 +27,7 @@ use Cake\Event\Event;
  * @property \App\Controller\Component\NotificationComponent $Notification
  * @property \App\Controller\Component\PusherComponent $Pusher
  * @property \App\Controller\Component\MailerComponent $Mailer
+ * @property \App\Controller\Component\ToolsComponent $Tools
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
@@ -56,6 +57,7 @@ class AppController extends Controller
         $this->loadComponent('Mailer', ['transport' => 'default']);
         $this->loadComponent('Notification');
         $this->loadComponent('Pusher');
+        $this->loadComponent('Tools');
         /*
          * Enable the following component for recommended CakePHP security settings.
          * see https://book.cakephp.org/3.0/en/controllers/components/security.html
