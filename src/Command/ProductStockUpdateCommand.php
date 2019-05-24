@@ -54,14 +54,17 @@ class ProductStockUpdateCommand extends Command
 
         $data = $data
             ->select([
-                'product_id',
+                'ProductOptionStocks.product_id',
                 'stock' => $data->func()->sum('stock')
             ])
+            ->contain([
+                'Products'
+            ])
             ->where([
-                'product_status_id' => 1
+                'Products.product_status_id' => 1
             ])
             ->group([
-                'product_id'
+                'ProductOptionStocks.product_id'
             ])
             ->having([
                 'stock' => 0
