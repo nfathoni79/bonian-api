@@ -54,6 +54,7 @@ class ChangePhoneController extends AppController
         $validator = new Validator();
 
         $validator
+            ->notBlank('password', 'Password tidak boleh kosong')
             ->add('password', 'verify_password', [
             'rule' => function($value) use ($passwordEntity)  {
                 return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
@@ -106,8 +107,9 @@ class ChangePhoneController extends AppController
 
                     $validator = new Validator();
                     $validator
+                        ->notBlank('old_phone', 'Nomor handphone lama tidak boleh kosong')
                         ->equals('old_phone', $find->get('phone'), 'Nomor handphone lama salah')
-                        ->notBlank('phone', 'Silahkan isi nomor handphone baru')
+                        ->notBlank('phone', 'Nomor handphone baru tidak boleh kosong')
                         ->regex('phone', '/^(\+\d{11,13}|0\d{9,11})$/', 'Nomor handphone tidak valid')
                         ->add('phone', 'is_unique', [
                             'rule' => function($value)   {
@@ -180,6 +182,7 @@ class ChangePhoneController extends AppController
 
                 $validator = new Validator();
                 $validator
+                    ->notBlank('otp', 'kode OTP tidak boleh kosong')
                     ->add('otp', 'is_valid', [
                     'rule' => function($value) {
                         return $this->SendAuth->isValid($value);
