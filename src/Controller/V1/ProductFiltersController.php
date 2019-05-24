@@ -19,6 +19,7 @@ use Cake\I18n\Time;
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
  * @property \App\Model\Table\ProductOptionValueListsTable $ProductOptionValueLists
+ * @property \App\Model\Table\BannersTable $Banners
  * @package App\Controller\V1
  */
 
@@ -33,6 +34,7 @@ class ProductFiltersController extends Controller
         $this->loadModel('Products');
         $this->loadModel('ProductCategories');
         $this->loadModel('ProductOptionValueLists');
+        $this->loadModel('Banners');
 
         if ($customer_id = $this->request->getHeader('customer-id')) {
             if (count($customer_id) > 0) {
@@ -271,6 +273,39 @@ class ProductFiltersController extends Controller
 
 
         $this->set(compact('categories'));
+    }
+
+
+    public function banners()
+    {
+        if ($category_id = $this->getQuery('category_id')) {
+            try {
+                $find = $this->ProductCategories->find('path', ['for' => $category_id])->toArray();
+                $categories = [];
+                if (is_array($find)) {
+                    foreach($find as $val) {
+                        array_push($categories, $val['id']);
+                    }
+                }
+
+                $data = $this->Banners->find()
+                    ->select([
+                        'id',
+                        'name',
+                        'url',
+                    ])
+                    ->where([
+                        'product_category_id IN' => $categories,
+                        'status' => 1
+                    ]);
+
+            } catch(\Exception $e) {
+
+            }
+
+        }
+
+        $this->set(compact('data'));
     }
 
     public function brand()
