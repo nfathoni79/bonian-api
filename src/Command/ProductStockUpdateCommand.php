@@ -11,7 +11,7 @@ use Cake\Console\ConsoleOptionParser;
  * @property \App\Model\Table\ProductOptionStocksTable $ProductOptionStocks
  * @property \App\Model\Table\ProductsTable $Products
  */
-class ProductStockUpdateCommand extends Command
+class ProductStockUpdateCommand extends BaseCommand
 {
 
     public function initialize()
