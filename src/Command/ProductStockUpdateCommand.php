@@ -57,6 +57,9 @@ class ProductStockUpdateCommand extends Command
                 'product_id',
                 'stock' => $data->func()->sum('stock')
             ])
+            ->where([
+                'product_status_id' => 1
+            ])
             ->group([
                 'product_id'
             ])
