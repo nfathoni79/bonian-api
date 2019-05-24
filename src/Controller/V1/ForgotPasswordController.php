@@ -162,6 +162,8 @@ class ForgotPasswordController extends Controller
 
 
         $validator = $this->Customers->getValidator('password')
+            ->requirePresence('password', 'create', 'Password tidak boleh kosong')
+            ->requirePresence('repeat_password', 'create', 'Kofirmasi password tidak boleh kosong')
             ->requirePresence('session_id', 'create', 'no session id')
             ->add('session_id', 'valid', [
                 'rule' => function($value)  {
