@@ -24,7 +24,10 @@ class DiscussionController extends Controller
     public function index(){
 
         $data = $this->ProductDiscussions->find('threaded')
-            ->contain(['Customers' => ['fields' => ['avatar','first_name','last_name','email']]])
+            ->contain([
+                'Customers' => ['fields' => ['avatar','first_name','last_name','email']],
+                'Users' => ['fields' => ['first_name']]
+            ])
             ->where(['ProductDiscussions.product_id' => $this->request->getData('product_id')]);
         $data = $data->orderAsc('ProductDiscussions.id');
         $data = $this->paginate($data, [

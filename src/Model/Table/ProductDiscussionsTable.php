@@ -56,7 +56,11 @@ class ProductDiscussionsTable extends Table
         ]);
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id',
-            'joinType' => 'INNER'
+            'joinType' => 'LEFT'
+        ]);
+        $this->belongsTo('Users', [
+            'foreignKey' => 'user_id',
+            'joinType' => 'LEFT'
         ]);
         $this->hasMany('ChildProductDiscussions', [
             'className' => 'ProductDiscussions',
