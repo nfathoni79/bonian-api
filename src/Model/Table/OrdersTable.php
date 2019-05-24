@@ -75,6 +75,9 @@ class OrdersTable extends Table
         $this->hasMany('Transactions', [
             'foreignKey' => 'order_id'
         ]);
+        $this->hasMany('ProductRatings', [
+            'foreignKey' => 'order_id'
+        ]);
         $this->hasOne('OrderDigitals', [
             'foreignKey' => 'order_id'
         ]);

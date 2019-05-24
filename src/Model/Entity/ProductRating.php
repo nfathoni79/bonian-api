@@ -32,7 +32,7 @@ class ProductRating extends Entity
      * @var array
      */
     protected $_accessible = [
-        'order_detail_product_id' => true,
+        'order_id' => true,
         'product_id' => true,
         'customer_id' => true,
         'rating' => true,
