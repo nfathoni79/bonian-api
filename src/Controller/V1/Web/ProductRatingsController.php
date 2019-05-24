@@ -194,4 +194,15 @@ class ProductRatingsController extends AppController
 
     }
 
+    public function view(){
+        $data = $this->ProductRatings->find()
+            ->contain(['ProductRatingImages'])
+            ->where([
+                'ProductRatings.order_id' => $this->request->getData('order_id'),
+                'ProductRatings.customer_id' => $this->Authenticate->getId()
+            ]);
+        $this->set(compact('data'));
+
+    }
+
 }
