@@ -133,15 +133,22 @@ class IpnController extends AppController
 
                                         /* trigger insert row product ratting */
                                         foreach($vals->order_detail_products as $value){
-
-                                            $saveRatting = $this->ProductRatings->newEntity([
-                                                'order_detail_product_id' => $value->id,
-                                                'product_id' => $value->product_id,
-                                                'customer_id' => $orderEntity->get('customer_id'),
-                                                'rating' => 0,
-                                                'status' => 0,
-                                            ]);
-                                            $this->ProductRatings->save($saveRatting);
+                                            /* check before save*/
+                                            $check = $this->ProductRatings->find()
+                                                ->where([
+                                                    'order_id' => $orderEntity->get('id'),
+                                                    'product_id' => $value->product_id,
+                                                ])->first();
+                                            if(empty($check)){
+                                                $saveRatting = $this->ProductRatings->newEntity([
+                                                    'order_id' => $orderEntity->get('id'),
+                                                    'product_id' => $value->product_id,
+                                                    'customer_id' => $orderEntity->get('customer_id'),
+                                                    'rating' => 0,
+                                                    'status' => 0,
+                                                ]);
+                                                $this->ProductRatings->save($saveRatting);
+                                            }
                                         }
 
                                     }

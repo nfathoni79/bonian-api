@@ -15,6 +15,7 @@ use function PhpParser\filesInDir;
  *
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\ProductRatingsTable $ProductRatings
+ * @property \App\Model\Table\OrdersTable $Orders
  * @method \App\Model\Entity\ProductRating[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ProductRatingsController extends AppController
@@ -25,6 +26,101 @@ class ProductRatingsController extends AppController
         parent::initialize();
         $this->loadModel('Products');
         $this->loadModel('ProductRatings');
+        $this->loadModel('Orders');
+    }
+
+
+    public function index()
+    {
+        $status_payment = [
+//            'semua' => '0',
+//            'pending' => '1',
+            'success' => '2',
+//            'failed' => '3',
+//            'expired' => '4',
+//            'refunde' => '5',
+//            'cancel' => '6',
+        ];
+
+        $orders = $this->Orders->find()
+            ->contain([
+                'Transactions' => [
+                    'fields' => [
+                        'order_id',
+                        'transaction_time',
+                        'transaction_status',
+                        'fraud_status',
+                        'gross_amount',
+                        'currency',
+                        'payment_type',
+                        'va_number',
+                        'masked_card',
+                        'card_type',
+                        'created',
+                        'modified'
+                    ]
+                ],
+                'ProductRatings' => [
+                    'Products' => [
+                        'fields' => [
+                            'id',
+                            'name',
+                            'slug'
+                        ],
+                        'ProductImages' => [
+                            'fields' => [
+                                'name',
+                                'product_id',
+                            ],
+                            'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
+                        ]
+                    ]
+                ],
+                'Provinces',
+                'Cities',
+                'Subdistricts'
+
+            ])
+            ->where([
+                'Orders.customer_id' => $this->Authenticate->getId(),
+                'Orders.payment_status != ' => 4
+            ]);
+
+
+        $orders
+            ->orderDesc('Orders.id')
+        ;
+
+        if(!empty($this->request->getQuery('search'))){
+            $orders->where(['Orders.invoice' => $this->request->getQuery('search')]);
+        }
+
+        if(($this->request->getQuery('status') != 'semua') && ($this->request->getQuery('status'))){
+            $orders->where([
+                'Orders.payment_status' => $status_payment[$this->request->getQuery('status')]
+            ]);
+        }
+
+        if(!empty($this->request->getQuery('start')) && !empty($this->request->getQuery('end'))){
+            $orders->where(function (\Cake\Database\Expression\QueryExpression $exp) {
+                return $exp->gte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('start'))).' 00:00:00')
+                    ->lte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('end'))).' 23:59:59');
+            });
+        }
+
+
+        $data = $this->paginate($orders, [
+            'limit' => (int) $this->request->getQuery('limit', 5)
+        ])
+            ->map(function (\App\Model\Entity\Order $row) {
+                foreach ($row['product_ratings'] as $key => $vals){
+                    $row->product_ratings[$key]->product->images = Hash::extract($row->product_ratings[$key]->product->product_images, '{n}.name');
+                    unset($row->product_ratings[$key]->product->product_images);
+                }
+                unset($row->customer_id);
+                return $row;
+            });
+        $this->set(compact('data'));
     }
 
 
@@ -95,6 +191,17 @@ class ProductRatingsController extends AppController
         $this->set(compact('error'));
 
 
+
+    }
+
+    public function view(){
+        $data = $this->ProductRatings->find()
+            ->contain(['ProductRatingImages'])
+            ->where([
+                'ProductRatings.order_id' => $this->request->getData('order_id'),
+                'ProductRatings.customer_id' => $this->Authenticate->getId()
+            ]);
+        $this->set(compact('data'));
 
     }
 

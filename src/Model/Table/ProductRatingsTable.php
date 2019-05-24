@@ -48,8 +48,8 @@ class ProductRatingsTable extends Table
         $this->belongsTo('Customers', [
             'foreignKey' => 'customer_id'
         ]);
-        $this->belongsTo('OrderDetailProducts', [
-            'foreignKey' => 'order_detail_product_id'
+        $this->belongsTo('Orders', [
+            'foreignKey' => 'order_id'
         ]);
         $this->hasMany('ProductRatingImages', [
             'foreignKey' => 'product_rating_id'
@@ -91,7 +91,7 @@ class ProductRatingsTable extends Table
     {
         $rules->add($rules->existsIn(['product_id'], 'Products'));
         $rules->add($rules->existsIn(['customer_id'], 'Customers'));
-        $rules->add($rules->existsIn(['order_detail_product_id'], 'OrderDetailProducts'));
+        $rules->add($rules->existsIn(['order_id'], 'Orders'));
 
 //        $rules->add($rules->isUnique(['order_detail_product_id', 'product_id', 'customer_id'], 'Anda sudah pernah melakukan review'));
 
