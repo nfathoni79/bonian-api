@@ -17,6 +17,8 @@ use Cake\ORM\Rule\IsUnique;
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerResetPasswordTable $CustomerResetPassword
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
+ *
+ * @property \App\Controller\Component\SmsComponent $Sms
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ForgotPasswordController extends Controller
@@ -28,6 +30,8 @@ class ForgotPasswordController extends Controller
         $this->loadModel('Customers');
         $this->loadModel('CustomerResetPassword');
         $this->loadModel('CustomerAuthenticates');
+
+        $this->loadComponent('Sms');
     }
 
 
