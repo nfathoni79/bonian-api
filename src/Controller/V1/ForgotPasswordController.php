@@ -179,13 +179,13 @@ class ForgotPasswordController extends Controller
 
         $getData = $this->request->getData();
 
-        foreach($getData as $key => $val) {
+        /*foreach($getData as $key => $val) {
             if (in_array($key, ['password', 'repeat_password'])) {
                 if (ctype_xdigit($val)) {
                     $getData[$key] = $this->Tools->decrypt($val);
                 }
             }
-        }
+        }*/
 
 
 
