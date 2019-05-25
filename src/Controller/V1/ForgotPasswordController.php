@@ -177,7 +177,19 @@ class ForgotPasswordController extends Controller
                 'message' => 'Invalid session id.'
             ]);
 
-        $error = $validator->errors($this->request->getData());
+        $getData = $this->request->getData();
+
+        foreach($getData as $key => $val) {
+            if (in_array($key, ['password', 'repeat_password'])) {
+                if (ctype_xdigit($val)) {
+                    $getData[$key] = $this->Tools->decrypt($val);
+                }
+            }
+        }
+
+
+
+        $error = $validator->errors($getData);
 
         if (!$error) {
             /**
@@ -194,7 +206,7 @@ class ForgotPasswordController extends Controller
                 ->first();
 
             if ($entity) {
-                $this->Customers->patchEntity($entity->customer, $this->request->getData(), [
+                $this->Customers->patchEntity($entity->customer, $getData, [
                     'validate' => false,
                     'fields' => [
                         'password'
