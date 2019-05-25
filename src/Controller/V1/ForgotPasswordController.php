@@ -48,11 +48,14 @@ class ForgotPasswordController extends Controller
                 'rule' => function($value)  {
                     return $this->Customers->find()
                         ->where([
-                            'email' => $value
+                            'OR' => [
+                                'email' => $value,
+                                'phone' => preg_replace('/^0/', '+62', $value),
+                            ]
                         ])
                         ->count() > 0;
                 },
-                'message' => 'Email tidak terdaftar.'
+                'message' => 'Email / handphone tidak terdaftar.'
             ]);
 
         $error = $validator->errors($this->request->getData());
@@ -63,30 +66,41 @@ class ForgotPasswordController extends Controller
                     'email'
                 ])
                 ->where([
-                    'email' => $this->request->getData('email')
+                    'OR' => [
+                        'email' => $this->request->getData('email'),
+                        'phone' => preg_replace('/^0/', '+62', $this->request->getData('email')),
+                    ]
                 ])
                 ->first();
+
+            $isEmail = filter_var($this->request->getData('email'), FILTER_VALIDATE_EMAIL);
 
             $resetPassword = $this->CustomerResetPassword->newEntity([
                 'customer_id' => $customerEntity->get('id'),
                 'session_id' => Security::randomString(), //$this->request->getData('session_id'),
                 'request_name' => $this->request->getData('email'),
-                'request_type' => 1,
+                'request_type' => $isEmail ? 1 : 2,
                 'otp' => rand(111111, 999999),
                 'status' => 0
             ]);
 
             if ($this->CustomerResetPassword->save($resetPassword)) {
 
-                $this->Mailer
-                    ->setVar([
-                        'otp' => $resetPassword->otp
-                    ])
-                    ->send(
-                        $customerEntity->get('id'),
-                        'Atur ulang password anda.',
-                        'forgot_password'
-                    );
+                if ($isEmail) {
+                    $this->Mailer
+                        ->setVar([
+                            'otp' => $resetPassword->otp
+                        ])
+                        ->send(
+                            $customerEntity->get('id'),
+                            'Atur ulang password anda.',
+                            'forgot_password'
+                        );
+                } else {
+                    $text = 'Zolaku, Request reset password, Kode OTP berlaku 15 mnt : '. $resetPassword->otp;
+                    $this->Sms->send(preg_replace('/^\+62/i', '0', $resetPassword->request_name), $text);
+                }
+
 
 
                 $data = [
