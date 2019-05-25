@@ -197,7 +197,19 @@ class ForgotPasswordController extends Controller
              */
             $entity = $this->CustomerResetPassword->find()
                 ->contain([
-                    'Customers'
+                    'Customers' => [
+                        'fields' => [
+                            'id',
+                            'first_name',
+                            'last_name',
+                            'email',
+                            'password',
+                            'avatar',
+                            'customer_status_id',
+                            'reffcode',
+                            'is_verified',
+                        ]
+                    ]
                 ])
                 ->where([
                     'session_id' => $this->request->getData('session_id'),
@@ -235,6 +247,18 @@ class ForgotPasswordController extends Controller
                             'customer_id' => $entity->customer_id
                         ])
                         ->execute();
+
+
+                    $this->Mailer
+                        ->setVar([
+                            'email' => $entity->customer->email,
+                            'date' => date('d M Y H:i:s')
+                        ])
+                        ->send(
+                            $entity->customer->get('id'),
+                            'Password berhasil diubah.',
+                            'success_reset_password'
+                        );
                 }
             }
 
