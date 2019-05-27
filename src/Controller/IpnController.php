@@ -156,6 +156,19 @@ class IpnController extends AppController
                                             }
                                         }
 
+                                        $this->Mailer
+                                            ->setVar([
+                                                'orderEntity' => $orderEntity,
+                                                'transactionEntity' => $transactionEntity
+                                            ])
+                                            ->send(
+                                                $orderEntity->customer->email,
+                                                vsprintf('checkout pesanan berhasil untuk pembayaran %s', [
+                                                    $orderEntity->invoice
+                                                ]),
+                                                'success_payment'
+                                            );
+
                                     }
 
                                     //sent event to listener
@@ -189,6 +202,17 @@ class IpnController extends AppController
                                 } else if (strtolower($content['transaction_status']) == 'pending' && $content['payment_type'] == 'bank_transfer') {
                                     //sent notification
 
+
+                                    $payment_type = null;
+                                    switch ($transactionEntity->payment_type) {
+                                        case 'bank_transfer':
+                                            $payment_type = $transactionEntity->bank . ' Virtual account';
+                                        break;
+                                        default:
+                                            $payment_type = $transactionEntity->payment_type;
+                                        break;
+                                    }
+
                                     $this->Mailer
                                         ->setVar([
                                             'orderEntity' => $orderEntity,
@@ -196,8 +220,8 @@ class IpnController extends AppController
                                         ])
                                         ->send(
                                             $orderEntity->customer->email,
-                                            vsprintf('Menunggu pembayaran %s virtual account untuk pembayaran %s', [
-                                                $transactionEntity->bank,
+                                            vsprintf('Menunggu pembayaran %s untuk pembayaran %s', [
+                                                $payment_type,
                                                 $orderEntity->invoice
                                             ]),
                                             'waiting_payment'
@@ -233,6 +257,31 @@ class IpnController extends AppController
                                     ]));
 
                                     //sent notification
+
+                                    $payment_type = null;
+                                    switch ($transactionEntity->payment_type) {
+                                        case 'bank_transfer':
+                                            $payment_type = $transactionEntity->bank . ' Virtual account';
+                                            break;
+                                        default:
+                                            $payment_type = $transactionEntity->payment_type;
+                                            break;
+                                    }
+
+                                    $this->Mailer
+                                        ->setVar([
+                                            'orderEntity' => $orderEntity,
+                                            'transactionEntity' => $transactionEntity
+                                        ])
+                                        ->send(
+                                            $orderEntity->customer->email,
+                                            vsprintf('Pembatalan pembelian dengan %s untuk pembayaran %s', [
+                                                $payment_type,
+                                                $orderEntity->invoice
+                                            ]),
+                                            'expire_payment'
+                                        );
+
                                     $this->Notification->create(
                                         $orderEntity->customer_id,
                                         '1',
@@ -251,6 +300,9 @@ class IpnController extends AppController
                                         $orderEntity->customer_id,
                                         $orderEntity->customer->reffcode
                                     );
+
+
+
                                 }
                                 $responseText = "OK";
                             }
