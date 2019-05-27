@@ -132,15 +132,18 @@ class ProductRatingsController extends AppController
 
         $validator = new Validator();
         $validator
-            ->requirePresence('order_detail_product_id')
-            ->notBlank('order_detail_product_id');
+            ->requirePresence('order_id')
+            ->notBlank('order_id');
+        $validator
+            ->requirePresence('product_id')
+            ->notBlank('product_id');
 
         $error = $validator->errors($this->request->getData());
         if (empty($error)) {
-
             $findProductRating = $this->ProductRatings->find()
                 ->where([
-                    'ProductRatings.order_detail_product_id' => $this->request->getData('order_detail_product_id'),
+                    'ProductRatings.order_id' => $this->request->getData('order_id'),
+                    'ProductRatings.product_id' => $this->request->getData('product_id'),
                     'ProductRatings.customer_id' => $this->Authenticate->getId(),
                     'ProductRatings.status' => 0,
                 ])
@@ -160,7 +163,6 @@ class ProductRatingsController extends AppController
 
 
                     $id = $productRating->get('id');
-
                     $http = new Client();
                     $data = new FormData();
                     $data->add('product_rating_id', $id);
@@ -197,11 +199,33 @@ class ProductRatingsController extends AppController
 
     public function view(){
         $data = $this->ProductRatings->find()
-            ->contain(['ProductRatingImages'])
+            ->contain([
+                'Orders',
+                'Products' => [
+                    'fields' => [
+                        'id',
+                        'name',
+                        'slug'
+                    ],
+                    'ProductImages' => [
+                        'fields' => [
+                            'name',
+                            'product_id',
+                        ],
+                        'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
+                    ]
+                ],
+                'ProductRatingImages'
+            ])
             ->where([
                 'ProductRatings.order_id' => $this->request->getData('order_id'),
-                'ProductRatings.customer_id' => $this->Authenticate->getId()
-            ]);
+                'ProductRatings.customer_id' => $this->Authenticate->getId(),
+                'ProductRatings.id' => $this->request->getData('id'),
+            ]) ->map(function (\App\Model\Entity\ProductRating $row) {
+                $row->product->images = Hash::extract($row->product->product_images, '{n}.name');
+                unset($row->product->product_images);
+                return $row;
+            })->first();
         $this->set(compact('data'));
 
     }
