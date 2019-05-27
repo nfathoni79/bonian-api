@@ -11,8 +11,11 @@
         <p>Silahkan selesaikan pembayaran anda,</p>
         <p>Nomor Invoice: <?= $orderEntity->invoice; ?></p>
         <p>Total Pembayaran: <?= $this->Number->format($orderEntity->total); ?></p>
-        <p>Metode Pembayaran: <?= $transactionEntity->bank; ?> virtual account</p>
+        <p>Metode Pembayaran: <?= $transactionEntity->payment_type; ?></p>
+        <?php if ($transactionEntity->payment_type == 'bank_transfer') : ?>
+        <p>Bank: <?= $transactionEntity->bank; ?> virtual account</p>
         <p>Nomor Virtual account: <?= $transactionEntity->va_number; ?></p>
+        <?php endif; ?>
         <p></p>
 
         <?php if ($orderEntity->order_type == 1) : ?>
