@@ -79,8 +79,13 @@ class IpnController extends AppController
                         'Customers',
                         'OrderDetails' => [
                             'OrderShippingDetails',
-                            'OrderDetailProducts'
-                        ]
+                            'OrderDetailProducts' => [
+                                'Products'
+                            ]
+                        ],
+                        'OrderDigitals' => [
+                            'DigitalDetails'
+                        ],
                     ])
                     ->where([
                         'invoice' => $content['order_id']
@@ -183,6 +188,20 @@ class IpnController extends AppController
 
                                 } else if (strtolower($content['transaction_status']) == 'pending' && $content['payment_type'] == 'bank_transfer') {
                                     //sent notification
+
+                                    $this->Mailer
+                                        ->setVar([
+                                            'orderEntity' => $orderEntity,
+                                            'transactionEntity' => $transactionEntity
+                                        ])
+                                        ->send(
+                                            $orderEntity->customer->email,
+                                            vsprintf('Menunggu pembayaran %s virtual account untuk pembayaran %s', [
+                                                $transactionEntity->bank,
+                                                $orderEntity->invoice
+                                            ]),
+                                            'waiting_payment'
+                                        );
 
                                     if ($this->Notification->create(
                                         $orderEntity->customer_id,
