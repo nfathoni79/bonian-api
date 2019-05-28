@@ -221,8 +221,6 @@ class ProductRatingsController extends AppController
     public function add()
     {
         $this->request->allowMethod('post');
-
-
         $validator = new Validator();
         $validator
             ->requirePresence('order_id')
@@ -267,6 +265,7 @@ class ProductRatingsController extends AppController
 
                     $response = $http->post(Configure::read('postImage').'/ratings', (string)$data,['headers' => ['Content-Type' => $data->contentType()]]);
                     $result = json_decode($response->getBody()->getContents());
+
                     if($result->is_success){
 
                     }else{
