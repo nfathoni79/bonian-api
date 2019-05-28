@@ -179,6 +179,13 @@ Cache::setConfig('change_phone', [
     'prefix' => 'change_phone_'
 ]);
 
+Cache::setConfig('change_email', [
+    'className' => 'File',
+    'duration' => '+30 minutes',
+    'path' => CACHE  . 'change_email' . DS,
+    'prefix' => 'change_email_'
+]);
+
 Cache::setConfig('oauth', [
     'className' => 'File',
     'duration' => '+1 years',
