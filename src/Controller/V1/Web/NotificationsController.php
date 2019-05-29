@@ -161,12 +161,14 @@ class NotificationsController extends AppController
 
         $data = $this->CustomerNotifications->find()
             ->where([
-                'customer_id' => $this->Authenticate->getId(),
-                'is_read' => 0
+                'customer_id' => $this->Authenticate->getId()
             ]);
 
 
-        $data = $data->orderDesc('CustomerNotifications.id')
+        $data = $data->order([
+            'CustomerNotifications.is_read' => 'desc',
+            'CustomerNotifications.id' => 'desc'
+        ])
             ->limit(15)
             ->map(function (\App\Model\Entity\CustomerNotification $row) {
 
