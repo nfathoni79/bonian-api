@@ -37,7 +37,7 @@
                 <td style="vertical-align:top;"></td>
             </tr>
             <tr>
-                <td style="vertical-align:top;">Di Batalkan<br><br></td>
+                <td style="vertical-align:top;">Di Batalkan - Kadaluarsa<br><br></td>
                 <td style="vertical-align:top;"><br><br></td>
             </tr>
         </table> 

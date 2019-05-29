@@ -12,6 +12,7 @@ use Cake\I18n\Number;
  *  @property \App\Model\Table\OrdersTable $Orders
  *  @property \App\Model\Table\TransactionsTable $Transactions
  *  @property \App\Model\Table\OrderShippingDetailsTable $OrderShippingDetails
+ *  @property \App\Model\Table\OrderDigitalsTable $OrderDigitals
  *  @property \App\Model\Table\ProductRatingsTable $ProductRatings
  *  @property \App\Model\Table\ProductStockMutationsTable $ProductStockMutations
  * This controller will render views from Template/Ipn/
@@ -33,6 +34,7 @@ class IpnController extends AppController
         $this->loadModel('OrderShippingDetails');
         $this->loadModel('ProductRatings');
         $this->loadModel('ProductStockMutations');
+        $this->loadModel('OrderDigitals');
     }
 
 
@@ -282,6 +284,19 @@ class IpnController extends AppController
                                             }
                                         }
                                     }
+									
+									
+                                    if ($orderEntity->order_type == 2) { 
+										$query = $this->OrderDigitals->query();
+										$query->update()
+											->set(['status' => 2])
+											->where([
+												'id' => $orderEntity->order_digital->id,
+												// 'status' => 0,
+
+											])
+											->execute();  
+									}
 
 
                                     //sent notification

@@ -140,6 +140,7 @@ class OrdersController extends AppController
           '2' => 'Diproses',
           '3' => 'Dikirim',
           '4' => 'Selesai',
+          '5' => 'Dibatalkan',
         ];
         $data = $this->Orders->find()
             ->contain([
