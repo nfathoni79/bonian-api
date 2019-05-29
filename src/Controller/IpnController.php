@@ -269,8 +269,18 @@ class IpnController extends AppController
                                                     'expired va'
                                                 );
                                             }
-                                        }
+                                            foreach($detail->order_shipping_details as $value) {
+                                                $query = $this->OrderShippingDetails->query();
+                                                $query->update()
+                                                    ->set(['status' => 5])
+                                                    ->where([
+                                                        'order_detail_id' => $value->order_detail_id,
+                                                        'status' => 1,
 
+                                                    ])
+                                                    ->execute();
+                                            }
+                                        }
                                     }
 
 
