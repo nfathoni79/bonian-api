@@ -4,42 +4,42 @@
  * @var \App\Model\Entity\Transaction $transactionEntity
  */
 ?>
-<div style="padding: 5px 20px; border-top: 1px solid rgba(0,0,0,0.05);">
-    <h3 style="margin-top: 10px;">Hi<?php echo !empty($name) ? ', ' . $name : ''; ?></h3>
-    <p>&nbsp;</p>
-    <div style="color: #636363; font-size: 14px;"><strong>Silahkan selesaikan pembayaran anda,</strong>
+<div style="padding: 5px 20px; border-top: 1px solid rgba(0,0,0,0.05);"> 
+    <div style="color: #636363; font-size: 12px;">
+		<strong>Silahkan selesaikan pembayaran anda,</strong>
         <p>Checkout berhasil pada tanggal <?= date('d M Y, H:i',strtotime($orderEntity->created)); ?> WIB</p>
         <table  border="0" cellspacing="0" cellpadding="0" style="width:100%;">
-            <tr>
+            <tr style="margin-top:15px;">
                 <td><strong>Total pembayaran</strong></td>
                 <td><strong>Batas waktu pembayaran</strong></td>
             </tr>
             <tr>
-                <td><?= $this->Number->format($orderEntity->total); ?></td>
-                <td><?= date('d M Y, H:i',strtotime($orderEntity->created . '+1 day')); ?></td>
+                <td style="vertical-align:top;">Rp. <?= $this->Number->format($orderEntity->total); ?><br><br></td>
+                <td style="vertical-align:top;"><?= date('d M Y, H:i',strtotime($orderEntity->created . ' +1 day')); ?><br><br></td>
+            </tr>
+            <tr style="margin-top:15px;">
+                <td style="vertical-align:top;"><strong>Metode pembayaran</strong></td>
+                <td style="vertical-align:top;"><strong>Referensi pembayaran</strong></td>
             </tr>
             <tr>
-                <td><strong>Metode pembayaran</strong></td>
-                <td><strong>Referensi pembayaran</strong></td>
-            </tr>
-            <tr>
-                <td>
+                <td style="vertical-align:top;">
                     <?php if ($transactionEntity->payment_type == 'bank_transfer') : ?>
-                    <img src="<?= Configure::read('mainSite');?>/img/logo/<?= $transactionEntity->bank; ?>.png">
-                    <p>Nomor Virtual account: <?= $transactionEntity->va_number; ?></p>
+                    <img src="<?= Cake\Core\Configure::read('mainSite');?>/img/logo/<?= $transactionEntity->bank; ?>.png"><br>
+                    Virtual Account: <?= $transactionEntity->va_number; ?><br><br>
                     <?php elseif($transactionEntity->payment_type == 'gopay') : ?>
-                    <img src="<?= Configure::read('mainSite');?>/img/logo/<?= $transactionEntity->bank; ?>.png">
+                    <img src="<?= Cake\Core\Configure::read('mainSite');?>/img/logo/<?= $transactionEntity->bank; ?>.png"> 
+					<br><br>
                     <?php endif; ?>
                 </td>
-                <td><?= $orderEntity->invoice; ?></td>
+                <td style="vertical-align:top;"><?= $orderEntity->invoice; ?><br><br></td> 
+            </tr>
+            <tr style="margin-top:15px;">
+                <td style="vertical-align:top;"><strong>Status pembayaran</strong></td>
+                <td style="vertical-align:top;"></td>
             </tr>
             <tr>
-                <td><strong>Status pembayaran</strong></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Menunggu Pembayaran</td>
-                <td></td>
+                <td style="vertical-align:top;">Menunggu Pembayaran<br><br></td>
+                <td style="vertical-align:top;"><br><br></td>
             </tr>
         </table>
 

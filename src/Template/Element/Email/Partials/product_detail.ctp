@@ -4,13 +4,13 @@
  * @var \App\Model\Entity\Transaction $transactionEntity
  */
 ?>
-<p>Detail pembayaran</p>
-<table cellpadding="0" cellspacing="0">
+<p><strong>Detail pesanan</strong></p>
+<table cellpadding="0" cellspacing="0" style="width:100%;font-size:12px !important;">
     <tr style="background: #efefef;">
-        <td style="padding: 5px; width: 70%;">
+        <td style="padding: 5px; width: 70%;text-align:center;">
             Nama Product
         </td>
-        <td style="padding: 5px; width: 30%;">Harga</td>
+        <td style="padding: 5px; width: 30%;text-align:center;">Harga</td>
     </tr>
     <?php foreach($orderEntity->order_details as $detail) : ?>
         <?php foreach($detail->order_detail_products as $product) : ?>
@@ -41,8 +41,8 @@
     <?php endif; ?>
     <tr>
         <td>
-            Total Pembayaran
+            <strong>Total Pembayaran</strong>
         </td>
-        <td style="text-align:right"><?= $this->Number->format($orderEntity->total); ?></td>
+        <td style="text-align:right"><strong>Rp. <?= $this->Number->format($orderEntity->total); ?></strong></td>
     </tr>
 </table>

@@ -4,9 +4,9 @@
  * @var \App\Model\Entity\Transaction $transactionEntity
  */
 ?>
-<p>Detail Pembayaran Pembelian produk digital</p>
+<p>Detail pesanan produk digital</p>
 
-<table>
+<table  style="width:100%;">
     <tr>
         <td>
             Nomor customer
