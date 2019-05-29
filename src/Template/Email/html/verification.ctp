@@ -1,8 +1,9 @@
 <div style="padding: 5px 20px; border-top: 1px solid rgba(0,0,0,0.05);">
     <div style="color: #636363; font-size: 12px;">
-        <p>Kamu telah mendaftarkan email <?php echo $email;?> sebagai alamat email kamu di zolaku. </p>
-        <p>Ayo verifikasi email kamu di zolaku, dan dapatkan berbagai penawaran ekslusif dan tips-tips menarik dari zolaku.</p>
+        <p>Terima kasih sudah sign up ke Bonian. <br > Segera aktifkan email anda dengan mengklik link di bawah ini.</p>
         <p><a href="<?php echo $activation_url . '/' . $code;?>" style="padding:8px 20px;background-color:#DF0101;color:#fff;font-weight:bolder;font-size:16px;display:inline-block;margin:20px 0px;text-decoration:none"><?= 'Verifikasi Email'; ?></a> </p>
-        <p></p>
+        <p>Jika anda tidak merasa melakukan pendaftaran silahkan hubungi customer support BONIAN : customersupport@bonian.com</p>
+        <p>Regards,</p>
+        <p>BONIAN ~ Sebar manfaat hidup hemat</p>
     </div>
 </div>
