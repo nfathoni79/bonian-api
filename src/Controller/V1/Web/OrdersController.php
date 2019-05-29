@@ -48,7 +48,7 @@ class OrdersController extends AppController
             'pending' => '1',
             'success' => '2',
             'failed' => '3',
-//            'expired' => '4',
+			'expired' => '4',
             'refunde' => '5',
             'cancel' => '6',
         ];
@@ -93,7 +93,7 @@ class OrdersController extends AppController
             ])
             ->where([
                 'Orders.customer_id' => $this->Authenticate->getId(),
-                'Orders.payment_status != ' => 4
+                // 'Orders.payment_status != ' => 4
             ]);
 
 
