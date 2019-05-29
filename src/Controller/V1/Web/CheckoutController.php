@@ -1412,7 +1412,7 @@ class CheckoutController extends AppController
                                         ->save($detailProductEntity)) {
                                         $this->Products->ProductStockMutations->saving(
                                             $detailProductEntity->get('product_option_stock_id'),
-                                            3,
+                                            4, //penjualan
                                             -$detailProductEntity->get('qty'),
                                             ''
                                         );

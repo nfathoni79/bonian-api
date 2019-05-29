@@ -13,6 +13,7 @@ use Cake\I18n\Number;
  *  @property \App\Model\Table\TransactionsTable $Transactions
  *  @property \App\Model\Table\OrderShippingDetailsTable $OrderShippingDetails
  *  @property \App\Model\Table\ProductRatingsTable $ProductRatings
+ *  @property \App\Model\Table\ProductStockMutationsTable $ProductStockMutations
  * This controller will render views from Template/Ipn/
  * 
  */
@@ -31,6 +32,7 @@ class IpnController extends AppController
         $this->loadModel('Transactions');
         $this->loadModel('OrderShippingDetails');
         $this->loadModel('ProductRatings');
+        $this->loadModel('ProductStockMutations');
     }
 
 
@@ -255,6 +257,22 @@ class IpnController extends AppController
                                     $this->getEventManager()->dispatch(new Event('Controller.Ipn.expired', $this, [
                                         'transactionEntity' => $transactionEntity
                                     ]));
+
+                                    //restock
+                                    if ($orderEntity->order_type == 1) {
+                                        foreach($orderEntity->order_details as $detail) {
+                                            foreach($detail->order_detail_products as $product) {
+                                                $this->ProductStockMutations->saving(
+                                                    $product->product_option_stock_id,
+                                                    1,
+                                                    $product->qty,
+                                                    'expired va'
+                                                );
+                                            }
+                                        }
+
+                                    }
+
 
                                     //sent notification
 
