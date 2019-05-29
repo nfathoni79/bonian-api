@@ -57,8 +57,7 @@ class NotificationsController extends AppController
                 'CustomerNotificationTypes'
             ])
             ->where([
-                'customer_id' => $this->Authenticate->getId(),
-                'is_read' => 0
+                'customer_id' => $this->Authenticate->getId()
             ]);
 
         if ($type) {
@@ -162,7 +161,8 @@ class NotificationsController extends AppController
 
         $data = $this->CustomerNotifications->find()
             ->where([
-                'customer_id' => $this->Authenticate->getId()
+                'customer_id' => $this->Authenticate->getId(),
+                'is_read' => 0
             ]);
 
 
