@@ -1298,8 +1298,17 @@ class CheckoutController extends AppController
 
                     case 'bca_va':
                         //for bca
-                        $payment = (new BcaVirtualAccount(1111111))
-                            ->setSubCompanyCode(1111);
+                        $va_number_fixed = $customerEntity->get('phone')
+                            ? preg_replace('/^\+62/i', '0', $customerEntity->get('phone')) : null;
+
+                        if ($va_number_fixed) {
+                            $payment = (new BcaVirtualAccount($va_number_fixed))
+                                ->setSubCompanyCode(1111);
+                        } else {
+                            $payment = (new BcaVirtualAccount(rand(111111,999999)))
+                                ->setSubCompanyCode(1111);
+                        }
+
                         break;
 
                     case 'mandiri_billpayment':
