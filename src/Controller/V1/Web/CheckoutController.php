@@ -1301,6 +1301,8 @@ class CheckoutController extends AppController
                         $va_number_fixed = $customerEntity->get('phone')
                             ? preg_replace('/^\+62/i', '0', $customerEntity->get('phone')) : null;
 
+                        $va_number_fixed = null; //force null
+
                         if ($va_number_fixed) {
                             $payment = (new BcaVirtualAccount($va_number_fixed))
                                 ->setSubCompanyCode(1111);
