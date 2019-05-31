@@ -151,6 +151,27 @@ class NotificationsController extends AppController
         }
     }
 
+    public function markAll()
+    {
+        $this->request->allowMethod('post');
+        $this->CustomerNotifications->query()
+            ->update()
+            ->set('is_read', 1)
+            ->where([
+                'customer_id' => $this->Authenticate->getId()
+            ])
+            ->execute();
+
+        $total = $this->CustomerNotifications->find()
+            ->where([
+                'customer_id' => $this->Authenticate->getId(),
+                'is_read' => 0
+            ])->count();
+
+        $this->set(compact('total'));
+    }
+
+
     public function head()
     {
         $count = $this->CustomerNotifications->find()
