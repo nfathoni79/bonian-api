@@ -52,7 +52,7 @@ class CartController extends AppController
     public function add(){
         $this->request->allowMethod(['post', 'put']);
         $customerId = $this->Authenticate->getId();
-
+        $errors = [];
         if($this->request->getData('qty') <= 0){
             $this->setResponse($this->response->withStatus(406, 'Silahkan lengkapi quantity'));
         }else{
@@ -159,8 +159,6 @@ class CartController extends AppController
                         $newEntityDetails->set('totalpoint', ($getAddPrice['product']['point'] * $newEntityDetails['qty']));
                         $newEntityDetails->set('status', 1);
 
-
-
                         if ($this->CustomerCartDetails->save($newEntityDetails)) {
 
 
@@ -184,8 +182,6 @@ class CartController extends AppController
                                     $this->CustomerCartCoupons->save($newEntity);
                                 }
                             }
-
-
 
 
 
