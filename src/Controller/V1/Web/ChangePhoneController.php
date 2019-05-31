@@ -164,7 +164,19 @@ class ChangePhoneController extends AppController
     }
 
     public function getStep($step) {
-
+        $this->request->allowMethod('post');
+        if ($session_id = $this->request->getData('session_id')) {
+            if ($cache = Cache::read($session_id, 'change_phone')) {
+                if ($cache['step'] != $step) {
+                    return $this->response->withStatus(404,'failed step');
+                }
+            } else {
+                $this->response = $this->response->withStatus(404, 'no cache file');
+            }
+        } else {
+            $this->response = $this->response->withStatus(404, 'No session id');
+        }
+        $this->set(compact('cache'));
     }
 
     public function verification()
