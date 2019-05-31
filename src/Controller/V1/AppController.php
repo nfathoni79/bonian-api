@@ -16,6 +16,7 @@ namespace App\Controller\V1;
 
 use Cake\Controller\Controller;
 use Cake\Event\Event;
+use App\Event\TransactionListener;
 
 /**
  * Application Controller
@@ -77,5 +78,11 @@ class AppController extends Controller
         $this->viewBuilder()->setClassName('App.Json');
         return null;
 
+    }
+
+    public function beforeFilter(Event $event)
+    {
+        $this->getEventManager()->on(new TransactionListener());
+        return parent::beforeFilter($event);
     }
 }

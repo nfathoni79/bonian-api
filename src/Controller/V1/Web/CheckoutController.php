@@ -1607,19 +1607,21 @@ class CheckoutController extends AppController
                             'transaction_status' => 'success',
                             'status_code' => 200,
                             'fraud_status' => 'accept',
-                            'gross_amount' => $trx->getAmount(),
+                            'gross_amount' => $orderEntity->total,
                             'payment_type' => 'wallet'
                         ];
+                        if (isset($balance) && $balance < $trx->getAmount()) {
+                            $data['payment_status'] = 'failed';
+                            $process_payment_charge = false;
+                        }
                     }
                 }
 
 
-                if ($process_save_order && $payment_method == 'wallet') {
-                    if (isset($balance) && $balance < $trx->getAmount()) {
-                        $data['payment_status'] = 'failed';
-                        $this->setResponse($this->response->withStatus(406, 'Proses pembayaran gagal, Saldo tidak cukup silahkan pilih metode pembayaran lain.'));
-                    }
-                } else if ($process_save_order && $process_payment_charge) {
+
+
+
+                if ($process_save_order && $process_payment_charge) {
 
                     $transactionEntity = $this->Transactions->newEntity($charge);
                     if ($transactionEntity->payment_type && $orderEntity->get('id')) {
@@ -1630,6 +1632,18 @@ class CheckoutController extends AppController
                             //send event
                             $orderEntity->payment_status = 2;
                             $this->Orders->save($orderEntity);
+
+                            $data['payment'] = [
+                                'order_id' => $orderEntity->invoice
+                            ];
+
+                            $this->Orders->Customers->CustomerMutationAmounts->saving(
+                                $orderEntity->customer_id,
+                                1,
+                                -$orderEntity->total,
+                                'Transaksi untuk invoice: ' . $orderEntity->invoice
+                            );
+
                             $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
                                 'transactionEntity' => $transactionEntity,
                                 'orderEntity' => null //set null and on event to get again
@@ -1641,7 +1655,15 @@ class CheckoutController extends AppController
 
                     $this->Orders->getConnection()->commit();
                 } else {
-                    $this->setResponse($this->response->withStatus(406, 'Proses pembayaran Gagal, pastikan anda menginput PIN yang tepat, Jika masih berlanjut silahkan hubungi Bank Kartu anda'));
+                    switch ($payment_method) {
+                        case 'credit_card':
+                            $this->setResponse($this->response->withStatus(406, 'Proses pembayaran Gagal, pastikan anda menginput PIN yang tepat, Jika masih berlanjut silahkan hubungi Bank Kartu anda'));
+                        break;
+                        case 'wallet':
+                            $this->setResponse($this->response->withStatus(406, 'Proses pembayaran gagal, Saldo tidak cukup silahkan pilih metode pembayaran lain.'));
+                        break;
+                    }
+
                 }
 
             } else {

@@ -47,37 +47,21 @@ class TransactionListener implements EventListenerInterface
     public function success(Event $event)
     {
         // Code to update transaction
+
+        $subject = $event->getSubject();
         /**
          * @var \App\Model\Entity\Transaction $transactionEntity
          */
         $transactionEntity = $event->getData('transactionEntity');
+
+
 
         /**
          * @var \App\Model\Entity\Order $orderEntity
          */
         $orderEntity = $event->getData('orderEntity');
 
-        if (!$orderEntity) {
-            $orderEntity = $this->Orders->find()
-                ->contain([
-                    'Customers',
-                    'OrderDetails' => [
-                        'OrderShippingDetails',
-                        'OrderDetailProducts' => [
-                            'Products'
-                        ]
-                    ],
-                    'OrderDigitals' => [
-                        'DigitalDetails'
-                    ],
-                ])
-                ->where([
-                    'Orders.id' => $transactionEntity->order_id
-                ])
-                ->first();
-        }
 
-        $subject = $event->getSubject();
         if (property_exists($subject, 'Orders')) {
             $this->Orders = $subject->Orders;
 
@@ -87,6 +71,27 @@ class TransactionListener implements EventListenerInterface
 
             if (property_exists($subject, 'Notification')) {
                 $this->Notification = $subject->Notification;
+            }
+
+
+            if (!$orderEntity) {
+                $orderEntity = $this->Orders->find()
+                    ->contain([
+                        'Customers',
+                        'OrderDetails' => [
+                            'OrderShippingDetails',
+                            'OrderDetailProducts' => [
+                                'Products'
+                            ]
+                        ],
+                        'OrderDigitals' => [
+                            'DigitalDetails'
+                        ],
+                    ])
+                    ->where([
+                        'Orders.id' => $transactionEntity->order_id
+                    ])
+                    ->first();
             }
 
 
@@ -191,6 +196,9 @@ class TransactionListener implements EventListenerInterface
                 }
 
             } else if ($orderEntity && count($orderEntity->order_details) > 0) {
+
+
+
                 //transaction for mutation point
                 $this->Orders->getConnection()->begin();
                 foreach($orderEntity->order_details as $detail) {
