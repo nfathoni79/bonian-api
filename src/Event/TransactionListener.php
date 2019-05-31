@@ -11,13 +11,17 @@ use Cake\Event\EventListenerInterface;
 use Cake\Event\Event;
 use App\Controller\Component\SepulsaComponent;
 use Cake\Controller\ComponentRegistry;
+use Cake\I18n\Number;
 use Cake\Log\Log;
+use Cake\ORM\Locator\TableLocator;
 
 /**
  * Class TransactionListener
  * @package App\Event
  * @property \App\Model\Table\OrdersTable $Orders
  * @property \App\Model\Table\TransactionsTable $Transactions
+ * @property \App\Model\Table\OrderShippingDetailsTable $OrderShippingDetails
+ * @property \App\Model\Table\ProductRatingsTable $ProductRatings
  *
  * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\SepulsaComponent $Sepulsa
@@ -48,13 +52,48 @@ class TransactionListener implements EventListenerInterface
          */
         $transactionEntity = $event->getData('transactionEntity');
 
+        /**
+         * @var \App\Model\Entity\Order $orderEntity
+         */
+        $orderEntity = $event->getData('orderEntity');
+
+        if (!$orderEntity) {
+            $orderEntity = $this->Orders->find()
+                ->contain([
+                    'Customers',
+                    'OrderDetails' => [
+                        'OrderShippingDetails',
+                        'OrderDetailProducts' => [
+                            'Products'
+                        ]
+                    ],
+                    'OrderDigitals' => [
+                        'DigitalDetails'
+                    ],
+                ])
+                ->where([
+                    'Orders.id' => $transactionEntity->order_id
+                ])
+                ->first();
+        }
+
         $subject = $event->getSubject();
         if (property_exists($subject, 'Orders')) {
             $this->Orders = $subject->Orders;
+
+            if (property_exists($subject, 'Mailer')) {
+                $this->Mailer = $subject->Mailer;
+            }
+
+            if (property_exists($subject, 'Notification')) {
+                $this->Notification = $subject->Notification;
+            }
+
+
             /**
              * @var \App\Model\Entity\Order $orderEntity
              */
-            $orderEntity = $this->Orders->find()
+            /*$orderEntity = $this->Orders->find()
                 ->where([
                     'Orders.id' => $transactionEntity->get('order_id')
                 ])
@@ -67,7 +106,7 @@ class TransactionListener implements EventListenerInterface
                     ],
                     'Customers'
                 ])
-                ->first();
+                ->first();*/
 
             if ($orderEntity && $orderEntity->order_digital instanceof \App\Model\Entity\OrderDigital) {
                 if ($orderEntity->order_digital->digital_detail instanceof \App\Model\Entity\DigitalDetail) {
@@ -176,6 +215,92 @@ class TransactionListener implements EventListenerInterface
                     }
                 }
                 $this->Orders->getConnection()->commit();
+
+                if (property_exists($subject, 'OrderShippingDetails')) {
+                    $this->OrderShippingDetails = $subject->OrderShippingDetails;
+                } else {
+                    $this->OrderShippingDetails = (new TableLocator())->get('OrderShippingDetails');
+                }
+
+                if (property_exists($subject, 'ProductRatings')) {
+                    $this->ProductRatings = $subject->ProductRatings;
+                } else {
+                    $this->ProductRatings = (new TableLocator())->get('ProductRatings');
+                }
+
+
+                foreach($orderEntity->order_details as $vals){
+                    foreach($vals->order_shipping_details as $value){
+                        $query = $this->OrderShippingDetails->query();
+                        $query->update()
+                            ->set(['status' => 2])
+                            ->where([
+                                'order_detail_id' => $value['order_detail_id'],
+                                'status' => 1,
+                            ])
+                            ->execute();
+                    }
+
+                    ///trigger insert row product ratting
+                    foreach($vals->order_detail_products as $value){
+                        //check before save
+                        $check = $this->ProductRatings->find()
+                            ->where([
+                                'order_id' => $orderEntity->get('id'),
+                                'product_id' => $value->product_id,
+                            ])->first();
+                        if(empty($check)){
+                            $saveRatting = $this->ProductRatings->newEntity([
+                                'order_id' => $orderEntity->get('id'),
+                                'product_id' => $value->product_id,
+                                'customer_id' => $orderEntity->get('customer_id'),
+                                'rating' => 0,
+                                'status' => 0,
+                            ]);
+                            $this->ProductRatings->save($saveRatting);
+                        }
+                    }
+
+                    $this->Mailer
+                        ->setVar([
+                            'orderEntity' => $orderEntity,
+                            'transactionEntity' => $transactionEntity
+                        ])
+                        ->send(
+                            $orderEntity->customer->email,
+                            vsprintf('checkout pesanan berhasil untuk pembayaran %s', [
+                                $orderEntity->invoice
+                            ]),
+                            'success_payment'
+                        );
+
+                }
+
+                //sent notification
+                if ($this->Notification->create(
+                    $orderEntity->customer_id,
+                    '1',
+                    'Pembayaran telah dikonfirmasi',
+                    vsprintf('Konfirmasi pembayaran sebesar %s dengan nomor invoice %s telah diterima, silahkan menunggu kiriman barang', [
+                        Number::format($orderEntity->total),
+                        $orderEntity->invoice
+                    ]),
+                    'Orders',
+                    $orderEntity->id,
+                    1,
+                    $this->Notification->getImageConfirmationPath(),
+                    '/user/history/detail/' . $orderEntity->invoice
+                )) {
+
+                    $this->Notification->triggerCount(
+                        $orderEntity->customer_id,
+                        $orderEntity->customer->reffcode
+                    );
+                }
+
+
+
+
             }
         }
 

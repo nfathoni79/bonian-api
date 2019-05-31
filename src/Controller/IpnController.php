@@ -128,6 +128,9 @@ class IpnController extends AppController
                                 if ($content['status_code'] == 200) {
                                     $orderEntity->set('payment_status', 2);
 
+                                    /*
+                                     * move to transaction listener
+                                     *
                                     foreach($orderEntity->order_details as $vals){
                                         foreach($vals->order_shipping_details as $value){
                                             $query = $this->OrderShippingDetails->query();
@@ -140,9 +143,9 @@ class IpnController extends AppController
                                                 ->execute();
                                         }
 
-                                        /* trigger insert row product ratting */
+                                        ///trigger insert row product ratting
                                         foreach($vals->order_detail_products as $value){
-                                            /* check before save*/
+                                            //check before save
                                             $check = $this->ProductRatings->find()
                                                 ->where([
                                                     'order_id' => $orderEntity->get('id'),
@@ -174,35 +177,13 @@ class IpnController extends AppController
                                             );
 
                                     }
+                                    */
 
                                     //sent event to listener
                                     $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
-                                        'transactionEntity' => $transactionEntity
+                                        'transactionEntity' => $transactionEntity,
+                                        'orderEntity' => $orderEntity
                                     ]));
-
-                                    //sent notification
-                                    if ($this->Notification->create(
-                                        $orderEntity->customer_id,
-                                        '1',
-                                        'Pembayaran telah dikonfirmasi',
-                                        vsprintf('Konfirmasi pembayaran sebesar %s dengan nomor invoice %s telah diterima, silahkan menunggu kiriman barang', [
-                                            Number::format($orderEntity->total),
-                                            $orderEntity->invoice
-                                        ]),
-                                        'Orders',
-                                        $orderEntity->id,
-                                        1,
-                                        $this->Notification->getImageConfirmationPath(),
-                                        '/user/history/detail/' . $orderEntity->invoice
-                                    )) {
-
-                                        $this->Notification->triggerCount(
-                                            $orderEntity->customer_id,
-                                            $orderEntity->customer->reffcode
-                                        );
-                                    }
-
-
                                 } else if (strtolower($content['transaction_status']) == 'pending' && $content['payment_type'] == 'bank_transfer') {
                                     //sent notification
 
