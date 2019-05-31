@@ -182,6 +182,12 @@ class FlashSaleController extends Controller
                             'price_sale',
 
                         ],
+                        'queryBuilder' => function(\Cake\ORM\Query $q) {
+                            return $q->where([
+                                'Products.product_status_id' => 1,
+                                'Products.product_stock_status_id' => 1
+                            ]);
+                        },
                         'ProductImages' => [
                             'fields' => [
                                 'name',
