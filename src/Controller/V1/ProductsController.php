@@ -78,7 +78,8 @@ class ProductsController extends Controller
             ])
             ->where([
                 'Products.slug' => $slug,
-                'Products.product_status_id' => 1
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ])
             ->contain([
                 'ProductToCategories',
@@ -341,7 +342,8 @@ class ProductsController extends Controller
                 return $exp->gte('created', (Time::now())->addDays($this->is_new_rules)->format('Y-m-d H:i:s'));
             })
             ->where([
-                'product_status_id' => 1
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ])
             ->contain([
                 'ProductImages' => [
@@ -413,7 +415,8 @@ class ProductsController extends Controller
                 return $exp->gte('created', (Time::now())->addDays(-20)->format('Y-m-d H:i:s'));
             })*/
             ->where([
-                'product_status_id' => 1
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ])
             ->contain([
                 'ProductImages' => [
@@ -452,7 +455,8 @@ class ProductsController extends Controller
             ->leftJoinWith('OrderDetails.Orders')
             ->where([
                 'Orders.payment_status' => 2,
-                'Products.product_status_id' => 1
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ]);
 
 
@@ -525,7 +529,8 @@ class ProductsController extends Controller
             ])
             ->where([
                 'ProductToCategories.product_category_id' => $category_id,
-                'Products.product_status_id' => 1
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ]);
 
         if (($except_product_id = $this->request->getQuery('except_product_id')) && is_string($except_product_id)) {
@@ -767,7 +772,9 @@ class ProductsController extends Controller
                 'ProductCategories'
             ])
             ->where([
-                'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)'
+                'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)',
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
             ])
             ->enableAutoFields(true)
             ->group('product_category_id')
@@ -913,7 +920,8 @@ class ProductsController extends Controller
                 'Products.price_sale',
             ])
             ->where([
-                'product_status_id' => 1,
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1,
                 'MATCH (Products.name, Products.highlight_text) AGAINST (:search)'
             ])
             ->contain([
