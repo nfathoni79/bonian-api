@@ -255,6 +255,14 @@ Log::setConfig('sms', [
     'file' => 'sms.log',
 ]);
 
+Log::setConfig('testing', [
+    'className' => 'File',
+    'path' => LOGS,
+    'levels' => [],
+    'scopes' => ['testing'],
+    'file' => 'testing.log',
+]);
+
 /*
  * Custom Inflector rules, can be set to correctly pluralize or singularize
  * table, model, controller names or whatever other string is passed to the

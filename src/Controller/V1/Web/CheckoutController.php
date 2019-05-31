@@ -26,6 +26,7 @@ use App\Lib\MidTrans\Payment\PermataVirtualAccount;
 use App\Lib\MidTrans\Request;
 use App\Lib\MidTrans\Transaction;
 
+use Cake\Log\Log;
 use Cake\Utility\Hash;
 
 use Cake\I18n\Time;
@@ -215,8 +216,8 @@ class CheckoutController extends AppController
                     unset($row->customer_cart_details[$key]->product_option_price);
                     unset($row->customer_cart_details[$key]->id);
                     unset($row->customer_cart_details[$key]->customer_cart_id);
-                    unset($row->customer_cart_details[$key]->product_option_price_id);
-                    unset($row->customer_cart_details[$key]->product_option_stock_id);
+                    //unset($row->customer_cart_details[$key]->product_option_price_id);
+                    //unset($row->customer_cart_details[$key]->product_option_stock_id);
 
                     if (is_callable($call)) {
                         call_user_func($call, $key, $row);
@@ -1049,12 +1050,16 @@ class CheckoutController extends AppController
              * @var \App\Model\Entity\CustomerCart $cartEntity
              */
             $cartEntity = null;
+            /**
+             * @var \App\Model\Entity\CustomerCartDetail[] $cartDetailEntities
+             */
             $cartDetailEntities = [];
             $cart = $this->getCart(function($key, \App\Model\Entity\CustomerCart $row) use(&$product_to_couriers, &$cartDetailEntities) {
                 $product_to_couriers[$row->customer_cart_details[$key]->origin_id][] = $row->customer_cart_details[$key]->couriers;
                 /**
                  * @var \App\Model\Entity\CustomerCartDetail $customer_cart_details
                  */
+
                 $customer_cart_details =  $row->customer_cart_details[$key];
                 $customer_cart_details->set('id', $customer_cart_details->cartid);
                 $cartDetailEntities[$key] = $customer_cart_details;
@@ -1417,6 +1422,16 @@ class CheckoutController extends AppController
                                             ''
                                         );
 
+                                        //mark status cart detail
+                                        if (is_array($cartDetailEntities)) {
+                                            foreach($cartDetailEntities as $key => $cart_val) {
+                                                if ($cart_val->product_option_price_id == $detailProductEntity->product_option_price_id &&
+                                                    $cart_val->product_option_stock_id == $detailProductEntity->product_option_stock_id) {
+                                                    $cartDetailEntities[$key]->status = 4;
+                                                }
+                                            }
+                                        }
+
                                         /*$this
                                             ->Customers
                                             ->CustomerMutationPoints
@@ -1438,18 +1453,37 @@ class CheckoutController extends AppController
                         }
 
 
-                        $cartEntity->set('status', 3);
-                        if ($this->CustomerCarts->save($cartEntity)) {
-                            if (is_array($cartDetailEntities)) {
-                                /**
-                                 * @var \App\Model\Entity\CustomerCartDetail[] $cartDetailEntities
-                                 */
-                                foreach($cartDetailEntities as $cartDetailEntity) {
-                                    $cartDetailEntity->set('status', 4);
+                        if (is_array($cartDetailEntities)) {
+                            /**
+                             * @var \App\Model\Entity\CustomerCartDetail[] $cartDetailEntities
+                             */
+
+                            $total_selected = 0;
+                            foreach($cartDetailEntities as $cartDetailEntity) {
+                                //$cartDetailEntity->set('status', 4);
+                                if ($cartDetailEntity->status == 4) {
                                     $this->CustomerCarts->CustomerCartDetails->save($cartDetailEntity);
+                                    $total_selected++;
                                 }
                             }
+
+                            $exists_customer_cart_detail = $this->CustomerCarts->CustomerCartDetails->find()
+                                ->where([
+                                    'CustomerCarts.customer_id' => $this->Authenticate->getId(),
+                                    'CustomerCarts.status' => 1, //status is active,
+                                    'CustomerCartDetails.status' => 1
+                                ])
+                                ->contain([
+                                    'CustomerCarts'
+                                ])
+                                ->count();
+
+                            if ($exists_customer_cart_detail == 0) {
+                                $cartEntity->set('status', 3);
+                                $this->CustomerCarts->save($cartEntity);
+                            }
                         }
+
 
                         if ($customerCouponEntity instanceof \App\Model\Entity\CustomerCartCoupon) {
                             $customerCouponEntity->set('customer_cart_id', $cartEntity->get('id'));
