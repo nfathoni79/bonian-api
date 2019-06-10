@@ -318,7 +318,7 @@ class CartController extends AppController
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
 //                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
-                    ->where(['CustomerCartDetails.status IN ' => [1]]);
+                    ->where(['CustomerCartDetails.status IN ' => [1,5]]);
                 }
             )
             ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
@@ -353,7 +353,7 @@ class CartController extends AppController
                     ]
                 ])
 //                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
-                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1]]);
+                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1,5]]);
             $cartList->orderDesc('CustomerCartDetails.id');
             $data = $this->paginate($cartList, [
                 'limit' => (int) $this->request->getQuery('limit',100)
