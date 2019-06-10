@@ -20,6 +20,7 @@ use Cake\I18n\Time;
  * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
  * @property \App\Model\Table\ProductOptionValueListsTable $ProductOptionValueLists
  * @property \App\Model\Table\BannersTable $Banners
+ * @property \App\Model\Table\OrderDetailProductsTable $OrderDetailProducts
  * @package App\Controller\V1
  */
 
@@ -35,6 +36,7 @@ class ProductFiltersController extends Controller
         $this->loadModel('ProductCategories');
         $this->loadModel('ProductOptionValueLists');
         $this->loadModel('Banners');
+        $this->loadModel('OrderDetailProducts');
 
         if ($customer_id = $this->request->getHeader('customer-id')) {
             if (count($customer_id) > 0) {
@@ -782,6 +784,7 @@ class ProductFiltersController extends Controller
                 $row->images = $images;
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
                 $row->wishlist_id = $this->getWishList($row->id);
+                $row->item_sold = $this->Tools->itemSoldCount($this->OrderDetailProducts, $row->id);
                 return $row;
             });
         } else {
