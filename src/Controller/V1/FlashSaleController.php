@@ -150,7 +150,7 @@ class FlashSaleController extends Controller
                 'time' => 'TIME(date_start)',
                 'date_start'
             ])
-            ->where(['status' => 1])
+            ->where(['status != ' => 2])
             ->limit(3)
             ->orderAsc('id');
         $this->set(compact('timeList'));
@@ -209,7 +209,7 @@ class FlashSaleController extends Controller
                     ]
                 ]
             ])
-            ->where(['ProductDeals.status' => 1, 'ProductDeals.id' => $id])
+            ->where(['ProductDeals.status IN ' => [0, 1], 'ProductDeals.id' => $id])
             ->map(function (\App\Model\Entity\ProductDeal $row) {
                 foreach ($row['product_deal_details'] as $key => $vals){
 
