@@ -153,6 +153,10 @@ class PaymentController extends AppController
                         ->setCvv($this->request->getData('cvv'))
                         ->setSecure(true)
                         ->request($amount);
+
+                    if ($token->status_code != 200) {
+                        $this->setResponse($this->response->withStatus(406, 'Gagal verifikasi cvv'));
+                    }
                 }
             } else {
                 $this->setResponse($this->response->withStatus(406, 'Invalid amount'));
