@@ -145,6 +145,9 @@ class TransactionListener implements EventListenerInterface
                                     //1: pending, 2: success, 3: failed, 4: expired, 5: refund, 6: cancel
                                     $orderEntity->set('payment_status', 5);
                                     $this->Orders->save($orderEntity);
+
+                                    $orderEntity->order_digital->set('status', 2);
+                                    $this->Orders->OrderDigitals->save($orderEntity->order_digital);
                                 }
                                 $this->Orders->getConnection()->commit();
 
