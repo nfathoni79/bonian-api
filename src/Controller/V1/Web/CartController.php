@@ -352,7 +352,8 @@ class CartController extends AppController
                         'Branches'
                     ]
                 ])
-                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
+//                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
+                ->where(['CustomerCartDetails.customer_cart_id' => $cart->get('id'),'CustomerCartDetails.status IN ' => [1]]);
             $cartList->orderDesc('CustomerCartDetails.id');
             $data = $this->paginate($cartList, [
                 'limit' => (int) $this->request->getQuery('limit',100)
