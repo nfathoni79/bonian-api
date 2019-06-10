@@ -317,7 +317,8 @@ class CartController extends AppController
             ->contain(
                 'CustomerCartDetails', function (\Cake\ORM\Query $q) {
                 return $q
-                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
+//                    ->where(['CustomerCartDetails.status IN ' => [1, 2, 3, 5]]);
+                    ->where(['CustomerCartDetails.status IN ' => [1]]);
                 }
             )
             ->where(['CustomerCarts.customer_id' => $customerId,'CustomerCarts.status' => 1 ])
