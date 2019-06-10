@@ -7,6 +7,7 @@ use Cake\Database\Query;
 use Cake\Utility\Hash;
 use Cake\I18n\Time;
 use Cake\Utility\Text;
+use Cake\Validation\Validator;
 
 /**
  * Categories Controller
@@ -20,6 +21,7 @@ use Cake\Utility\Text;
  * @property \App\Model\Table\ProductCategoriesTable $ProductCategories
  * @property \App\Model\Table\ProductToCategoriesTable $ProductToCategories
  * @property \App\Model\Table\CustomerAuthenticatesTable $CustomerAuthenticates
+ * @property \App\Model\Table\ShareStatisticsTable $ShareStatistics
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ProductsController extends Controller
@@ -41,6 +43,7 @@ class ProductsController extends Controller
         $this->loadModel('CustomerAuthenticates');
         $this->loadModel('ProductCategories');
         $this->loadModel('ProductToCategories');
+        $this->loadModel('ShareStatistics');
 
 
         if ($customer_id = $this->request->getHeader('customer-id')) {
@@ -552,6 +555,47 @@ class ProductsController extends Controller
                 return $row;
             });
         $this->set(compact('data'));
+    }
+
+
+    public function share()
+    {
+        $this->request->allowMethod('post');
+
+        $validator = new Validator();
+        $validator->requirePresence('product_id')
+            ->notBlank('product_id')
+            ->requirePresence('media_type')
+            ->notBlank('media_type')
+            ->requirePresence('reffcode')
+            ->notBlank('reffcode');
+
+        $error = $validator->errors($this->request->getData());
+
+        if (empty($error)) {
+            $customerEntity = $this->CustomerAuthenticates->Customers->find()
+                ->select([
+                    'Customers.id'
+                ])
+                ->where([
+                    'reffcode' => $this->request->getData('reffcode')
+                ])
+                ->first();
+
+            $shareStatisticEntity = $this->ShareStatistics->newEntity([
+                'product_id' => $this->request->getData('product_id'),
+                'media_type' => $this->request->getData('media_type'),
+                'customer_id' => $customerEntity->id,
+                'clicked' => $this->request->getData('clicked') ? true : false
+            ]);
+
+            $this->ShareStatistics->save($shareStatisticEntity);
+
+        } else {
+            $this->setResponse($this->response->withStatus(406));
+        }
+
+        $this->set(compact('data', 'error'));
     }
 
 

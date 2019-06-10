@@ -156,6 +156,7 @@ Router::prefix('v1', function (RouteBuilder $routes) {
     $routes->connect('/leaderboards/:slug', ['controller' => 'Leaderboards', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/vouchers/:slug', ['controller' => 'Vouchers', 'action' => 'index'])->setPass(['slug']);
     $routes->connect('/product-ratings/:slug', ['controller' => 'ProductRatings', 'action' => 'index'])->setPass(['slug']);
+    $routes->connect('/products/share', ['controller' => 'Products', 'action' => 'share']);
 
 
     $routes->fallbacks(DashedRoute::class);
