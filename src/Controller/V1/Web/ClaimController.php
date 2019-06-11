@@ -84,25 +84,43 @@ class ClaimController extends AppController
                         $error = $validator->errors($newData->getData());
                         if(empty($error)){
                             /* SYARAT POINT CUKUP MAKA DEBIT POINT */
-                            if($this->CustomerMutationPoints->saving($this->Authenticate->getId(),'5', ($syarat * -1), 'Redeem voucher '.$voucher)){
+                            /* HITUNG AKUMULASI POINT YANG SUDAH DI REDEEM DARI TOTAL DENGAN STATUS 1, SYARAT max 5000 point */
+                            $limit = 5000;
+                            $customerVoucher = $this->CustomerVouchers->find()
+                                ->contain(['Vouchers'])
+                                ->where([
+                                    'CustomerVouchers.customer_id' =>  $this->Authenticate->getId(),
+                                    'CustomerVouchers.status' => 1,
+                                    'Vouchers.type' => 1
+                                ])
+                                ->all();
+                            $touch = 0;
+                            foreach($customerVoucher as $vals){
+                                $touch += $vals['voucher']['point'];
+                            }
+                            if($touch <= $limit){
+                                if($this->CustomerMutationPoints->saving($this->Authenticate->getId(),'5', ($syarat * -1), 'Redeem voucher '.$voucher)){
 
-                                /* Update Stock */
-                                $saveStock = clone $findVoucher;
-                                $saveStock->set('stock', $saveStock->get('stock') - 1);
-                                if($this->Vouchers->save($saveStock)){
-                                    $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
-                                    $setEntity = [
-                                        'customer_id' => $this->Authenticate->getId(),
-                                        'voucher_id' => $findVoucher->get('id'),
-                                        'status ' => 1,
-                                        'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
-                                    ];
-                                    $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
-                                    $this->CustomerVouchers->save($newEntityCustVoucher);
+                                    /* Update Stock */
+                                    $saveStock = clone $findVoucher;
+                                    $saveStock->set('stock', $saveStock->get('stock') - 1);
+                                    if($this->Vouchers->save($saveStock)){
+                                        $newEntityCustVoucher = $this->CustomerVouchers->newEntity();
+                                        $setEntity = [
+                                            'customer_id' => $this->Authenticate->getId(),
+                                            'voucher_id' => $findVoucher->get('id'),
+                                            'status ' => 1,
+                                            'expired' => (Time::now())->addDays(+30)->format('Y-m-d H:i:s')
+                                        ];
+                                        $this->CustomerVouchers->patchEntity($newEntityCustVoucher,$setEntity);
+                                        $this->CustomerVouchers->save($newEntityCustVoucher);
 
+                                    }
+                                } else{
+                                    $this->setResponse($this->response->withStatus(406, 'Terjadi kesalahan, silahkan coba lagi.'));
                                 }
-                            } else{
-                                $this->setResponse($this->response->withStatus(406, 'Terjadi kesalahan, silahkan coba lagi.'));
+                            }else{
+                                $this->setResponse($this->response->withStatus(406, 'Syarat batas claim 5.000 point sudah terpenuhi atau gunakan sisa untuk dapat melakukan penukaran voucher.'));
                             }
                         }
                     }else{
