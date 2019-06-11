@@ -358,7 +358,7 @@ class ProductsController extends Controller
                 ]
             ])
             ->orderDesc('Products.created')
-            ->limit(10)
+            ->limit(15)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
@@ -431,7 +431,7 @@ class ProductsController extends Controller
                 ]
             ])
             ->orderDesc('Products.view')
-            ->limit(10)
+            ->limit(15)
             ->map(function(\App\Model\Entity\Product $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 $row->is_new = (Time::parse($row->created))->gte((Time::now())->addDay($this->is_new_rules));
@@ -491,7 +491,7 @@ class ProductsController extends Controller
                 'OrderDetailProducts.product_id'
             ])
             ->orderDesc('total_count')
-            ->limit(10)
+            ->limit(15)
             ->map(function(\App\Model\Entity\OrderDetailProduct $row) {
                 $row->created = $row->created instanceof \Cake\I18n\FrozenTime  ? $row->created->timestamp : (Time::now())->timestamp;
                 $row->product->images = Hash::extract($row->product->get('product_images'), '{n}.name');
