@@ -23,15 +23,19 @@ use App\Lib\MidTrans\Payment\Gopay;
 use App\Lib\MidTrans\Payment\MandiriBillPayment;
 use App\Lib\MidTrans\Payment\MandiriClickPay;
 use App\Lib\MidTrans\Payment\PermataVirtualAccount;
+use App\Lib\MidTrans\PaymentRequest;
 use App\Lib\MidTrans\Request;
 use App\Lib\MidTrans\Transaction;
 
+use Cake\Auth\DefaultPasswordHasher;
+use Cake\Event\Event;
 use Cake\Utility\Hash;
 
 use Cake\I18n\Time;
 use App\Lib\MidTrans\Token;
 use Cake\Utility\Security;
 use Cake\Core\Configure;
+use Cake\Utility\Text;
 use Cake\Validation\Validator;
 use Cake\Cache\Cache;
 
@@ -273,7 +277,8 @@ class PaymentController extends AppController
                 'bni_va',
                 'bca_klikpay',
                 'mandiri_clickpay',
-                'gopay'
+                'gopay',
+                'wallet'
             ]);
 
         if ($payment_method == 'credit_card') {
@@ -315,6 +320,24 @@ class PaymentController extends AppController
                 ->numeric('cvv')
                 ->maxLength('cvv', 3)
                 ->minLength('cvv', 3);
+
+        } else if ($this->request->getData('payment_method') == 'wallet') {
+            $validator
+                ->notBlank('password', 'Password tidak boleh kosong.')
+                ->add('password', 'check_password', [
+                    'rule' => function($value) use($customer_id) {
+                        $passwordEntity = $this->Customers->find()
+                            ->select(['password'])
+                            ->where([
+                                'id' => $customer_id,
+                            ])
+                            ->first();
+                        if ($passwordEntity) {
+                            return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
+                        }
+                    },
+                    'message' => 'Password anda salah.'
+                ]);
         }
 
         $error = $validator->errors($getData);
@@ -453,25 +476,40 @@ class PaymentController extends AppController
                     $payment = new Gopay($this->request->getData('callback_url'));
                     break;
 
+                case 'wallet':
+                    $payment = null;
+                    $balance = 0;
+                    $getBalance = $this->Customers->CustomerBalances->find()
+                        ->where([
+                            'customer_id' => $this->Authenticate->getId()
+                        ])
+                        ->first();
+                    if ($getBalance) {
+                        $balance = $getBalance->get('balance');
+                    }
+                    break;
+
                 default:
                     $payment = null;
                     break;
             }
 
 
-            $request = new Request($payment);
-            $request->addTransaction($trx);
+            $request = null;
+
+            if ($payment instanceof PaymentRequest) {
+                $request = new Request($payment);
+                $request->addTransaction($trx);
 
 
-
-
-            if (!$request->isCreditCard()) {
-                $request->setCustomer(
-                    $customerEntity->get('email'),
-                    $customerEntity->get('first_name'),
-                    $customerEntity->get('last_name'),
-                    $customerEntity->get('phone')
-                );
+                if (!$request->isCreditCard()) {
+                    $request->setCustomer(
+                        $customerEntity->get('email'),
+                        $customerEntity->get('first_name'),
+                        $customerEntity->get('last_name'),
+                        $customerEntity->get('phone')
+                    );
+                }
             }
 
             //debug(json_encode($request->toObject()));
@@ -491,7 +529,7 @@ class PaymentController extends AppController
             ]);
 
             $process_save_order = true;
-            $process_payment_charge = false;
+            $process_payment_charge = true;
 
             $this->Orders->getConnection()->begin();
 
@@ -509,54 +547,71 @@ class PaymentController extends AppController
 
             if ($process_save_order) {
                 //process charge exception credit card
-                try {
-                    $charge = $this->MidTrans->charge($request);
-                    /*
-                     * status_code 200 is success and using credit card
-                     * status_code 201 is pending and using gopay, virtual_account, clickpay
-                     */
-                    if ($charge && isset($charge['status_code'])) {
-                        switch ($charge['status_code']) {
-                            case 200:
-                                $data['payment_status'] = 'success';
-                                $data['payment'] = $charge;
-                                $process_payment_charge = true;
-                                break;
-                            case 201:
-                                //process pending need response to frontend
-                                $data['payment_status'] = 'pending';
-                                $data['payment'] = $charge;
-                                $process_payment_charge = true;
-                                break;
-                            default:
-                                $data['payment_status'] = 'failed';
-                                $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 1'));
-                                break;
-                        }
-
-
-                        if (isset($charge['payment_type'])) {
-                            switch($charge['payment_type']) {
-                                case 'bank_transfer':
-                                    if (isset($charge['va_numbers'])) {
-                                        foreach($charge['va_numbers'] as $va) {
-                                            $charge['va_number'] = $va['va_number'];
-                                            $charge['bank'] = $va['bank'];
-                                        }
-                                    } else if (isset($charge['permata_va_number'])) {
-                                        $charge['va_number'] = $charge['permata_va_number'];
-                                        $charge['bank'] = 'permata';
-                                    }
+                if ($request instanceof \App\Lib\MidTrans\Request) {
+                    try {
+                        $charge = $this->MidTrans->charge($request);
+                        /*
+                         * status_code 200 is success and using credit card
+                         * status_code 201 is pending and using gopay, virtual_account, clickpay
+                         */
+                        if ($charge && isset($charge['status_code'])) {
+                            switch ($charge['status_code']) {
+                                case 200:
+                                    $data['payment_status'] = 'success';
+                                    $data['payment'] = $charge;
+                                    $process_payment_charge = true;
+                                    break;
+                                case 201:
+                                    //process pending need response to frontend
+                                    $data['payment_status'] = 'pending';
+                                    $data['payment'] = $charge;
+                                    $process_payment_charge = true;
+                                    break;
+                                default:
+                                    $data['payment_status'] = 'failed';
+                                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 1'));
                                     break;
                             }
+
+
+                            if (isset($charge['payment_type'])) {
+                                switch ($charge['payment_type']) {
+                                    case 'bank_transfer':
+                                        if (isset($charge['va_numbers'])) {
+                                            foreach ($charge['va_numbers'] as $va) {
+                                                $charge['va_number'] = $va['va_number'];
+                                                $charge['bank'] = $va['bank'];
+                                            }
+                                        } else if (isset($charge['permata_va_number'])) {
+                                            $charge['va_number'] = $charge['permata_va_number'];
+                                            $charge['bank'] = 'permata';
+                                        }
+                                        break;
+                                }
+                            }
+
+                            //debug($charge);
                         }
 
-                        //debug($charge);
+                    } catch (\Exception $e) {
+                        $process_payment_charge = false;
+
                     }
+                } else if ($payment_method == 'wallet') {
+                    $charge = [
+                        'transaction_id' => Text::uuid(),
+                        'transaction_time' => date('Y-m-d H:i:s'),
+                        'transaction_status' => 'success',
+                        'status_code' => 200,
+                        'fraud_status' => 'accept',
+                        'gross_amount' => $orderEntity->total,
+                        'payment_type' => 'wallet'
+                    ];
 
-                } catch(\Exception $e) {
-                    $process_payment_charge = false;
-
+                    if (isset($balance) && $balance < $trx->getAmount()) {
+                        $data['payment_status'] = 'failed';
+                        $process_payment_charge = false;
+                    }
                 }
             }
 
@@ -567,6 +622,28 @@ class PaymentController extends AppController
                     $transactionEntity->set('raw_response', json_encode($charge));
                     $transactionEntity->set('order_id', $orderEntity->get('id'));
                     $this->Transactions->save($transactionEntity);
+
+                    if ($payment_method == 'wallet') {
+                        //send event
+                        $orderEntity->payment_status = 2;
+                        $this->Orders->save($orderEntity);
+
+                        $data['payment'] = [
+                            'order_id' => $orderEntity->invoice
+                        ];
+
+                        $this->Orders->Customers->CustomerMutationAmounts->saving(
+                            $orderEntity->customer_id,
+                            1,
+                            -$orderEntity->total,
+                            'Transaksi untuk invoice: ' . $orderEntity->invoice
+                        );
+
+                        $this->getEventManager()->dispatch(new Event('Controller.Ipn.success', $this, [
+                            'transactionEntity' => $transactionEntity,
+                            'orderEntity' => null //set null and on event to get again
+                        ]));
+                    }
 
                     //process save sepulsa
                     switch($this->request->getData('type')) {
@@ -593,7 +670,15 @@ class PaymentController extends AppController
                 $this->Orders->getConnection()->commit();
             } else {
                 $this->Orders->getConnection()->rollback();
-                $this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                //$this->setResponse($this->response->withStatus(406, 'Proses payment gagal'));
+                switch ($payment_method) {
+                    case 'credit_card':
+                        $this->setResponse($this->response->withStatus(406, 'Proses pembayaran Gagal, pastikan anda menginput PIN yang tepat, Jika masih berlanjut silahkan hubungi Bank Kartu anda'));
+                        break;
+                    case 'wallet':
+                        $this->setResponse($this->response->withStatus(406, 'Proses pembayaran gagal, Saldo tidak cukup silahkan pilih metode pembayaran lain.'));
+                        break;
+                }
             }
 
 
