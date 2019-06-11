@@ -989,7 +989,7 @@ class CheckoutController extends AppController
                 'wallet'
             ]);
 
-        if ($payment_method = $this->request->getData('payment_method') == 'credit_card') {
+        if (($payment_method = $this->request->getData('payment_method')) == 'credit_card') {
             $validator
                 ->notBlank('card_id')
                 ->add('card_id', 'check_card', [
@@ -1029,7 +1029,7 @@ class CheckoutController extends AppController
                 ->maxLength('cvv', 3)
                 ->minLength('cvv', 3);
 
-        } else if ($payment_method = $this->request->getData('payment_method') == 'wallet') {
+        } else if (($payment_method = $this->request->getData('payment_method')) == 'wallet') {
             $validator
                 ->notBlank('password', 'Password tidak boleh kosong.')
                 ->add('password', 'check_password', [
