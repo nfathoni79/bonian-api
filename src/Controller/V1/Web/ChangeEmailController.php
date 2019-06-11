@@ -17,6 +17,7 @@ namespace App\Controller\V1\Web;
 use Cake\Auth\DefaultPasswordHasher;
 use Cake\I18n\Time;
 use Cake\Utility\Hash;
+use Cake\Utility\Text;
 use Cake\Validation\Validator;
 use Cake\Cache\Cache;
 
@@ -139,6 +140,7 @@ class ChangeEmailController extends AppController
                             if ($customerEntity instanceof \App\Model\Entity\Customer) {
                                 $customerEntity->set('email', $this->request->getData('email'));
                                 $customerEntity->set('is_email_verified', 0);
+                                $customerEntity->set('activation', Text::uuid());
                                 //$customerEntity->set('is_email_verified', 0);
                                 if ($this->Customers->save($customerEntity)) {
                                     $data = [
