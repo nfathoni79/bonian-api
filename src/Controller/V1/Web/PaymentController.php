@@ -623,6 +623,27 @@ class PaymentController extends AppController
                     $transactionEntity->set('order_id', $orderEntity->get('id'));
                     $this->Transactions->save($transactionEntity);
 
+                    //process save sepulsa
+                    switch($this->request->getData('type')) {
+                        case 'pulsa':
+
+                            $inquiryEntity->set('status', true);
+                            $this->CustomerDigitalInquiry->save($inquiryEntity);
+
+                            $orderDigitalEntity = $this->Orders->OrderDigitals->newEntity([
+                                'order_id' => $orderEntity->get('id'),
+                                'digital_detail_id' => $digitalDetailEntity->get('id'),
+                                'customer_number' => $inquiryEntity->get('customer_number'),
+                                'price' => $digitalDetailEntity->get('price'),
+                                'bonus_point' => $digitalDetailEntity->get('point'),
+                                'status' => 0
+                            ]);
+
+                            $this->Orders->OrderDigitals->save($orderDigitalEntity);
+
+                            break;
+                    }
+
                     if ($payment_method == 'wallet') {
                         //send event
                         $orderEntity->payment_status = 2;
@@ -643,27 +664,6 @@ class PaymentController extends AppController
                             'transactionEntity' => $transactionEntity,
                             'orderEntity' => null //set null and on event to get again
                         ]));
-                    }
-
-                    //process save sepulsa
-                    switch($this->request->getData('type')) {
-                        case 'pulsa':
-
-                            $inquiryEntity->set('status', true);
-                            $this->CustomerDigitalInquiry->save($inquiryEntity);
-
-                            $orderDigitalEntity = $this->Orders->OrderDigitals->newEntity([
-                                'order_id' => $orderEntity->get('id'),
-                                'digital_detail_id' => $digitalDetailEntity->get('id'),
-                                'customer_number' => $inquiryEntity->get('customer_number'),
-                                'price' => $digitalDetailEntity->get('price'),
-                                'bonus_point' => $digitalDetailEntity->get('point'),
-                                'status' => 0
-                            ]);
-
-                            $this->Orders->OrderDigitals->save($orderDigitalEntity);
-
-                            break;
                     }
                 }
 
