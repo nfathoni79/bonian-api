@@ -138,6 +138,7 @@ class ChangeEmailController extends AppController
                             $customerEntity = $cache['entity'];
                             if ($customerEntity instanceof \App\Model\Entity\Customer) {
                                 $customerEntity->set('email', $this->request->getData('email'));
+                                $customerEntity->set('is_email_verified', 0);
                                 //$customerEntity->set('is_email_verified', 0);
                                 if ($this->Customers->save($customerEntity)) {
                                     $data = [
