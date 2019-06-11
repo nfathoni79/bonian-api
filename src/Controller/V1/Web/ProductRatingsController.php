@@ -74,7 +74,12 @@ class ProductRatingsController extends AppController
                             ],
                             'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                         ]
-                    ]
+                    ],
+                    'queryBuilder' => function(\Cake\ORM\Query $q) {
+                        return $q->where([
+                            'ProductRatings.status' => 0
+                        ]);
+                    },
                 ],
                 'Provinces',
                 'Cities',
@@ -168,7 +173,12 @@ class ProductRatingsController extends AppController
                             ],
                             'sort' => ['ProductImages.primary' => 'DESC','ProductImages.created' => 'ASC']
                         ]
-                    ]
+                    ],
+                    'queryBuilder' => function(\Cake\ORM\Query $q) {
+                        return $q->where([
+                            'ProductRatings.status' => 1
+                        ]);
+                    },
                 ],
                 'Provinces',
                 'Cities',
