@@ -763,10 +763,12 @@ class ProductFiltersController extends Controller
                 'limit' => (int) $this->getQuery('limit', 5)
             ];
 
-            if (!empty($sortBy) && !empty($order) && in_array($sortBy, ['price', 'rating']) && in_array($order, ['asc', 'desc'])) {
+            if (!empty($sortBy) && !empty($order) && in_array($sortBy, ['price', 'rating', 'view', 'created']) && in_array($order, ['asc', 'desc'])) {
                 $sort_keys = [
                     'price' => 'price_sale',
                     'rating' => 'rating',
+                    'view' => 'view',
+                    'created' => 'Products.created'
                 ];
                 $pagination_options['order'] = [$sort_keys[$sortBy] => $order];
             } else {
