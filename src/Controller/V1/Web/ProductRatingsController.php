@@ -258,18 +258,20 @@ class ProductRatingsController extends AppController
                     $data = new FormData();
                     $data->add('product_rating_id', $id);
 
-                    foreach($this->request->getData('images') as $k => $vals){
-                        $file = $data->addFile('name['.$k.']', fopen($this->request->getData('images.'.$k.'.tmp_name'), 'r'));
-                        $file->filename($this->request->getData('images.'.$k.'.name'));
-                    }
+                    if ($this->request->getData('images')) {
+                        foreach ($this->request->getData('images') as $k => $vals) {
+                            $file = $data->addFile('name[' . $k . ']', fopen($this->request->getData('images.' . $k . '.tmp_name'), 'r'));
+                            $file->filename($this->request->getData('images.' . $k . '.name'));
+                        }
 
-                    $response = $http->post(Configure::read('postImage').'/ratings', (string)$data,['headers' => ['Content-Type' => $data->contentType()]]);
-                    $result = json_decode($response->getBody()->getContents());
+                        $response = $http->post(Configure::read('postImage').'/ratings', (string)$data,['headers' => ['Content-Type' => $data->contentType()]]);
+                        $result = json_decode($response->getBody()->getContents());
 
-                    if($result->is_success){
+                        if($result->is_success){
 
-                    }else{
-                        $this->setResponse($this->response->withStatus(406, 'Unable to upload images'));
+                        }else{
+                            $this->setResponse($this->response->withStatus(406, 'Unable to upload images'));
+                        }
                     }
 
                     //save logic
