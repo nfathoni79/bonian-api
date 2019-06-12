@@ -297,4 +297,66 @@ class OrdersController extends AppController
 
     }
 
+    public function listInvoice(){
+
+        $status_payment = [
+//            'semua' => '0',
+//            'pending' => '1',
+            'success' => '2',
+//            'failed' => '3',
+//            'expired' => '4',
+//            'refunde' => '5',
+//            'cancel' => '6',
+        ];
+
+        $data = $this->Orders->find()
+            ->contain([
+//                'Transactions' => [
+//                    'fields' => [
+//                        'order_id',
+//                        'transaction_time',
+//                        'transaction_status',
+//                        'fraud_status',
+//                        'gross_amount',
+//                        'currency',
+//                        'payment_type',
+//                        'va_number',
+//                        'masked_card',
+//                        'card_type',
+//                        'created',
+//                        'modified'
+//                    ]
+//                ],
+                'OrderDetails' => [
+                    'Branches',
+                    'OrderStatuses',
+                    'OrderShippingDetails'
+                ],
+                'OrderDigitals' => [
+                    'DigitalDetails'
+//                    'OrderStatuses'
+                ],
+                'Vouchers' => [
+                    'fields' => [
+                        'id',
+                        'code_voucher'
+                    ]
+                ],
+//                'Provinces',
+//                'Cities',
+//                'Subdistricts'
+
+            ])
+            ->where([
+                'Orders.customer_id' => $this->Authenticate->getId(),
+                 'Orders.payment_status' => 2
+            ]);
+
+
+        $data
+            ->orderDesc('Orders.id')
+        ;
+
+        $this->set(compact('data'));
+    }
 }
