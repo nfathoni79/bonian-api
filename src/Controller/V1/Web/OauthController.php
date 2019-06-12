@@ -151,6 +151,7 @@ class OauthController extends AppController
                             'first_name',
                             'last_name',
                             'email',
+                            'username',
                             'password',
                             'avatar',
                             'customer_status_id',
@@ -240,6 +241,7 @@ class OauthController extends AppController
                         $data = [
                             'id' => $user->get('id'),
                             'email' => $user->get('email'),
+                            'username' => $user->get('username'),
                             'first_name' => $user->get('first_name'),
                             'last_name' => $user->get('last_name'),
                             'avatar' => $user->get('avatar'),

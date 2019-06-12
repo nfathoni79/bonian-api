@@ -54,6 +54,55 @@ class LoginController extends AppController
         $this->set(compact('auth'));
     }
 
+    public function chatEndPoint()
+    {
+        $this->request->allowMethod('post');
+        $user_id = $this->request->getData('user_id');
+
+        try {
+            $user = $this->ChatKit->getInstance()->getUser([ 'id' => $user_id ]);
+        } catch(\Exception $e) {
+            $customerEntity = $this->Customers->find()
+                ->select([
+                    'first_name',
+                    'last_name',
+                    'avatar'
+
+                ])
+                ->where([
+                    'id' => $this->Authenticate->getId()
+                ])
+                ->first();
+            try {
+
+                $entity = [
+                    'id' => $user_id,
+                    'name' => $customerEntity ? $customerEntity->get('first_name') . ' ' . $customerEntity->get('last_name') : ''
+                ];
+
+                if ($customerEntity->get('avatar')) {
+                    $entity['avatar_url'] = rtrim(Configure::read('mainSite'), '/') . '/files/Customers/avatar/thumbnail-' . $customerEntity->get('avatar');
+                }
+
+                $user = $this->ChatKit->getInstance()->createUser($entity);
+            } catch(\Exception $e) {
+
+            }
+
+        }
+
+        try {
+            $auth = $this->ChatKit->getInstance()->authenticate([
+                'user_id' => $user_id
+            ]);
+        } catch(\Exception $e) {
+            $this->setResponse($this->response->withStatus(403, 'failed authenticate socket'));
+        }
+
+
+        $this->set(compact('auth', 'user'));
+    }
+
     protected function sendNotification($ip, $userAgent, \App\Model\Entity\Customer $user)
     {
         $ua = parse_user_agent($userAgent);
@@ -136,6 +185,7 @@ class LoginController extends AppController
                     'first_name',
                     'last_name',
                     'email',
+                    'username',
                     'password',
                     'avatar',
                     'customer_status_id',
@@ -251,6 +301,7 @@ class LoginController extends AppController
                 $data = [
                     'id' => $user->get('id'),
                     'email' => $user->get('email'),
+                    'username' => $user->get('username'),
                     'first_name' => $user->get('first_name'),
                     'last_name' => $user->get('last_name'),
                     'avatar' => $user->get('avatar'),
