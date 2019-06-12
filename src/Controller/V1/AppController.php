@@ -29,6 +29,7 @@ use App\Event\TransactionListener;
  * @property \App\Controller\Component\PusherComponent $Pusher
  * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\ToolsComponent $Tools
+ * @property \App\Controller\Component\ChatKitComponent $ChatKit
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  */
@@ -59,6 +60,7 @@ class AppController extends Controller
         $this->loadComponent('Notification');
         $this->loadComponent('Pusher');
         $this->loadComponent('Tools');
+        $this->loadComponent('ChatKit');
         /*
          * Enable the following component for recommended CakePHP security settings.
          * see https://book.cakephp.org/3.0/en/controllers/components/security.html

@@ -650,7 +650,6 @@ class ProductFiltersController extends Controller
 
 
 
-
         $validator = $this->_validator();
         $error = $validator->errors($this->request->getQueryParams());
 
