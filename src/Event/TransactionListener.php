@@ -159,7 +159,7 @@ class TransactionListener implements EventListenerInterface
                                             'invoice' => $orderEntity->invoice,
                                             'customer_number' => $orderEntity->order_digital->customer_number,
                                             'product_digital_name' => $orderEntity->order_digital->digital_detail->name,
-                                            'status' => $e->getMessage()
+                                            'status' => 'gagal'
                                         ])
                                         ->send(
                                             $orderEntity->customer->email,
@@ -348,21 +348,19 @@ class TransactionListener implements EventListenerInterface
                         }
                     break;
                     case '2':
-                        foreach($orderEntity->order_digital as $val) {
-                            try {
-                                $this->ChatKit->getInstance()->createRoom([
-                                    'creator_id' => $orderEntity->customer->username,
-                                    'name' => $orderEntity->invoice . '-' . $val->id,
-                                    'user_ids' => ['administrator', $orderEntity->customer->username],
-                                    'private' => true,
-                                    'custom_data' => [
-                                        'order_id' => $orderEntity->id,
-                                        'id' => $val->id
-                                    ]
-                                ]);
-                            } catch(\Exception $e) {
-                                Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
-                            }
+                        try {
+                            $this->ChatKit->getInstance()->createRoom([
+                                'creator_id' => $orderEntity->customer->username,
+                                'name' => $orderEntity->invoice . '-' . $orderEntity->order_digital->id,
+                                'user_ids' => ['administrator', $orderEntity->customer->username],
+                                'private' => true,
+                                'custom_data' => [
+                                    'order_id' => $orderEntity->id,
+                                    'id' => $orderEntity->order_digital->id
+                                ]
+                            ]);
+                        } catch(\Exception $e) {
+                            Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
                         }
                     break;
                 }
