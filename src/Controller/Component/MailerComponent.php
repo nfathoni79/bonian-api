@@ -71,7 +71,7 @@ class MailerComponent extends Component
             }
         }
         $this->Email = new Email($this->_defaultConfig['transport']);
-        $email = $this->Email->setFrom(['noreply@zolaku.com' => 'Zolaku'])
+        $email = $this->Email->setFrom(['noreply@bonian.id' => 'Bonian'])
             ->setTo($destination)
             ->setViewVars($this->params)
             //->setLayout('default') //deprecated
