@@ -43,6 +43,42 @@ class ChatKitComponent extends Component
         return $this->chatkit;
     }
 
+    public function test()
+    {
+        return 'testing oke';
+    }
 
 
+    /**
+     * @param $user_id
+     * @param null $name
+     * @param null $avatar
+     * @return array|null
+     */
+    public function createUser($user_id, $name = null, $avatar = null)
+    {
+        $user = null;
+        try {
+            $user = $this->getInstance()->getUser([ 'id' => $user_id ]);
+        } catch(\Exception $e) {
+            try {
+
+                $entity = [
+                    'id' => $user_id,
+                    'name' => $name
+                ];
+
+                if ($avatar) {
+                    $entity['avatar_url'] = rtrim(Configure::read('mainSite'), '/') .
+                        '/files/Customers/avatar/thumbnail-' . $avatar;
+                }
+
+                $user = $this->getInstance()->createUser($entity);
+            } catch(\Exception $e) {
+
+            }
+
+        }
+        return $user;
+    }
 }

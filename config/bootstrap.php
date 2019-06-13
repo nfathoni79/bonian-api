@@ -263,6 +263,14 @@ Log::setConfig('testing', [
     'file' => 'testing.log',
 ]);
 
+Log::setConfig('chatkit', [
+    'className' => 'File',
+    'path' => LOGS,
+    'levels' => [],
+    'scopes' => ['chatkit'],
+    'file' => 'chatkit.log',
+]);
+
 /*
  * Custom Inflector rules, can be set to correctly pluralize or singularize
  * table, model, controller names or whatever other string is passed to the

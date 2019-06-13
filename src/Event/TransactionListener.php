@@ -26,6 +26,7 @@ use Cake\ORM\Locator\TableLocator;
  * @property \App\Controller\Component\MailerComponent $Mailer
  * @property \App\Controller\Component\SepulsaComponent $Sepulsa
  * @property \App\Controller\Component\NotificationComponent $Notification
+ * @property \App\Controller\Component\ChatKitComponent $ChatKit
  */
 class TransactionListener implements EventListenerInterface
 {
@@ -313,6 +314,65 @@ class TransactionListener implements EventListenerInterface
 
 
             }
+
+            //create room chat related invoice
+            if (property_exists($subject, 'ChatKit')) {
+                $this->ChatKit = $subject->ChatKit;
+                try {
+                    $this->ChatKit->createUser(
+                        $orderEntity->customer->username,
+                        $orderEntity->customer->first_name . ' ' . $orderEntity->customer->last_name
+                    );
+                } catch(\Exception $e) {
+                    Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
+                }
+
+
+                switch ($orderEntity->order_type) {
+                    case '1':
+                        foreach($orderEntity->order_details as $val) {
+                            try {
+                                $this->ChatKit->getInstance()->createRoom([
+                                    'creator_id' => $orderEntity->customer->username,
+                                    'name' => $orderEntity->invoice . '-' . $val->id,
+                                    'user_ids' => ['administrator', $orderEntity->customer->username],
+                                    'private' => true,
+                                    'custom_data' => [
+                                        'order_id' => $orderEntity->id,
+                                        'id' => $val->id
+                                    ]
+                                ]);
+                            } catch(\Exception $e) {
+                                Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
+                            }
+                        }
+                    break;
+                    case '2':
+                        foreach($orderEntity->order_digital as $val) {
+                            try {
+                                $this->ChatKit->getInstance()->createRoom([
+                                    'creator_id' => $orderEntity->customer->username,
+                                    'name' => $orderEntity->invoice . '-' . $val->id,
+                                    'user_ids' => ['administrator', $orderEntity->customer->username],
+                                    'private' => true,
+                                    'custom_data' => [
+                                        'order_id' => $orderEntity->id,
+                                        'id' => $val->id
+                                    ]
+                                ]);
+                            } catch(\Exception $e) {
+                                Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
+                            }
+                        }
+                    break;
+                }
+
+
+
+            }
+
+
+
         }
 
 
