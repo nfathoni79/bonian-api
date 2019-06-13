@@ -113,6 +113,7 @@ class TransactionListener implements EventListenerInterface
                     'Customers'
                 ])
                 ->first();*/
+            $transaction_digital_process_status = true;
 
             if ($orderEntity && $orderEntity->order_digital instanceof \App\Model\Entity\OrderDigital) {
                 if ($orderEntity->order_digital->digital_detail instanceof \App\Model\Entity\DigitalDetail) {
@@ -133,6 +134,8 @@ class TransactionListener implements EventListenerInterface
 
                             } catch(\GuzzleHttp\Exception\ClientException $e) {
                                 //debug($e->getMessage());
+
+                                $transaction_digital_process_status = false;
                                 Log::info($e->getMessage(), ['scope' => ['sepulsa']]);
 
                                 //refund to saldo
@@ -348,19 +351,21 @@ class TransactionListener implements EventListenerInterface
                         }
                     break;
                     case '2':
-                        try {
-                            $this->ChatKit->getInstance()->createRoom([
-                                'creator_id' => $orderEntity->customer->username,
-                                'name' => $orderEntity->invoice . '-' . $orderEntity->order_digital->id,
-                                'user_ids' => ['administrator', $orderEntity->customer->username],
-                                'private' => true,
-                                'custom_data' => [
-                                    'order_id' => $orderEntity->id,
-                                    'id' => $orderEntity->order_digital->id
-                                ]
-                            ]);
-                        } catch(\Exception $e) {
-                            Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
+                        if ($transaction_digital_process_status) {
+                            try {
+                                $this->ChatKit->getInstance()->createRoom([
+                                    'creator_id' => $orderEntity->customer->username,
+                                    'name' => $orderEntity->invoice . '-' . $orderEntity->order_digital->id,
+                                    'user_ids' => ['administrator', $orderEntity->customer->username],
+                                    'private' => true,
+                                    'custom_data' => [
+                                        'order_id' => $orderEntity->id,
+                                        'id' => $orderEntity->order_digital->id
+                                    ]
+                                ]);
+                            } catch(\Exception $e) {
+                                Log::warning($e->getMessage(), ['scope' => ['chatkit']]);
+                            }
                         }
                     break;
                 }
