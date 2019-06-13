@@ -57,6 +57,18 @@ class BannerController extends Controller
         $this->set(compact('banner'));
     }
 
+    public function flashSale(){
+        $banner = $this->Banners->find()
+            ->select([
+                'image' => 'Banners.name',
+                'url' => 'Banners.url',
+            ])
+            ->where(['Banners.status' => 1, 'Banners.position' => 'Flash Sale'])
+            ->order('Banners.created DESC')
+            ->all();
+        $this->set(compact('banner'));
+    }
+
     public function promotion(){
         $banner = $this->Banners->find()
             ->select([
@@ -68,6 +80,7 @@ class BannerController extends Controller
             ->first();
         $this->set(compact('banner'));
     }
+
 
 
 }
