@@ -481,6 +481,25 @@ class CheckoutController extends AppController
                         ->execute();
                 }
 
+                $customerCart = $this->CustomerCarts->find()
+                    ->contain(['CustomerCartDetails'])
+                    ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(), 'CustomerCarts.status' => 1])
+                    ->first() ;
+                if($customerCart){
+                    $updateToActive = $this->CustomerCartDetails->find()
+                        ->where(['status' => 5, 'customer_cart_id' => $customerCart->get('id')])
+                        ->all();
+                    foreach($updateToActive as $vals){
+                        $query = $this->CustomerCartDetails->query();
+                        $query->update()
+                            ->set(['status' => 1])
+                            ->where([
+                                'id' => $vals['id']
+                            ])
+                            ->execute();
+                    }
+                }
+
                 foreach($this->request->getData('cart') as $k => $val){
                     $query = $this->CustomerCartDetails->query();
                     $query->update()
