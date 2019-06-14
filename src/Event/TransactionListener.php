@@ -237,11 +237,12 @@ class TransactionListener implements EventListenerInterface
                     $this->OrderShippingDetails = (new TableLocator())->get('OrderShippingDetails');
                 }
 
+                /*
                 if (property_exists($subject, 'ProductRatings')) {
                     $this->ProductRatings = $subject->ProductRatings;
                 } else {
                     $this->ProductRatings = (new TableLocator())->get('ProductRatings');
-                }
+                }*/
 
 
                 foreach($orderEntity->order_details as $vals){
@@ -259,6 +260,7 @@ class TransactionListener implements EventListenerInterface
                     ///trigger insert row product ratting
                     foreach($vals->order_detail_products as $value){
                         //check before save
+                        /*
                         $check = $this->ProductRatings->find()
                             ->where([
                                 'order_id' => $orderEntity->get('id'),
@@ -273,7 +275,7 @@ class TransactionListener implements EventListenerInterface
                                 'status' => 0,
                             ]);
                             $this->ProductRatings->save($saveRatting);
-                        }
+                        }*/
                     }
 
                     $this->Mailer
