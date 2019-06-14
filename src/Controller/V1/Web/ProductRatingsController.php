@@ -2,6 +2,8 @@
 namespace App\Controller\V1\Web;
 
 
+use Cake\Database\Expression\QueryExpression;
+use Cake\Database\Query;
 use Cake\Utility\Hash;
 use Cake\I18n\Time;
 use Cake\Http\Client;
@@ -41,6 +43,18 @@ class ProductRatingsController extends AppController
 //            'refunde' => '5',
 //            'cancel' => '6',
         ];
+
+        $subquery = $this->ProductRatings->find()
+            ->select(['Order.id'])
+            ->leftJoin(['Order' => 'orders'], [
+                'Order.id = ProductRatings.order_id'
+            ])
+            ->where([
+                'ProductRatings.status' => 0,
+                'ProductRatings.customer_id' => $this->Authenticate->getId(),
+                'Orders.id = Order.id'
+            ])
+            ->group('Order.id');
 
         $orders = $this->Orders->find()
             ->contain([
@@ -90,12 +104,14 @@ class ProductRatingsController extends AppController
                 'Orders.customer_id' => $this->Authenticate->getId(),
                 'Orders.payment_status != ' => 4,
                 'Orders.order_type' => 1,
-            ]);
-
-
-        $orders
-            ->orderDesc('Orders.id')
+            ])
+            ->where(function (\Cake\Database\Expression\QueryExpression $exp) use ($subquery) {
+                return $exp->exists($subquery);
+            })
         ;
+
+        $orders->orderDesc('Orders.id');
+
 
         if(!empty($this->request->getQuery('search'))){
             $orders->where(['Orders.invoice' => $this->request->getQuery('search')]);
@@ -108,11 +124,12 @@ class ProductRatingsController extends AppController
         }
 
         if(!empty($this->request->getQuery('start')) && !empty($this->request->getQuery('end'))){
-            $orders->where(function (\Cake\Database\Expression\QueryExpression $exp) {
+            $orders->where(function (\Cake\Database\Expression\QueryExpression $exp){
                 return $exp->gte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('start'))).' 00:00:00')
                     ->lte('Orders.created', date("Y-m-d", strtotime($this->request->getQuery('end'))).' 23:59:59');
             });
         }
+
 
 
         $data = $this->paginate($orders, [
@@ -140,6 +157,18 @@ class ProductRatingsController extends AppController
 //            'refunde' => '5',
 //            'cancel' => '6',
         ];
+
+        $subquery = $this->ProductRatings->find()
+            ->select(['Order.id'])
+            ->leftJoin(['Order' => 'orders'], [
+                'Order.id = ProductRatings.order_id'
+            ])
+            ->where([
+                'ProductRatings.status' => 1,
+                'ProductRatings.customer_id' => $this->Authenticate->getId(),
+                'Orders.id = Order.id'
+            ])
+            ->group('Order.id');
 
         $orders = $this->Orders->find()
             ->contain([
@@ -189,7 +218,10 @@ class ProductRatingsController extends AppController
                 'Orders.customer_id' => $this->Authenticate->getId(),
                 'Orders.payment_status != ' => 4,
                 'Orders.order_type' => 1,
-            ]);
+            ])
+            ->where(function (\Cake\Database\Expression\QueryExpression $exp) use ($subquery) {
+                return $exp->exists($subquery);
+            });
 
 
         $orders
