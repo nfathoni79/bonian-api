@@ -7,6 +7,7 @@
  */
 
 namespace App\Event;
+use Cake\Core\Configure;
 use Cake\Event\EventListenerInterface;
 use Cake\Event\Event;
 use App\Controller\Component\SepulsaComponent;
@@ -336,6 +337,37 @@ class TransactionListener implements EventListenerInterface
                 switch ($orderEntity->order_type) {
                     case '1':
                         foreach($orderEntity->order_details as $val) {
+
+                            $products = [];
+                            $images = [];
+                            foreach($val->order_detail_products as $detail_product) {
+                                array_push($products, $detail_product->product_id);
+                            }
+
+                            if (count($products) > 0) {
+                                $productImages = $this
+                                    ->Orders
+                                    ->OrderDetails
+                                    ->OrderDetailProducts
+                                    ->Products
+                                    ->ProductImages->find()
+                                    ->where([
+                                        'product_id IN' => $products
+                                    ])
+                                    ->group('ProductImages.product_id');
+
+                                $mainSite = rtrim(Configure::read('mainSite'), '/') . '/images/100x100/';
+                                if (!$productImages->isEmpty()) {
+                                    /**
+                                     * @var \App\Model\Entity\ProductImage[] $productImages
+                                     */
+                                    foreach($productImages as $product_image) {
+                                        array_push($images, $mainSite . $product_image->name);
+                                    }
+                                }
+                            }
+
+
                             try {
                                 $this->ChatKit->getInstance()->createRoom([
                                     'creator_id' => $orderEntity->customer->username,
@@ -344,7 +376,12 @@ class TransactionListener implements EventListenerInterface
                                     'private' => true,
                                     'custom_data' => [
                                         'order_id' => $orderEntity->id,
-                                        'id' => $val->id
+                                        'order_detail_id' => $val->id,
+                                        'shipping_cost' => $val->shipping_cost,
+                                        'total' => $val->total,
+                                        'images' => $images,
+                                        'products' => $products,
+                                        'order_type' => $orderEntity->order_type
                                     ]
                                 ]);
                             } catch(\Exception $e) {
@@ -362,7 +399,7 @@ class TransactionListener implements EventListenerInterface
                                     'private' => true,
                                     'custom_data' => [
                                         'order_id' => $orderEntity->id,
-                                        'id' => $orderEntity->order_digital->id
+                                        'order_digital_id' => $orderEntity->order_digital->id
                                     ]
                                 ]);
                             } catch(\Exception $e) {
