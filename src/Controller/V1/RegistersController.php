@@ -17,6 +17,7 @@ use Cake\ORM\Rule\IsUnique;
  * @property \App\Model\Table\CustomerMutationPointsTable $CustomerMutationPoints
  * @property \App\Controller\Component\GenerationsTreeComponent $GenerationsTree
  * @property \App\Model\Table\CustomerAddresesTable $CustomerAddreses
+ * @property \App\Model\Table\AuthCodesTable $AuthCodes
  * @method \App\Model\Entity\Product[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class RegistersController extends Controller
@@ -30,6 +31,7 @@ class RegistersController extends Controller
         $this->loadModel('CustomerMutationAmounts');
         $this->loadModel('CustomerMutationPoints');
         $this->loadModel('CustomerAddreses');
+        $this->loadModel('AuthCodes');
         $this->loadComponent('GenerationsTree');
         $this->loadComponent('Sms');
     }
@@ -136,22 +138,28 @@ class RegistersController extends Controller
     }
 
     public function sendcode(){
-        $this->SendAuth->register('register', $this->request->getData('phone'));
-        $code = $this->SendAuth->generates();
-        if($code){
+        $findAuth = $this->AuthCodes->find()
+            ->where([
+                'phone' => $this->request->getData('phone'),
+                'name' => 'register',
+                'used' => 0
+            ])->first();
+
+        if(!empty($findAuth)){
+            $this->setResponse($this->response->withStatus(406, 'Tunggu 15 menit sampai habis.'));
+        }else{
             $customerCheck = $this->Customers->find()
                 ->where(['phone' => $this->request->getData('phone')])
                 ->first();
             if($customerCheck){
-
+                $this->setResponse($this->response->withStatus(406, 'Nomor HP sudah digunakan..'));
             }else{
+                $this->SendAuth->register('register', $this->request->getData('phone'));
+                $code = $this->SendAuth->generates();
                 $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Kode berlaku 15 mnt : '.$code;
                 $this->Sms->send($this->request->getData('phone'),$text);
             }
-        }else{
-            $this->setResponse($this->response->withStatus(406, 'request telah di kirim, silahkan tunggu 15 menit sampai sesi habis.'));
         }
-        $this->set(compact('error'));
     }
 
 
