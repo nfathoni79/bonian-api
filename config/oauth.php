@@ -17,6 +17,8 @@ return [
               'options' => [
                   'identity.fields' => [
                       'email',
+                      'first_name',
+                      'last_name',
                       'picture.width(99999)'
                   ],
               ]
