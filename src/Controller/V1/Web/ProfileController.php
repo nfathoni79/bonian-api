@@ -108,14 +108,18 @@ class ProfileController extends AppController
             ])
             ->first();
 
-        $validator = $this->Customers->getValidator('password')
-            ->notBlank('current_password', 'Kolom ini harus diisi')
-            ->add('current_password', 'check_password', [
-                'rule' => function($value) use ($passwordEntity) {
-                    return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
-                },
-                'message' => 'Password lama anda tidak valid'
-            ]);
+        $validator = $this->Customers->getValidator('password');
+
+        if ($passwordEntity->get('password')) {
+            $validator->notBlank('current_password', 'Kolom ini harus diisi')
+                ->add('current_password', 'check_password', [
+                    'rule' => function($value) use ($passwordEntity) {
+                        return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
+                    },
+                    'message' => 'Password lama anda tidak valid'
+                ]);
+        }
+
 
         $this->Customers->patchEntity($passwordEntity, $this->request->getData(), [
             'validate' => 'password',
