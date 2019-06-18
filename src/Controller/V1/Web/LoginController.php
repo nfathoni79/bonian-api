@@ -185,6 +185,7 @@ class LoginController extends AppController
                     'first_name',
                     'last_name',
                     'email',
+                    'phone',
                     'username',
                     'password',
                     'avatar',
@@ -301,6 +302,7 @@ class LoginController extends AppController
                 $data = [
                     'id' => $user->get('id'),
                     'email' => $user->get('email'),
+                    'phone' => $user->get('phone'),
                     'username' => $user->get('username'),
                     'first_name' => $user->get('first_name'),
                     'last_name' => $user->get('last_name'),

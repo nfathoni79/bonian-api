@@ -9,6 +9,9 @@
 namespace App\Controller\V1\Web;
 
 
+use Cake\Http\Client;
+use Cake\Http\Client\FormData;
+use Cake\Log\Log;
 use Cake\Utility\Security;
 use Cake\I18n\Time;
 use Cake\Core\Configure;
@@ -115,9 +118,7 @@ class OauthController extends AppController
 
             try {
                 $provider = $service->getProvider($providerName);
-
                 $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
-
 
                 $oauth = [
                     'token' => $oauthToken->getToken(),
@@ -151,6 +152,7 @@ class OauthController extends AppController
                             'last_name',
                             'email',
                             'username',
+                            'phone',
                             'password',
                             'avatar',
                             'customer_status_id',
@@ -187,7 +189,6 @@ class OauthController extends AppController
 
                         $save = $this->Customers->save($register);
                         if($save){
-                            $user = $register;
                             $balanceEntity = $this->Customers->CustomerBalances->newEntity([
                                 'customer_id' => $save->get('id'),
                                 'balance' => 0,
@@ -196,6 +197,40 @@ class OauthController extends AppController
                             if ($this->Customers->CustomerBalances->save($balanceEntity)) {
 
                             }
+
+                            try {
+                                $tmp = tempnam(sys_get_temp_dir(), 'avatar');
+                                file_put_contents($tmp, file_get_contents($profile->pictureURL));
+                                $http = new Client();
+                                $data = new FormData();
+                                $data->add('customer_id', $save->get('id'));
+                                $file = $data->addFile('avatar', fopen($tmp, 'r'));
+                                $file->filename(basename($profile->pictureURL));
+                                $http->post(Configure::read('postImage').'/avatar', (string)$data, ['headers' => ['Content-Type' => $data->contentType()]]);
+                                @unlink($tmp);
+                            } catch(\Exception $e) {
+                                Log::error($e->getMessage());
+                            }
+
+                            //get again
+                            $user = $this->Customers->find()
+                                ->select([
+                                    'id',
+                                    'first_name',
+                                    'last_name',
+                                    'email',
+                                    'username',
+                                    'phone',
+                                    'password',
+                                    'avatar',
+                                    'customer_status_id',
+                                    'reffcode',
+                                    'is_verified',
+                                ])
+                                ->where([
+                                    'email' => $profile->email
+                                ])->first();
+
                         }
                     }
 
@@ -264,6 +299,7 @@ class OauthController extends AppController
                     $data = [
                         'id' => $user->get('id'),
                         'email' => $user->get('email'),
+                        'phone' => $user->get('phone'),
                         'username' => $user->get('username'),
                         'first_name' => $user->get('first_name'),
                         'last_name' => $user->get('last_name'),
@@ -340,6 +376,7 @@ class OauthController extends AppController
                             'last_name',
                             'email',
                             'username',
+                            'phone',
                             'password',
                             'avatar',
                             'customer_status_id',
@@ -430,6 +467,7 @@ class OauthController extends AppController
                             'id' => $user->get('id'),
                             'email' => $user->get('email'),
                             'username' => $user->get('username'),
+                            'phone' => $user->get('phone'),
                             'first_name' => $user->get('first_name'),
                             'last_name' => $user->get('last_name'),
                             'avatar' => $user->get('avatar'),
