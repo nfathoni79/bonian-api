@@ -175,11 +175,47 @@ class ProfileController extends AppController
 
             if($result->is_success){
                 $data = $result->data;
+
+                try {
+                    $userEntity = $this->Customers->find()
+                        ->select([
+                            'username',
+                            'avatar'
+                        ])
+                        ->where([
+                            'id' => $this->Authenticate->getId()
+                        ])
+                        ->first();
+
+                    if ($userEntity && $userEntity->get('username')) {
+                        $user = $this->ChatKit->getInstance()->getUser([ 'id' => $userEntity->get('username') ]);
+                        if (isset($user['body'])) {
+                            //$avatar_url = $user['body']['avatar_url'];
+                            $avatar_url = rtrim(Configure::read('mainSite'), '/') . '/files/Customers/avatar/thumbnail-' . $data;
+
+                            try {
+                                $this->ChatKit->getInstance()->updateUser([
+                                    'id' => $userEntity->get('username'),
+                                    'avatar_url' => $avatar_url
+                                ]);
+                            }catch(\Exception $e) {
+
+                            }
+
+                        }
+                    }
+
+
+                } catch(\Exception $e) {
+
+                }
+
+
             }else{
                 $this->setResponse($this->response->withStatus(406, 'Unable to update data profile'));
             }
         }
-        $this->set(compact('error', 'data'));
+        $this->set(compact('error', 'data', 'user'));
     }
 
 
