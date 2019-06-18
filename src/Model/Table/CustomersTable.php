@@ -130,6 +130,7 @@ class CustomersTable extends Table
             ->scalar('username')
             ->maxLength('username', 30)
             ->requirePresence('username', 'create', 'Username harus diisi')
+            ->alphaNumeric('username', 'Username harus terdiri dari huruf atau angka')
             ->allowEmptyString('username', false);
 
         $validator

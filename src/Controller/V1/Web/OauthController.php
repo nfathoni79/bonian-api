@@ -306,6 +306,7 @@ class OauthController extends AppController
                         'avatar' => $user->get('avatar'),
                         'customer_status_id' => $user->get('customer_status_id'),
                         'reffcode' => $user->get('reffcode'),
+                        'is_verified' => $user->get('is_verified'),
                         'token' => $token
                     ];
 
@@ -473,6 +474,7 @@ class OauthController extends AppController
                             'avatar' => $user->get('avatar'),
                             'customer_status_id' => $user->get('customer_status_id'),
                             'reffcode' => $user->get('reffcode'),
+                            'is_verified' => $user->get('is_verified'),
                             'token' => $token
                         ];
                     } else {
