@@ -107,7 +107,7 @@ class VerificationController extends AppController
                     ];
                     $code = $this->SendAuth->generates();
                     $text = 'Demi keamanan, mohon TIDAK MEMBERIKAN kode kepada siapapun TERMASUK TIM ZOLAKU. Kode berlaku 15 mnt : '.$code;
-                    //$this->Sms->send('0' . preg_replace('/^\+62/i', '', $phone), $text);
+                    $this->Sms->send('0' . preg_replace('/^\+62/i', '', $phone), $text);
                 } else {
                     $error = $customerEntity->getErrors();
                     $this->setResponse($this->response->withStatus(406, 'Gagal setting handphone'));
