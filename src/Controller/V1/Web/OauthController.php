@@ -100,6 +100,194 @@ class OauthController extends AppController
         $this->set(compact('redirect'));
     }
 
+    public function register($providerName)
+    {
+        $callback = $this->request->getHeader('callback');
+        if(count($callback) > 0) {
+            $this->config['redirectUri'] = $callback[0];
+        }
+
+        $service = $this->setService();
+
+        if (!$service->getFactory()->has($providerName)) {
+            $this->setResponse($this->response->withStatus(400, 'invalid provider'));
+        } else {
+
+            try {
+                $provider = $service->getProvider($providerName);
+
+                $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+
+
+                $oauth = [
+                    'token' => $oauthToken->getToken(),
+                    'expires' => $oauthToken->getExpires(),
+                    'uid' => $oauthToken->getUserId()
+                ];
+
+                $profile = $provider->getIdentity($oauthToken);
+
+                $bid = $this->request->getHeader('bid');
+                if(count($bid) > 0) {
+                    $bid = $bid[0];
+                } else {
+                    $bid = null;
+                }
+
+                $userAgent = $this->request->getHeader('user-agent');
+                if(count($userAgent) > 0) {
+                    $userAgent = $userAgent[0];
+                } else {
+                    $userAgent = null;
+                }
+
+                if ($profile && $profile instanceof \SocialConnect\Common\Entity\User) {
+                    //do with register status
+                    //check exists
+                    $user = $this->Customers->find()
+                        ->select([
+                            'id',
+                            'first_name',
+                            'last_name',
+                            'email',
+                            'username',
+                            'password',
+                            'avatar',
+                            'customer_status_id',
+                            'reffcode',
+                            'is_verified',
+                        ])
+                        ->where([
+                            'email' => $profile->email
+                        ])->first();
+
+                    if (!$user) {
+                        //do register user
+                        $register = $this->Customers->newEntity(null, ['validate' => false]);
+
+
+                        $register->set('email', $profile->email);
+
+                        if ($first_name = $profile->firstname) {
+                            $register->set('first_name', $first_name);
+                        }
+
+                        if ($last_name = $profile->lastname) {
+                            $register->set('last_name', $last_name);
+                        }
+
+
+                        $register->set('reffcode', strtoupper($this->Tools->reffcode('10')));
+                        $register->set('customer_group_id', 1);
+                        $register->set('customer_status_id', 1);
+                        $register->set('is_verified', 0);
+                        $register->set('is_email_verified', $profile->emailVerified);
+                        $register->set('avatar', 'avatar.jpg');
+                        $register->set('platforrm', $this->request->getQuery('platform', 'Web'));
+
+                        $save = $this->Customers->save($register);
+                        if($save){
+                            $user = $register;
+                            $balanceEntity = $this->Customers->CustomerBalances->newEntity([
+                                'customer_id' => $save->get('id'),
+                                'balance' => 0,
+                                'point' => 0
+                            ]);
+                            if ($this->Customers->CustomerBalances->save($balanceEntity)) {
+
+                            }
+                        }
+                    }
+
+
+                    $key = Security::randomString();
+                    $token = base64_encode(Security::encrypt(json_encode([
+                        'id' => $user->get('id'),
+                        'email' => $user->get('email'),
+                        'token' => $key
+                    ]), Configure::read('Encrypt.salt')));
+
+
+
+                    $find = $this->CustomerAuthenticates->find()
+                        ->contain([
+                            'Browsers'
+                        ])
+                        ->where([
+                            'customer_id' => $user->get('id')
+                        ]);
+
+                    if ($bid) {
+                        $find->where([
+                            'Browsers.bid' => $bid
+                        ]);
+                    }
+
+                    $find->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                        return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
+                    });
+
+                    $find = $find->first();
+
+                    if ($find) {
+                        $token = base64_encode(Security::encrypt(json_encode([
+                            'id' => $user->get('id'),
+                            'email' => $user->get('email'),
+                            'token' => $find->get('token')
+                        ]), Configure::read('Encrypt.salt')));
+
+                    } else {
+                        $browserEntity = $this->CustomerAuthenticates->Browsers->find()
+                            ->where([
+                                'bid' => $bid
+                            ])
+                            ->first();
+
+                        if (!$browserEntity) {
+                            $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
+                                'bid' => $bid,
+                                'user_agent' => $userAgent
+                            ]);
+                            $this->CustomerAuthenticates->Browsers->save($browserEntity);
+                        }
+
+                        $find = $this->CustomerAuthenticates->newEntity([
+                            'customer_id' => $user->get('id'),
+                            'token' => $key,
+                            'browser_id' => $browserEntity->get('id'),
+                            'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
+                        ]);
+                    }
+
+                    $this->CustomerAuthenticates->save($find);
+
+                    $data = [
+                        'id' => $user->get('id'),
+                        'email' => $user->get('email'),
+                        'username' => $user->get('username'),
+                        'first_name' => $user->get('first_name'),
+                        'last_name' => $user->get('last_name'),
+                        'avatar' => $user->get('avatar'),
+                        'customer_status_id' => $user->get('customer_status_id'),
+                        'reffcode' => $user->get('reffcode'),
+                        'token' => $token
+                    ];
+
+
+
+                }
+
+
+            } catch (\Exception $e) {
+                $this->setResponse($this->response->withStatus(400, $e->getMessage()));
+            }
+        }
+
+        $this->set(compact('data', 'error'));
+    }
+
+
+
     public function cb($providerName)
     {
 		$callback = $this->request->getHeader('callback');
