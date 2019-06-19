@@ -237,7 +237,7 @@ class CustomersTable extends Table
         $rules->add($rules->isUnique(['email'], 'Email sudah terdaftar'));
         $rules->add($rules->isUnique(['username'], 'Username sudah terdaftar'));
         $rules->add($rules->isUnique(['reffcode']));
-        $rules->add($rules->isUnique(['phone'], 'Nomor telepon sudah terdaftar'));
+        $rules->add($rules->isUnique(['phone'], 'Nomor hanphone sudah terdaftar'));
 //        $rules->add($rules->existsIn(['refferal_customer_id'], 'RefferalCustomers'));
         $rules->add($rules->existsIn(['customer_group_id'], 'CustomerGroups'));
         $rules->add($rules->existsIn(['customer_status_id'], 'CustomerStatuses'));
