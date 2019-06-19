@@ -77,7 +77,10 @@ class LoginController extends AppController
 
                 $entity = [
                     'id' => $user_id,
-                    'name' => $customerEntity ? $customerEntity->get('first_name') . ' ' . $customerEntity->get('last_name') : ''
+                    'name' => $customerEntity ? $customerEntity->get('first_name') . ' ' . $customerEntity->get('last_name') : '',
+                    'custom_data' => [
+                        'is_admin' => false
+                    ]
                 ];
 
                 if ($customerEntity->get('avatar')) {
