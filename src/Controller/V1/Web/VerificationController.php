@@ -86,6 +86,7 @@ class VerificationController extends AppController
                 ->notBlank('phone', 'Nomor Handphone tidak boleh kosong')
                 ->minLength('phone', 9, 'Handphone minimal 9 digit')
                 ->maxLength('phone', 11, 'Handphone maksimal 11 digit')
+                ->numeric('phone', 'Nomor Handphone harus angka')
                 ->add('phone', 'is_valid', [
                     'rule' => function($value) {
                         return $this->SendAuth->exists() == 0;
