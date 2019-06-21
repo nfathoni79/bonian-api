@@ -730,7 +730,7 @@ class ProductsController extends Controller
             if($searchTermEntity->isEmpty()) {
                 $searchTermEntity = $this->SearchTerms->newEntity([
                     'words' => $keyword,
-                    'hits' => 0,
+                    'hits' => 1,
                     'match' => $productRelated ? true : false
                 ]);
 
@@ -738,6 +738,7 @@ class ProductsController extends Controller
                     $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                         'search_term_id' => $searchTermEntity->get('id'),
                         'browser_id' => $browser_id,
+                        'total' => $this->searchByKeywordCount($keyword),
                         'customer_id' => $customer_id
                     ]);
 
@@ -745,13 +746,14 @@ class ProductsController extends Controller
 
                     if ($productRelated) {
                         foreach($productRelated as $related) {
-                            if (strtolower($keyword) == $related['fill_text']) {
+                            if (strtolower($keyword) == $related['fill_text'] && $category_id) {
                                 $searchCategoryEntity = $this->SearchCategories->newEntity([
                                     'search_term_id' => $searchTermEntity->get('id'),
                                     'product_category_id' => $category_id ? $category_id : $related->product_category->id,
                                     'browser_id' => $browser_id
                                 ]);
                                 $this->SearchCategories->save($searchCategoryEntity);
+                                break;
                             }
                         }
                     }
@@ -769,6 +771,7 @@ class ProductsController extends Controller
                         $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                             'search_term_id' => $term->get('id'),
                             'browser_id' => $browser_id,
+                            'total' => $this->searchByKeywordCount($keyword),
                             'customer_id' => $customer_id
                         ]);
 
@@ -776,13 +779,14 @@ class ProductsController extends Controller
 
                         if ($productRelated) {
                             foreach($productRelated as $related) {
-                                if (strtolower($keyword) == $related['fill_text']) {
+                                if (strtolower($keyword) == $related['fill_text'] && $category_id) {
                                     $searchCategoryEntity = $this->SearchCategories->newEntity([
                                         'search_term_id' => $term->get('id'),
                                         'product_category_id' => $category_id,
                                         'browser_id' => $browser_id
                                     ]);
                                     $this->SearchCategories->save($searchCategoryEntity);
+                                    break;
                                 }
                             }
                         }
@@ -792,6 +796,27 @@ class ProductsController extends Controller
         }
 
 
+    }
+
+    protected function searchByKeywordCount($keywords)
+    {
+        $total = $this->Products->find();
+
+        $total = $total
+            ->select([
+                'count' => $total->func()->count('*'),
+            ])
+            ->where([
+                'MATCH (Products.name, Products.highlight_text) AGAINST (:search IN BOOLEAN MODE)',
+                'Products.product_status_id' => 1,
+                'Products.product_stock_status_id' => 1
+            ])
+            ->bind(':search', $keywords, 'string')
+            ->first();
+        if ($total) {
+            return $total->get('count');
+        }
+        return 0;
     }
 
 

@@ -9,6 +9,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $search_term_id
  * @property int $browser_id
+ * @property int $total
  * @property int $customer_id
  * @property \Cake\I18n\FrozenTime $created
  *
@@ -31,6 +32,7 @@ class SearchStat extends Entity
     protected $_accessible = [
         'search_term_id' => true,
         'browser_id' => true,
+        'total' => true,
         'customer_id' => true,
         'created' => true,
         'search_term' => true,
