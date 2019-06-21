@@ -738,7 +738,7 @@ class ProductsController extends Controller
                     $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                         'search_term_id' => $searchTermEntity->get('id'),
                         'browser_id' => $browser_id,
-                        'total' => $this->searchByKeywordCount($keyword),
+                        'total' => $this->searchByKeywordCount($keyword, $category_id),
                         'customer_id' => $customer_id
                     ]);
 
@@ -746,7 +746,7 @@ class ProductsController extends Controller
 
                     if ($productRelated) {
                         foreach($productRelated as $related) {
-                            if (strtolower($keyword) == $related['fill_text'] && $category_id) {
+                            if (strtolower($keyword) == $related['fill_text']) {
                                 $searchCategoryEntity = $this->SearchCategories->newEntity([
                                     'search_term_id' => $searchTermEntity->get('id'),
                                     'product_category_id' => $category_id ? $category_id : $related->product_category->id,
@@ -771,7 +771,7 @@ class ProductsController extends Controller
                         $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                             'search_term_id' => $term->get('id'),
                             'browser_id' => $browser_id,
-                            'total' => $this->searchByKeywordCount($keyword),
+                            'total' => $this->searchByKeywordCount($keyword, $category_id),
                             'customer_id' => $customer_id
                         ]);
 
@@ -779,7 +779,7 @@ class ProductsController extends Controller
 
                         if ($productRelated) {
                             foreach($productRelated as $related) {
-                                if (strtolower($keyword) == $related['fill_text'] && $category_id) {
+                                if (strtolower($keyword) == $related['fill_text']) {
                                     $searchCategoryEntity = $this->SearchCategories->newEntity([
                                         'search_term_id' => $term->get('id'),
                                         'product_category_id' => $category_id,
@@ -798,7 +798,7 @@ class ProductsController extends Controller
 
     }
 
-    protected function searchByKeywordCount($keywords)
+    protected function searchByKeywordCount($keywords, $category_id = null)
     {
         $total = $this->Products->find();
 
@@ -811,8 +811,21 @@ class ProductsController extends Controller
                 'Products.product_status_id' => 1,
                 'Products.product_stock_status_id' => 1
             ])
-            ->bind(':search', $keywords, 'string')
-            ->first();
+            ->bind(':search', $keywords, 'string');
+
+        if ($category_id) {
+            $total
+                ->leftJoin(['ProductToCategories' => 'product_to_categories'], [
+                'ProductToCategories.product_id = Products.id'
+            ])
+                ->where([
+                    'ProductToCategories.product_category_id' => $category_id
+                ]);
+        }
+
+
+        $total = $total->first();
+
         if ($total) {
             return $total->get('count');
         }
