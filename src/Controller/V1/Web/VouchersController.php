@@ -73,35 +73,35 @@ class VouchersController extends AppController
 
             $category = [];
             $categoryName = [];
-            if($row->voucher->type == '2'){
+            // if($row->voucher->type == '2'){
 
-                $row->active = false;
-                $categoryIn = [];
-                foreach($row->voucher->voucher_details as $k => $v){
-                    $category[] = $v['product_category_id'];
-                    $categoryIn[] = $v['product_category_id'];
+                // $row->active = false;
+                // $categoryIn = [];
+                // foreach($row->voucher->voucher_details as $k => $v){
+                    // $category[] = $v['product_category_id'];
+                    // $categoryIn[] = $v['product_category_id'];
 
-                    $categoryPath = $this->ProductCategories->find('path',['fields' => ['id','name', 'slug'],'for' => $v['product_category_id']])->toArray();
-                    $categoryName[] = $categoryPath[0]['name'].' '.$v['product_category']['name'];
-                }
+                    // $categoryPath = $this->ProductCategories->find('path',['fields' => ['id','name', 'slug'],'for' => $v['product_category_id']])->toArray();
+                    // $categoryName[] = $categoryPath[0]['name'].' '.$v['product_category']['name'];
+                // }
 
 
-                $query = $this->CustomerCarts->find()
-                    ->contain(['CustomerCartDetails'])
-                    ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(), 'CustomerCarts.status' => 1])
-                    ->first()
-                    ->toArray();
-                foreach($query['customer_cart_details'] as $vals){
-                    if(in_array($vals['status'], [1,5])){
-                        if(in_array($vals['product_category_id'],$categoryIn )){
-                            $row->active = true;
-                            break;
-                        }
-                    }
-                }
-            }else{
+                // $query = $this->CustomerCarts->find()
+                    // ->contain(['CustomerCartDetails'])
+                    // ->where(['CustomerCarts.customer_id' => $this->Authenticate->getId(), 'CustomerCarts.status' => 1])
+                    // ->first()
+                    // ->toArray();
+                // foreach($query['customer_cart_details'] as $vals){
+                    // if(in_array($vals['status'], [1,5])){
+                        // if(in_array($vals['product_category_id'],$categoryIn )){
+                            // $row->active = true;
+                            // break;
+                        // }
+                    // }
+                // }
+            // }else{
                 $row->active = true;
-            }
+            // }
 
             $row->category = $category;
             $row->category_name = $categoryName;
