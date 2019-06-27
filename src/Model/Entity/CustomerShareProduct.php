@@ -11,6 +11,7 @@ use Cake\ORM\Entity;
  * @property int|null $product_id
  * @property int|null $order_id
  * @property float|null $percentage
+ * @property boolean|null $credited
  * @property \Cake\I18n\FrozenTime|null $created
  *
  * @property \App\Model\Entity\Customer $customer
@@ -34,6 +35,7 @@ class CustomerShareProduct extends Entity
         'product_id' => true,
         'order_id' => true,
         'percentage' => true,
+        'credited' => true,
         'created' => true,
         'customer' => true,
         'product' => true,
