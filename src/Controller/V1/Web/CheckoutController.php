@@ -605,6 +605,7 @@ class CheckoutController extends AppController
         } else {
             $this->setResponse($this->response->withStatus(406, 'invalid step checkout'));
         }
+        //$data['cookie'] = json_decode($this->Tools->decrypt($this->request->getCookieParams()['share_product']), true);
 
 //        debug($data);
         $this->set(compact('data', 'error'));
