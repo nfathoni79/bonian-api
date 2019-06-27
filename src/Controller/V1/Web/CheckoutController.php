@@ -56,6 +56,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\CourriersTable $Courriers
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\TransactionsTable $Transactions
+ * @property \App\Model\Table\CustomerShareProductsTable $CustomerShareProducts
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -86,6 +87,7 @@ class CheckoutController extends AppController
         $this->loadModel('Products');
         $this->loadModel('CustomerCartDetails');
         $this->loadModel('Transactions');
+        $this->loadModel('CustomerShareProducts');
 
         $this->loadComponent('RajaOngkir');
 
@@ -1515,6 +1517,20 @@ class CheckoutController extends AppController
                                 $process_save_order = false;
                             }
 
+                        }
+
+                        //process save share products
+                        if ($share_product = $this->request->getCookie('share_product')) {
+                            $share_product_object = json_decode($this->Tools->decrypt($share_product), true);
+                            if ($share_product_object && is_array($share_product_object) && isset($share_product_object['customer_id'])) {
+                                $shareProductEntity = $this->CustomerShareProducts->newEntity([
+                                    'customer_id' => $share_product_object['customer_id'],
+                                    'product_id' => $share_product_object['product_id'],
+                                    'order_id' => $orderEntity->id,
+                                    'percentage' => Configure::read('sharing_percentage', 0.01)
+                                ]);
+                                $this->CustomerShareProducts->save($shareProductEntity);
+                            }
                         }
 
 
