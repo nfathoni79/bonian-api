@@ -27,6 +27,7 @@ use Cake\ORM\Entity;
  * @property \App\Model\Entity\ProductPromotion $product_promotion
  * @property \App\Model\Entity\OrderDetail[] $order_details
  * @property \App\Model\Entity\OrderDigital $order_digital
+ * @property \App\Model\Entity\CustomerShareProduct[] $customer_share_products
  */
 class Order extends Entity
 {
@@ -65,5 +66,6 @@ class Order extends Entity
         'discount_voucher' => true,
         'discount_kupon' => true,
         'product_coupon_id' => true,
+        'customer_share_products' => true,
     ];
 }

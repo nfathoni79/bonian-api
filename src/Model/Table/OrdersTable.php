@@ -14,6 +14,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\ProductPromotionsTable|\Cake\ORM\Association\BelongsTo $ProductPromotions
  * @property \App\Model\Table\OrderDetailsTable|\Cake\ORM\Association\HasMany $OrderDetails
  * @property \App\Model\Table\OrderDigitalsTable|\Cake\ORM\Association\hasOne $OrderDigitals
+ * @property \App\Model\Table\CustomerShareProductsTable|\Cake\ORM\Association\HasMany $CustomerShareProducts
  *
  * @method \App\Model\Entity\Order get($primaryKey, $options = [])
  * @method \App\Model\Entity\Order newEntity($data = null, array $options = [])
@@ -79,6 +80,9 @@ class OrdersTable extends Table
             'foreignKey' => 'order_id'
         ]);
         $this->hasOne('OrderDigitals', [
+            'foreignKey' => 'order_id'
+        ]);
+        $this->hasMany('CustomerShareProducts', [
             'foreignKey' => 'order_id'
         ]);
     }
