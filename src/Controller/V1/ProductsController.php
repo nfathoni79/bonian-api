@@ -589,7 +589,12 @@ class ProductsController extends Controller
                 'clicked' => $this->request->getData('clicked') ? true : false
             ]);
 
-            $this->ShareStatistics->save($shareStatisticEntity);
+            if ($this->ShareStatistics->save($shareStatisticEntity)) {
+                $data = $this->Tools->encrypt(json_encode([
+                    'customer_id' => $customerEntity->id,
+                    'product_id' => $shareStatisticEntity->product_id
+                ]));
+            }
 
         } else {
             $this->setResponse($this->response->withStatus(406));
