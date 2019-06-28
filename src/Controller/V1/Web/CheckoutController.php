@@ -57,6 +57,7 @@ use Cake\Cache\Cache;
  * @property \App\Model\Table\ProductsTable $Products
  * @property \App\Model\Table\TransactionsTable $Transactions
  * @property \App\Model\Table\CustomerShareProductsTable $CustomerShareProducts
+ * @property \App\Model\Table\ShareStatisticsTable $ShareStatistics
  * @property \App\Controller\Component\RajaOngkirComponent $RajaOngkir
  *
  * @link https://book.cakephp.org/3.0/en/controllers/pages-controller.html
@@ -88,6 +89,7 @@ class CheckoutController extends AppController
         $this->loadModel('CustomerCartDetails');
         $this->loadModel('Transactions');
         $this->loadModel('CustomerShareProducts');
+        $this->loadModel('ShareStatistics');
 
         $this->loadComponent('RajaOngkir');
 
@@ -1524,13 +1526,22 @@ class CheckoutController extends AppController
                             $share_product_object = json_decode($this->Tools->decrypt($share_product), true);
                             if ($share_product_object && is_array($share_product_object) && isset($share_product_object['customer_id'])) {
                                 if ($share_product_object['customer_id'] != $orderEntity->customer_id) {
-                                    $shareProductEntity = $this->CustomerShareProducts->newEntity([
-                                        'customer_id' => $share_product_object['customer_id'],
-                                        'product_id' => $share_product_object['product_id'],
-                                        'order_id' => $orderEntity->id,
-                                        'percentage' => Configure::read('sharing_percentage', 0.01)
-                                    ]);
-                                    $this->CustomerShareProducts->save($shareProductEntity);
+                                    $checkExists = $this->ShareStatistics->find()
+                                        ->where([
+                                            'customer_id' => $share_product_object['customer_id'],
+                                            'product_id' => $share_product_object['product_id'],
+                                            'clicked' => 1
+                                        ])->count();
+
+                                    if ($checkExists > 0) {
+                                        $shareProductEntity = $this->CustomerShareProducts->newEntity([
+                                            'customer_id' => $share_product_object['customer_id'],
+                                            'product_id' => $share_product_object['product_id'],
+                                            'order_id' => $orderEntity->id,
+                                            'percentage' => Configure::read('sharing_percentage', 0.01)
+                                        ]);
+                                        $this->CustomerShareProducts->save($shareProductEntity);
+                                    }
                                 }
                             }
                         }
