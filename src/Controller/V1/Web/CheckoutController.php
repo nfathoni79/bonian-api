@@ -1523,13 +1523,15 @@ class CheckoutController extends AppController
                         if ($share_product = $this->request->getCookie('share_product')) {
                             $share_product_object = json_decode($this->Tools->decrypt($share_product), true);
                             if ($share_product_object && is_array($share_product_object) && isset($share_product_object['customer_id'])) {
-                                $shareProductEntity = $this->CustomerShareProducts->newEntity([
-                                    'customer_id' => $share_product_object['customer_id'],
-                                    'product_id' => $share_product_object['product_id'],
-                                    'order_id' => $orderEntity->id,
-                                    'percentage' => Configure::read('sharing_percentage', 0.01)
-                                ]);
-                                $this->CustomerShareProducts->save($shareProductEntity);
+                                if ($share_product_object['customer_id'] != $orderEntity->customer_id) {
+                                    $shareProductEntity = $this->CustomerShareProducts->newEntity([
+                                        'customer_id' => $share_product_object['customer_id'],
+                                        'product_id' => $share_product_object['product_id'],
+                                        'order_id' => $orderEntity->id,
+                                        'percentage' => Configure::read('sharing_percentage', 0.01)
+                                    ]);
+                                    $this->CustomerShareProducts->save($shareProductEntity);
+                                }
                             }
                         }
 
