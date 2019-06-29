@@ -52,25 +52,49 @@ class LeaderboardsController extends AppController
         FrozenTime::setToStringFormat($timeJsonFormat);
 
         $user_id = $this->Authenticate->getId();
-        $generations = $this->Generations->find()
-            ->contain([
-                'Refferals'
-            ]);
-        $generations->select([
-            'Generations.refferal_id',
-            'username' => 'Refferals.username',
-            'reffcode' => 'Refferals.reffcode',
-            'last_active' => 'Refferals.modified',
-            'count' => $generations->func()->count('Generations.refferal_id')
-        ])
-            ->where(['Generations.level' => 1])
-            ->group('Generations.refferal_id')
-            ->limit(100);
-        $generations->orderDesc('count');
 
-        $data = $this->paginate($generations, [
+        $generations = $this->Generations->find()
+            ->select([
+                'count' => 'COUNT(Generations.refferal_id)'
+            ])
+            ->where([
+                'Generations.refferal_id = Customers.id',
+                'Generations.level' => 1
+            ])
+            ->group('Generations.refferal_id');
+
+        $customers = $this->Customers->find()
+            ->select([
+                'Customers.id',
+                'Customers.username',
+                'Customers.reffcode',
+                'Customers.first_name',
+                'Customers.last_name',
+                'total' => $generations,
+            ])
+            ->where([
+                'Customers.is_verified' => 1,
+                'Customers.is_email_verified' => 1,
+            ]);
+
+        if(!empty($this->request->getQuery('search'))){
+            $search = trim($this->request->getQuery('search'));
+            $customers->where(function (\Cake\Database\Expression\QueryExpression $exp) use($search){
+                $orConditions = $exp->or_([
+                    'Customers.username LIKE' => '%' . $search .'%',
+                    'Customers.reffcode LIKE' => '%' . $search .'%',
+                ]);
+                return $exp
+                    ->add($orConditions);
+            });
+        }
+
+        $data = $this->paginate($customers, [
             'limit' => (int) $this->request->getQuery('limit', 5)
-        ]);
+        ])->map(function (\App\Model\Entity\Customer $row) {
+            $row->total = ($row->total === null) ? '0' : $row->total;
+            return $row;
+        });
         $this->set(compact('data'));
 
     }
