@@ -163,6 +163,11 @@ class LoginController extends AppController
             ->notBlank('email', 'Email atau nomor telepon tidak boleh kosong')
             ->add('email', 'exists', [
                 'rule' => function($value) {
+
+                    if(preg_match('/^08/',$value)){
+                        $value = '+62'.substr(trim($value), 1);
+                    }
+
                     return $this->Customers->find()
                         ->where([
                             'OR' => [
@@ -182,6 +187,11 @@ class LoginController extends AppController
             /**
              * @var \App\Model\Entity\Customer $user
              */
+
+            if(preg_match('/^08/',$username)){
+                $username = '+62'.substr(trim($username), 1);
+            }
+
             $user = $this->Customers->find()
                 ->select([
                     'id',
