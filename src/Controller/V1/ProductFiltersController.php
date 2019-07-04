@@ -657,21 +657,33 @@ class ProductFiltersController extends Controller
             $subquery = null;
             if (is_array($variants)) {
                 $variants = array_values($variants);
+
+                $find_in_set = [];
+                foreach($variants as $val) {
+                    $val = (int) $val;
+                    $find_in_set[] = "FIND_IN_SET($val, grp_cnt) > 0";
+                }
+
                 $subquery = $this->ProductOptionValueLists->find()
                     ->select([
-                        'Product.id'
+                        'Product.id',
+                        'grp_cnt' => '(GROUP_CONCAT(DISTINCT ProductOptionValueLists.option_value_id))'
                     ])
                     ->where([
                         'ProductOptionValueLists.option_value_id IN' => $variants,
                         'Products.id = Product.id'
                     ])
-                    ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
+                    ->innerJoin(['ProductOptionPrices' => 'product_option_prices'], [
                         'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
                     ])
-                    ->leftJoin(['Product' => 'products'], [
+                    ->innerJoin(['Product' => 'products'], [
                         'ProductOptionPrices.product_id = Product.id'
                     ])
-                    ->group('Product.id');
+                    ->group([
+                        'Product.id'
+                    ])
+                    ->having($find_in_set);
+
 
             }
 
