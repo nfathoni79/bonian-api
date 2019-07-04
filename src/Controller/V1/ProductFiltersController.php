@@ -665,10 +665,10 @@ class ProductFiltersController extends Controller
                         'ProductOptionValueLists.option_value_id IN' => $variants,
                         'Products.id = Product.id'
                     ])
-                    ->leftJoin(['ProductOptionPrices' => 'product_option_prices'], [
+                    ->innerJoin(['ProductOptionPrices' => 'product_option_prices'], [
                         'ProductOptionValueLists.product_option_price_id = ProductOptionPrices.id'
                     ])
-                    ->leftJoin(['Product' => 'products'], [
+                    ->innerJoin(['Product' => 'products'], [
                         'ProductOptionPrices.product_id = Product.id'
                     ])
                     ->group('Product.id');
