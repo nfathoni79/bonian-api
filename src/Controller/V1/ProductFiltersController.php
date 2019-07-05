@@ -707,7 +707,8 @@ class ProductFiltersController extends Controller
                 ])
                 ->leftJoinWith('ProductToCategories')
                 ->where([
-                   'Products.product_status_id' => 1
+                    'Products.product_status_id' => 1,
+                    'Products.product_stock_status_id' => 1
                 ]);
 
 
