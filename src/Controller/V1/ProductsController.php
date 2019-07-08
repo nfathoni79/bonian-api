@@ -255,7 +255,7 @@ class ProductsController extends Controller
 
 
 
-        if ($product) {
+        if ($product && $this->request->getQuery('counter') != '0') {
             $saveProduct = clone $product;
             $saveProduct->set('view', $saveProduct->get('view') + 1);
             $this->Products->save($saveProduct);
