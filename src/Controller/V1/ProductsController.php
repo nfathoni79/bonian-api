@@ -255,11 +255,13 @@ class ProductsController extends Controller
 
 
 
-        if ($product && $this->request->getQuery('counter') != '0') {
-            $saveProduct = clone $product;
-            $saveProduct->set('view', $saveProduct->get('view') + 1);
-            $this->Products->save($saveProduct);
-            //unset($product->modified);
+        if ($product) {
+            if ( $this->request->getQuery('counter') != '0') {
+                $saveProduct = clone $product;
+                $saveProduct->set('view', $saveProduct->get('view') + 1);
+                $this->Products->save($saveProduct);
+                //unset($product->modified);
+            }
         } else {
             //if product not found set response code to 404
             $this->setResponse($this->response->withStatus(404, 'Product not found'));
