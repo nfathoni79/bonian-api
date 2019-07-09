@@ -729,7 +729,7 @@ class ProductsController extends Controller
 
             $searchTermEntity = $this->SearchTerms->find()
                 ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($keyword) {
-                    return $exp->like('words', '%' . $keyword . '%');
+                    return $exp->like('words', $keyword);
                 })
                 ->orderDesc('hits')
                 ->limit(1);
@@ -779,7 +779,7 @@ class ProductsController extends Controller
                         $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                             'search_term_id' => $term->get('id'),
                             'browser_id' => $browser_id,
-                            'total' => $this->searchByKeywordCount($keyword, $category_id),
+                            //'total' => $this->searchByKeywordCount($keyword, $category_id),
                             'customer_id' => $customer_id
                         ]);
 
@@ -791,7 +791,8 @@ class ProductsController extends Controller
                                     $searchCategoryEntity = $this->SearchCategories->newEntity([
                                         'search_term_id' => $term->get('id'),
                                         'product_category_id' => $category_id,
-                                        'browser_id' => $browser_id
+                                        'browser_id' => $browser_id,
+                                        'total' => $this->searchByKeywordCount($keyword, $category_id)
                                     ]);
                                     $this->SearchCategories->save($searchCategoryEntity);
                                     break;
