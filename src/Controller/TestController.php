@@ -222,6 +222,36 @@ class TestController extends AppController
 
     }
 
+    public function generation()
+    {
+        $this->disableAutoRender();
+        $this->loadModel('Generations');
+        $this->loadModel('Customers');
+
+        $generations = $this->Generations->find()
+            ->select([
+                'count' => 'COUNT(Generations.refferal_id)'
+            ])
+            ->where([
+                'Generations.refferal_id = Customers.id',
+                'Generations.level' => 1
+            ])
+            ->group('Generations.refferal_id');
+
+        $customers = $this->Customers->find()
+            ->select([
+                'Customers.id',
+                'Customers.username',
+                'total' => $generations,
+            ])
+            ->where([
+                'Customers.is_verified' => 1,
+                'Customers.is_email_verified' => 1,
+            ]);
+
+        debug($customers->toArray());
+    }
+
 
 
 

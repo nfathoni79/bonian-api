@@ -745,7 +745,7 @@ class ProductsController extends Controller
                     $searchStatEntity = $this->SearchTerms->SearchStats->newEntity([
                         'search_term_id' => $searchTermEntity->get('id'),
                         'browser_id' => $browser_id,
-                        'total' => $this->searchByKeywordCount($keyword, $category_id),
+                        //'total' => $this->searchByKeywordCount($keyword, $category_id),
                         'customer_id' => $customer_id
                     ]);
 
@@ -757,6 +757,7 @@ class ProductsController extends Controller
                                 $searchCategoryEntity = $this->SearchCategories->newEntity([
                                     'search_term_id' => $searchTermEntity->get('id'),
                                     'product_category_id' => $category_id ? $category_id : $related->product_category->id,
+                                    'total' => $this->searchByKeywordCount($keyword, $category_id),
                                     'browser_id' => $browser_id
                                 ]);
                                 $this->SearchCategories->save($searchCategoryEntity);
