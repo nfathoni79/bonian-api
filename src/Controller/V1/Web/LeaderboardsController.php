@@ -82,6 +82,8 @@ class LeaderboardsController extends AppController
             $customers->where(function (\Cake\Database\Expression\QueryExpression $exp) use($search){
                 $orConditions = $exp->or_([
                     'Customers.username LIKE' => '%' . $search .'%',
+                    'Customers.first_name LIKE' => '%' . $search .'%',
+                    'Customers.last_name LIKE' => '%' . $search .'%',
                     'Customers.reffcode LIKE' => '%' . $search .'%',
                 ]);
                 return $exp
