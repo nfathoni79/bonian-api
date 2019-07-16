@@ -658,11 +658,33 @@ class ProductFiltersController extends Controller
             if (is_array($variants)) {
                 $variants = array_values($variants);
 
+                $option_values = $this->ProductOptionValueLists->OptionValues->find()
+                    ->select([
+                        'id', 'option_id'
+                    ])
+                    ->where([
+                        'OptionValues.id IN' => $variants
+                    ]);
+
                 $find_in_set = [];
-                foreach($variants as $val) {
-                    $val = (int) $val;
-                    $find_in_set[] = "FIND_IN_SET($val, grp_cnt) > 0";
+                if (!$option_values->isEmpty()) {
+                    $results = Hash::combine($option_values->toArray(), '{n}.id', '{n}.id', '{n}.option_id');
+                    if ($results) {
+                        foreach($results as $option_id => $values) {
+                            $values = array_values($values);
+                            $new_values = [];
+                            foreach($values as $set) {
+                                $new_values[] = "FIND_IN_SET($set, grp_cnt) > 0";
+                            }
+                            if (count($new_values) > 0) {
+                                $find_in_set[] = '(' . join(' OR ', $new_values) . ')';
+                            }
+
+                        }
+                    }
+
                 }
+
 
                 $subquery = $this->ProductOptionValueLists->find()
                     ->select([
@@ -681,8 +703,11 @@ class ProductFiltersController extends Controller
                     ])
                     ->group([
                         'Product.id'
-                    ])
-                    ->having($find_in_set);
+                    ]);
+
+                if(count($find_in_set) > 0) {
+                    $subquery->having(join(' AND ', $find_in_set));
+                }
 
 
             }
