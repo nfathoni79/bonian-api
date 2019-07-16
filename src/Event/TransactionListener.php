@@ -132,6 +132,30 @@ class TransactionListener implements EventListenerInterface
                                 $orderEntity->order_digital->set('status', 99);
                                 $this->Orders->OrderDigitals->save($orderEntity->order_digital);
 
+                                if (property_exists($subject, 'Notification')) {
+                                    //sent notification
+                                    if ($this->Notification->create(
+                                        $orderEntity->customer_id,
+                                        '1',
+                                        'Pembayaran telah dikonfirmasi',
+                                        vsprintf('Konfirmasi pembayaran sebesar %s dengan nomor invoice %s telah diterima', [
+                                            Number::format($orderEntity->total),
+                                            $orderEntity->invoice
+                                        ]),
+                                        'Orders',
+                                        $orderEntity->id,
+                                        1,
+                                        $this->Notification->getImageConfirmationPath(),
+                                        '/user/history/detail/' . $orderEntity->invoice
+                                    )) {
+
+                                        $this->Notification->triggerCount(
+                                            $orderEntity->customer_id,
+                                            $orderEntity->customer->reffcode
+                                        );
+                                    }
+                                }
+
 
                             } catch(\GuzzleHttp\Exception\ClientException $e) {
                                 //debug($e->getMessage());
