@@ -569,7 +569,7 @@ class PaymentController extends AppController
                                     break;
                                 default:
                                     $data['payment_status'] = 'failed';
-                                    $this->setResponse($this->response->withStatus(406, 'Proses payment gagal 1'));
+                                    $this->setResponse($this->response->withStatus(406, 'Proses pembayaran Gagal, pastikan anda menginput PIN yang tepat, Jika masih berlanjut silahkan hubungi Bank Kartu anda'));
                                     break;
                             }
 
