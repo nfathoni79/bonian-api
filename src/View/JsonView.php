@@ -26,7 +26,7 @@ class JsonView extends View
 
 
         $this->response = $this->response->withType('json')
-                ->withAddedHeader('Access-Control-Allow-Headers', 'Content-Type, api_key, Authorization')
+                ->withAddedHeader('Access-Control-Allow-Headers', 'Content-Type, api_key, Authorization, bid, callback, User-Agent')
                 ->withAddedHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
                 ->withAddedHeader('Access-Control-Allow-Origin', '*');
 
