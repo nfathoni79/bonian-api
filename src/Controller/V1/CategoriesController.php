@@ -43,7 +43,7 @@ class CategoriesController extends Controller
                         }
                     }
                 }
-                unset($row->id);
+                //unset($row->id);
                 unset($row->parent_id);
                 return $row;
             })
