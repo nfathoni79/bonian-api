@@ -178,6 +178,7 @@ class LoginController extends AppController
                 },
                 'message' => 'Email atau nomor telepon tidak terdaftar'
             ])
+            ->requirePresence('password', 'created', 'Tidak boleh kosong')
             ->notBlank('password', 'Tidak boleh kosong');
 
 
