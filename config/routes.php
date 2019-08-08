@@ -107,6 +107,10 @@ Router::scope('/apis', function (RouteBuilder $routes) {
 Router::prefix('v1', function (RouteBuilder $routes) {
     // All routes here will be prefixed with `/admin`
     // And have the prefix => admin route element added.
+    $routes->registerMiddleware('cors', new CorsMiddleware());
+    $routes->applyMiddleware('cors');
+
+
     $routes->prefix('web', function(RouteBuilder $routes) {
 
         $routes->registerMiddleware('cors', new CorsMiddleware());
@@ -138,6 +142,8 @@ Router::prefix('v1', function (RouteBuilder $routes) {
         $routes->connect('/:controller/:action');
         $routes->connect('/:controller/:action/*');
     });
+
+
 
     $routes->connect('/:controller');
     $routes->connect('/:controller/:action');
