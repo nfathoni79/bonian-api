@@ -38,7 +38,7 @@ class ForgotPasswordController extends Controller
 
     public function index()
     {
-        $this->request->allowMethod('post');
+        $this->request->allowMethod(['options', 'post']);
 
 
         $validator = new Validator();
@@ -123,7 +123,7 @@ class ForgotPasswordController extends Controller
 
     public function otp()
     {
-        $this->request->allowMethod('post');
+        $this->request->allowMethod(['options', 'post']);
         $validator = new Validator();
 
 
@@ -175,7 +175,7 @@ class ForgotPasswordController extends Controller
 
     public function setPassword()
     {
-        $this->request->allowMethod('post');
+        $this->request->allowMethod(['options', 'post']);
 
 
 
