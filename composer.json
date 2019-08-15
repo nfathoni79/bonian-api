@@ -20,7 +20,7 @@
         "pusher/pusher-php-server": "^3.4",
         "react/socket": "^1.2",
         "socialconnect/auth": "^2.1",
-        "veritrans/veritrans-php": "^1.2"
+        "veritrans/veritrans-php": "dev-master"
     },
     "require-dev": {
         "cakephp/bake": "^1.9.0",
