@@ -104,7 +104,7 @@ class IpnController extends AppController
                     $transactionEntity = $this->Transactions->find()
                         ->where([
                             'order_id' => $orderEntity->get('id'),
-                            'transaction_id' => $content['transaction_id']
+                            //'transaction_id' => $content['transaction_id'] //will be remove midtrans snap
                         ])
                         ->first();
 

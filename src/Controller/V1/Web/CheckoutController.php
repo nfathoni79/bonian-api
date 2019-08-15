@@ -924,6 +924,7 @@ class CheckoutController extends AppController
         $this->request->allowMethod('post');
         //debug($this->request->getData());
 
+
         $customer_id = $this->Authenticate->getId();
 
         $validator = new Validator();
@@ -1666,8 +1667,11 @@ class CheckoutController extends AppController
                         $charge = [
                             'transaction_id' => Text::uuid(),
                             'transaction_time' => date('Y-m-d H:i:s'),
+                            'transaction_status' => 'pending',
                             'gross_amount' => $orderEntity->total,
+                            'payment_type' => 'online_payment'
                         ];
+
 
                         \Veritrans_Config::$serverKey = Configure::read('Midtrans.serverKey');
                         //\Veritrans_Config::$isSanitized = true;
