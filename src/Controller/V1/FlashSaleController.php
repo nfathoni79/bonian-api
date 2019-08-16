@@ -148,7 +148,8 @@ class FlashSaleController extends Controller
             ->select([
                 'id',
                 'time' => 'TIME(date_start)',
-                'date_start'
+                'date_start',
+                'status'
             ])
             ->where(['status != ' => 2])
             ->limit(3)
@@ -162,8 +163,7 @@ class FlashSaleController extends Controller
             ->select([
                 'start' => 'ProductDeals.date_start',
                 'end' => 'ProductDeals.date_end',
-                'id',
-                'status'
+                'id'
             ])
             ->contain([
                 'ProductDealDetails' => [
