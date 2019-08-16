@@ -162,7 +162,8 @@ class FlashSaleController extends Controller
             ->select([
                 'start' => 'ProductDeals.date_start',
                 'end' => 'ProductDeals.date_end',
-                'id'
+                'id',
+                'status'
             ])
             ->contain([
                 'ProductDealDetails' => [
