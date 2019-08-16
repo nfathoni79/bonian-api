@@ -32,7 +32,7 @@ class CategoriesController extends Controller
                     foreach ($row['children'] as $key => $vals){
 //                        unset($row->children[$key]->id);
                         unset($row->children[$key]->parent_id);
-                        unset($row->children[$key]->path);
+//                        unset($row->children[$key]->path);
                         if(is_array($vals['children'])){
                             foreach ($vals['children'] as $k => $v){
 //                                unset($row->children[$key]->children[$k]->id);
