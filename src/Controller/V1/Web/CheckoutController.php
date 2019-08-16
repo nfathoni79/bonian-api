@@ -1143,7 +1143,7 @@ class CheckoutController extends AppController
                 foreach ($cart as $origin_id => $item) {
                     $subtotal = 0;
                     foreach ($item['data'] as $val) {
-                        $trx->addItem($val['product_id'], $val['price'] + $val['add_price'], $val['qty'], $val['name']);
+                        $trx->addItem($val['product_id'], $val['price'] + $val['add_price'], $val['qty'], Text::truncate($val['name'], 50));
                         $subtotal += $val['price'] * $val['qty'];
                         $gross_total += ($val['price'] + $val['add_price']) * $val['qty'];
                         //debug($val);
