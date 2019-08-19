@@ -270,14 +270,15 @@ class PaymentController extends AppController
 
         $validator->requirePresence('payment_method')
             ->inList('payment_method', [
-                'credit_card',
+                /*'credit_card',
                 'mandiri_billpayment',
                 'bca_va',
                 'permata_va',
                 'bni_va',
                 'bca_klikpay',
                 'mandiri_clickpay',
-                'gopay',
+                'gopay',*/
+                'online_payment',
                 'wallet'
             ]);
 
@@ -489,6 +490,10 @@ class PaymentController extends AppController
                     }
                     break;
 
+                case 'online_payment':
+                    $payment = null;
+                    break;
+
                 default:
                     $payment = null;
                     break;
@@ -597,7 +602,52 @@ class PaymentController extends AppController
                         $process_payment_charge = false;
 
                     }
-                } else if ($payment_method == 'wallet') {
+                }
+                else if ($payment_method == 'online_payment') {
+                    //midtrans snap here
+
+                    $charge = [
+                        'transaction_id' => Text::uuid(),
+                        'transaction_time' => date('Y-m-d H:i:s'),
+                        'transaction_status' => 'pending',
+                        'gross_amount' => $orderEntity->total,
+                        'payment_type' => 'online_payment'
+                    ];
+
+
+                    \Veritrans_Config::$serverKey = Configure::read('Midtrans.serverKey');
+                    //\Veritrans_Config::$isSanitized = true;
+                    \Veritrans_Config::$is3ds = true;
+
+                    $data_transactions = $trx->toObject();
+                    $customer_details = [
+                        'first_name'    => $customerEntity->get('first_name'),
+                        'last_name'     => $customerEntity->get('last_name'),
+                        'email'         => $customerEntity->get('email'),
+                        'phone'         => $customerEntity->get('phone'),
+                        'billing_address'  => isset($addresses) ? $addresses->get('address') : '',
+                        'shipping_address' => isset($addresses) ? $addresses->get('address'): ''
+
+
+                    ];
+
+                    // Fill transaction details
+                    $transaction = array(
+                        'enabled_payments' => [],
+                        'transaction_details' => $data_transactions['transaction_details'],
+                        'customer_details' => $customer_details,
+                        'item_details' => $data_transactions['item_details'],
+                    );
+
+                    try {
+                        $data['snap_token'] = \Veritrans_Snap::getSnapToken($transaction);
+                    } catch(\Exception $e) {
+                        $this->setResponse($this->response->withStatus(406, $e->getMessage()));
+                        $process_payment_charge = false;
+                    }
+                }
+
+                else if ($payment_method == 'wallet') {
                     $charge = [
                         'transaction_id' => Text::uuid(),
                         'transaction_time' => date('Y-m-d H:i:s'),
