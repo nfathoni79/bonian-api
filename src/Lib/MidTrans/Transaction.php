@@ -70,6 +70,14 @@ class Transaction
     }
 
     /**
+     * @return mixed
+     */
+    public function getInvoice()
+    {
+        return $this->transaction_details['order_id'];
+    }
+
+    /**
      * @return array
      */
     public function getItems()
