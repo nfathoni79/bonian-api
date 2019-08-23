@@ -76,7 +76,7 @@ class IpnController extends AppController
                 }
 
             $tick = 1;
-            while($tick <= 15) {
+            while($tick <= Configure::read('ipn_timeout', 30)) {
 
                 /**
                  * @var \App\Model\Entity\Order $orderEntity
