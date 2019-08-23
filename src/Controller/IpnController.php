@@ -75,6 +75,9 @@ class IpnController extends AppController
                         break;
                 }
 
+            $tick = 1;
+            while($tick <= 15) {
+
                 /**
                  * @var \App\Model\Entity\Order $orderEntity
                  */
@@ -97,6 +100,14 @@ class IpnController extends AppController
                     ->first();
 
                 if ($orderEntity) {
+                    break;
+                }
+
+                $tick++;
+                sleep(1);
+            }
+
+                if ($orderEntity) {
 
                     /**
                      * @var \App\Model\Entity\Transaction $transactionEntity
@@ -107,6 +118,7 @@ class IpnController extends AppController
                             //'transaction_id' => $content['transaction_id'] //will be remove midtrans snap
                         ])
                         ->first();
+
 
                     if ($transactionEntity) {
                         $this->Transactions->patchEntity($transactionEntity, $content);
