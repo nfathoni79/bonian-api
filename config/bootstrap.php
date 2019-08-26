@@ -172,6 +172,13 @@ Cache::setConfig('checkout', [
     'prefix' => 'customer_checkout_'
 ]);
 
+Cache::setConfig('payment', [
+    'className' => 'File',
+    'duration' => '+7 days',
+    'path' => CACHE  . 'payment' . DS,
+    'prefix' => 'customer_payment_'
+]);
+
 Cache::setConfig('change_phone', [
     'className' => 'File',
     'duration' => '+30 minutes',

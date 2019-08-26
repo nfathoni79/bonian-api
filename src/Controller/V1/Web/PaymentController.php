@@ -216,6 +216,70 @@ class PaymentController extends AppController
         $this->set(compact('data'));
     }
 
+    protected function getStorageKey()
+    {
+        //get current cart_id
+        if ($this->cacheKey) {
+            return $this->cacheKey;
+        }
+
+        if ($inquiry_id = $this->request->getData('inquiry_id')) {
+            return $this->cacheKey = $this->Authenticate->getId() . '_' . $inquiry_id;
+        }
+
+        return $this->Authenticate->getId();
+    }
+
+    function createSnapToken(Transaction $trx, \App\Model\Entity\Customer $customerEntity, &$cache)
+    {
+        \Veritrans_Config::$serverKey = Configure::read('Midtrans.serverKey');
+        //\Veritrans_Config::$isSanitized = true;
+        \Veritrans_Config::$is3ds = true;
+
+        $data_transactions = $trx->toObject();
+        $customer_details = [
+            'first_name'    => $customerEntity->get('first_name'),
+            'last_name'     => $customerEntity->get('last_name'),
+            'email'         => $customerEntity->get('email'),
+            'phone'         => $customerEntity->get('phone'),
+            'billing_address'  => isset($addresses) ? $addresses->get('address') : '',
+            'shipping_address' => isset($addresses) ? $addresses->get('address') : ''
+
+
+        ];
+
+        // Fill transaction details
+        $transaction = array(
+            'enabled_payments' => [],
+            'transaction_details' => $data_transactions['transaction_details'],
+            'customer_details' => $customer_details,
+            'item_details' => $data_transactions['item_details'],
+        );
+
+        $snap_token = null;
+
+        try {
+            $snap_token = \Veritrans_Snap::getSnapToken($transaction);
+            $cache['invoice'] = $trx->getInvoice();
+            $cache['snap_token'] = $snap_token; //write snap token to cache
+            Cache::write($this->getStorageKey(), $cache, 'payment');
+
+        } catch(\Exception $e) {
+            $this->setResponse($this->response->withStatus(406, $e->getMessage()));
+        }
+
+        return $this->response->withType('application/json')
+            ->withStringBody(json_encode([
+                'status' => $this->response->getStatusCode() == 200 ? 'OK' : 'ERROR',
+                'code' => $this->response->getStatusCode(),
+                'result' => [
+                    'data' => [
+                        'snap_token' => $snap_token
+                    ]
+                ]
+            ]));
+    }
+
     public function process()
     {
 
@@ -245,8 +309,14 @@ class PaymentController extends AppController
             'message' => 'Maaf akun anda belum terverifikasi, silahkan verifikasi akun terlebih dahulu'
         ]);
 
-        $invoice = strtoupper(date('ymdHs') . Security::randomString(4));
-        $trx = new Transaction($invoice);
+        $validator->add('snap_token', 'valid_token', [
+            'rule' => function($value) {
+                $cache = Cache::read($this->getStorageKey(), 'payment');
+                return isset($cache['snap_token']) && $cache['snap_token'] == $value;
+            },
+            'message' => 'Invalid snap token'
+        ]);
+
 
         switch($this->request->getData('type')) {
             case 'pulsa':
@@ -362,6 +432,11 @@ class PaymentController extends AppController
             } catch(\Exception $e) {
 
             }
+
+            $cache = Cache::read($this->getStorageKey(), 'payment');
+
+            $invoice = !empty($cache['invoice']) ? $cache['invoice'] : strtoupper(date('ymdHs') . Security::randomString(4));
+            $trx = new Transaction($invoice);
 
             //check is inquiry_id
             if ($inquiry_id = $this->request->getData('inquiry_id')) {
@@ -492,6 +567,9 @@ class PaymentController extends AppController
 
                 case 'online_payment':
                     $payment = null;
+                    if (!$snap_token = $this->request->getData('snap_token')) {
+                        return $this->createSnapToken($trx, $customerEntity, $cache);
+                    }
                     break;
 
                 default:
@@ -614,7 +692,7 @@ class PaymentController extends AppController
                         'payment_type' => 'online_payment'
                     ];
 
-
+                    /*
                     \Veritrans_Config::$serverKey = Configure::read('Midtrans.serverKey');
                     //\Veritrans_Config::$isSanitized = true;
                     \Veritrans_Config::$is3ds = true;
@@ -645,11 +723,13 @@ class PaymentController extends AppController
                         $this->setResponse($this->response->withStatus(406, $e->getMessage()));
                         $process_payment_charge = false;
                     }
+                    */
+
                 }
 
                 else if ($payment_method == 'wallet') {
                     $charge = [
-                        'transaction_id' => Text::uuid(),
+                        'transaction_id' => !empty($cache['snap_token']) ? $cache['snap_token'] : Text::uuid(),
                         'transaction_time' => date('Y-m-d H:i:s'),
                         'transaction_status' => 'success',
                         'status_code' => 200,
