@@ -63,6 +63,20 @@ class CustomersController extends AppController
             ->limit(5)
             ->map(function($row) {
                 $ua = parse_user_agent($row->browser);
+                //TODO
+
+                if (empty($ua['platform'])) {
+                    switch ($ua['browser']) {
+                        case 'okhttp':
+                            $ua['platform'] = 'Android';
+                            break;
+                        default:
+                            $ua['platform'] = 'Unknown';
+                            break;
+                    }
+                }
+
+
                 $row->device = $ua;
                 return $row;
             });
