@@ -176,7 +176,8 @@ class AddressesController extends AppController
                     ])
                     ->where(function(\Cake\Database\Expression\QueryExpression $exp) use($entity) {
                         return $exp->notEq('CustomerAddreses.id', $entity->get('id'));
-                    });
+                    })
+                    ->execute();
             }
         } else {
             $this->setResponse($this->response->withStatus(406, 'Failed to add address'));

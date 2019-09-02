@@ -17,6 +17,7 @@ namespace App\Controller\V1\Web;
 use Cake\Auth\DefaultPasswordHasher;
 use Cake\I18n\Time;
 use Cake\Utility\Hash;
+use Cake\Utility\Text;
 use Cake\Validation\Validator;
 use Cake\Cache\Cache;
 
@@ -54,6 +55,7 @@ class ChangePhoneController extends AppController
         $validator = new Validator();
 
         $validator
+            ->requirePresence('password')
             ->notBlank('password', 'Password tidak boleh kosong')
             ->add('password', 'verify_password', [
             'rule' => function($value) use ($passwordEntity)  {
@@ -65,7 +67,7 @@ class ChangePhoneController extends AppController
         $error = $validator->errors($this->request->getData());
         if (!$error) {
             $data = [
-                'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                'session_id' => $this->request->getData('session_id', Text::uuid()),
                 'step' => 2,
             ];
 
@@ -107,6 +109,8 @@ class ChangePhoneController extends AppController
 
                     $validator = new Validator();
                     $validator
+                        ->requirePresence('old_phone')
+                        ->requirePresence('phone')
                         ->notBlank('old_phone', 'Nomor handphone lama tidak boleh kosong')
                         ->equals('old_phone', $find->get('phone'), 'Nomor handphone lama salah')
                         ->notBlank('phone', 'Nomor handphone baru tidak boleh kosong')
@@ -128,7 +132,7 @@ class ChangePhoneController extends AppController
 
                     if (!$error) {
                         $data = [
-                            'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                            'session_id' => $this->request->getData('session_id', Text::uuid()),
                             'step' => 3,
                             'phone' => $data['phone']
                         ];
@@ -156,6 +160,8 @@ class ChangePhoneController extends AppController
                 } else {
                     $this->response = $this->response->withStatus(404, 'No session id');
                 }
+            } else {
+                $this->response = $this->response->withStatus(404, 'No session id');
             }
         }
 
@@ -194,6 +200,7 @@ class ChangePhoneController extends AppController
 
                 $validator = new Validator();
                 $validator
+                    ->requirePresence('otp')
                     ->notBlank('otp', 'kode OTP tidak boleh kosong')
                     ->add('otp', 'is_valid', [
                     'rule' => function($value) {
@@ -213,7 +220,7 @@ class ChangePhoneController extends AppController
                             $customerEntity->set('phone', $cache['phone']);
                             if ($this->Customers->save($customerEntity)) {
                                 $data = [
-                                    'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                                    'session_id' => $this->request->getData('session_id', Text::uuid()),
                                     'step' => 4,
                                 ];
                                 Cache::delete($data['session_id'], 'change_phone');
@@ -229,6 +236,8 @@ class ChangePhoneController extends AppController
             } else {
                 $this->response = $this->response->withStatus(404, 'No session id');
             }
+        } else {
+            $this->response = $this->response->withStatus(404, 'No session id');
         }
         $this->set(compact('error', 'data'));
     }

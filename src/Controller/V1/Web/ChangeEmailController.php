@@ -67,7 +67,7 @@ class ChangeEmailController extends AppController
         $error = $validator->errors($this->request->getData());
         if (!$error) {
             $data = [
-                'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                'session_id' => $this->request->getData('session_id', Text::uuid()),
                 'step' => 2,
             ];
 
@@ -144,7 +144,7 @@ class ChangeEmailController extends AppController
                                 //$customerEntity->set('is_email_verified', 0);
                                 if ($this->Customers->save($customerEntity)) {
                                     $data = [
-                                        'session_id' => $this->request->getData('session_id', rand(1000, 9999)),
+                                        'session_id' => $this->request->getData('session_id', Text::uuid()),
                                         'step' => 3,
                                     ];
 
