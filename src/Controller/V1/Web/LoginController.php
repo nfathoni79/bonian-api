@@ -54,6 +54,29 @@ class LoginController extends AppController
         $this->set(compact('auth'));
     }
 
+    public function logout()
+    {
+        $this->request->allowMethod('get');
+        $token = $this->Authenticate->getToken();
+        if ($token) {
+            $tokenEntity = $this->CustomerAuthenticates->find()
+                ->where([
+                    'token' => $token
+                ])->first();
+
+            if ($tokenEntity) {
+                $this->CustomerAuthenticates->delete($tokenEntity);
+            } else {
+                $this->setResponse($this->response->withStatus(406, 'token not found'));
+            }
+
+
+        } else {
+            $this->setResponse($this->response->withStatus(406, 'token not found'));
+        }
+
+    }
+
     public function chatEndPoint()
     {
         $this->request->allowMethod('post');
