@@ -65,7 +65,9 @@ class LoginController extends AppController
                 ])->first();
 
             if ($tokenEntity) {
-                $this->CustomerAuthenticates->delete($tokenEntity);
+                //revoke token to expired
+                $tokenEntity->set('expired', Time::now()->format('Y-m-d H:i:s'));
+                $this->CustomerAuthenticates->save($tokenEntity);
             } else {
                 $this->setResponse($this->response->withStatus(406, 'token not found'));
             }
@@ -178,6 +180,10 @@ class LoginController extends AppController
             $ip = $ip[0];
         } else {
             $ip = null;
+        }
+
+        if (!$ip) {
+            $ip = $this->request->clientIp();
         }
 
 
@@ -326,6 +332,7 @@ class LoginController extends AppController
                         'customer_id' => $user->get('id'),
                         'token' => $key,
                         'browser_id' => $browserEntity->get('id'),
+                        'ip' => $ip,
                         'expired' => (Time::now())->addMonth($this->addMonth)->format('Y-m-d H:i:s')
                     ]);
                 }
