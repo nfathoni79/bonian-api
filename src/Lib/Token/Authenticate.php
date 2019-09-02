@@ -8,6 +8,7 @@
 
 namespace App\Lib\Token;
 
+use App\Exception\InvalidTokenException;
 use App\Exception\MissingTokenException;
 use App\Exception\InvalidTokenFormatException;
 use Cake\Utility\Security;
@@ -31,6 +32,8 @@ class Authenticate
 
             if (count($parts) < 2 || empty($parts[0]) || !preg_match('/^Bearer$/i', $parts[0])) {
                 throw new InvalidTokenFormatException();
+            } else if (count($parts) >= 3) {
+                throw new InvalidTokenFormatException();
             }
 
             $decrypt = Security::decrypt(base64_decode($parts[1]), Configure::read('Encrypt.salt'));
@@ -43,6 +46,8 @@ class Authenticate
                     $request = $request->withAttribute('authorization', $this);
                 }
 
+            } else {
+                throw new InvalidTokenException();
             }
 
         } else {

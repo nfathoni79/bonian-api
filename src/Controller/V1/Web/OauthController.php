@@ -142,6 +142,20 @@ class OauthController extends AppController
                     $userAgent = null;
                 }
 
+                $ip = $this->request->getHeader('ip');
+
+                if(count($ip) > 0) {
+                    $ip = $ip[0];
+                } else {
+                    $ip = null;
+                }
+
+                if (!$ip) {
+                    $ip = $this->request->clientIp();
+                }
+
+
+
                 if ($profile && $profile instanceof \SocialConnect\Common\Entity\User) {
                     //do with register status
                     //check exists
@@ -232,6 +246,10 @@ class OauthController extends AppController
                                 ])->first();
 
                         }
+                    }
+
+                    if (!$bid) {
+                        $bid = Security::hash($user->get('username') . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
                     }
 
 
@@ -369,6 +387,22 @@ class OauthController extends AppController
                     $userAgent = null;
                 }
 
+                $ip = $this->request->getHeader('ip');
+
+                if(count($ip) > 0) {
+                    $ip = $ip[0];
+                } else {
+                    $ip = null;
+                }
+
+                if (!$ip) {
+                    $ip = $this->request->clientIp();
+                }
+
+
+
+
+
                 if ($profile && $profile instanceof \SocialConnect\Common\Entity\User) {
                     $user = $this->Customers->find()
                         ->select([
@@ -391,6 +425,11 @@ class OauthController extends AppController
 
 
                     if ($user) {
+
+                        if (!$bid) {
+                            $bid = Security::hash($user->get('username') . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
+                        }
+
                         $message = '';
                         switch($user->get('customer_status_id')) {
                             case '2':

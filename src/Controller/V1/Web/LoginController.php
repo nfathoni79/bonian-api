@@ -54,30 +54,6 @@ class LoginController extends AppController
         $this->set(compact('auth'));
     }
 
-    public function logout()
-    {
-        $this->request->allowMethod('get');
-        $token = $this->Authenticate->getToken();
-        if ($token) {
-            $tokenEntity = $this->CustomerAuthenticates->find()
-                ->where([
-                    'token' => $token
-                ])->first();
-
-            if ($tokenEntity) {
-                //revoke token to expired
-                $tokenEntity->set('expired', Time::now()->format('Y-m-d H:i:s'));
-                $this->CustomerAuthenticates->save($tokenEntity);
-            } else {
-                $this->setResponse($this->response->withStatus(406, 'token not found'));
-            }
-
-
-        } else {
-            $this->setResponse($this->response->withStatus(406, 'token not found'));
-        }
-
-    }
 
     public function chatEndPoint()
     {
@@ -184,6 +160,10 @@ class LoginController extends AppController
 
         if (!$ip) {
             $ip = $this->request->clientIp();
+        }
+
+        if (!$bid) {
+            $bid = Security::hash($username . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
         }
 
 

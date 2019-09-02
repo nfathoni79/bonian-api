@@ -1,6 +1,7 @@
 <?php
 namespace App\Middleware;
 
+use App\Exception\MissingTokenException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use \Cake\ORM\Locator\TableLocator;
@@ -38,9 +39,9 @@ class AuthorizationMiddleware
                     ->where([
                         'token' => $authorization->getToken()
                     ])
-                    ->where(function(\Cake\Database\Expression\QueryExpression $exp) {
-                        return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
-                    })
+                    //->where(function(\Cake\Database\Expression\QueryExpression $exp) {
+                    //    return $exp->gte('expired', (Time::now())->format('Y-m-d H:i:s'));
+                    //})
                     ->first();
 
                 if ($find) {
@@ -61,7 +62,7 @@ class AuthorizationMiddleware
                 }
 
             } else {
-                throw new InvalidTokenException();
+                throw new MissingTokenException();
             }
         }
 

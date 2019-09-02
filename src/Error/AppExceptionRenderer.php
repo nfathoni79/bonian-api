@@ -2,6 +2,7 @@
 
 
 namespace App\Error;
+use App\Exception\InvalidTokenFormatException;
 use Cake\Error\ExceptionRenderer;
 
 
@@ -27,6 +28,14 @@ class AppExceptionRenderer extends ExceptionRenderer
 
 
     function MissingToken(\Exception $error)
+    {
+        $response = $this->controller->response;
+        return $response->withType('application/json')
+            ->withStatus($error->getCode(), $error->getMessage())
+            ->withStringBody($this->errorTemplate($error));
+    }
+
+    function InvalidTokenFormat(\Exception $error)
     {
         $response = $this->controller->response;
         return $response->withType('application/json')
