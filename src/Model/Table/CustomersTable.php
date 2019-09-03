@@ -143,7 +143,7 @@ class CustomersTable extends Table
             ->requirePresence('password', 'create', 'Password harus diisi')
             ->notBlank('password', 'Password harus diisi', 'create')
             ->lengthBetween('password', [6, 20], 'password min 6 - 20 character')
-            ->regex('password', '/^(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', 'Password harus mengandung min. 1 huruf besar dan 1 huruf kecil karakter');
+            ->regex('password', '/^(?=^.{6,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', 'Password harus mengandung 6 karakter, min. 1 huruf besar dan 1 huruf kecil karakter');
 
 
         $validator
