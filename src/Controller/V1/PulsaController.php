@@ -63,7 +63,7 @@ class PulsaController extends Controller
                     })
                     ->toArray();
 
-                $data = ['provider' => $provider, 'logo' => $this->provider[$provider]['logo'],'options' => $pulsa ];
+                $data = ['provider' => $provider, 'logo' => $this->provider[$provider]['logo'], 'logo_url' => rtrim(Configure::read('mainSite'), '/') . '/img/provider/' . $this->provider[$provider]['logo'],'options' => $pulsa ];
                 $this->set(compact('data'));
             }else{
                 $this->setResponse($this->response->withStatus(406, 'Provider tidak terdaftar'));
