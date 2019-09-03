@@ -117,6 +117,17 @@ class NotificationsController extends AppController
         $this->set(compact('data', 'count', 'categories', 'title'));
     }
 
+
+    public function getTypes()
+    {
+        $this->request->allowMethod('get');
+
+        $categories = $this->CustomerNotificationTypes->find()
+            ->toArray();
+
+        $this->set(compact('categories'));
+    }
+
     public function count()
     {
         $count = $this->CustomerNotifications->find()
@@ -132,7 +143,7 @@ class NotificationsController extends AppController
         $this->request->allowMethod('post');
         if ($notification_id = $this->request->getData('notification_id')) {
 
-            $this->CustomerNotifications->query()
+            $success = $this->CustomerNotifications->query()
                 ->update()
                 ->set('is_read', 1)
                 ->where([
@@ -147,14 +158,16 @@ class NotificationsController extends AppController
                     'is_read' => 0
                 ])->count();
 
-            $this->set(compact('total'));
+            $row_updated = $success->count();
+
+            $this->set(compact('total', 'row_updated'));
         }
     }
 
     public function markAll()
     {
         $this->request->allowMethod('post');
-        $this->CustomerNotifications->query()
+        $success = $this->CustomerNotifications->query()
             ->update()
             ->set('is_read', 1)
             ->where([
@@ -168,7 +181,9 @@ class NotificationsController extends AppController
                 'is_read' => 0
             ])->count();
 
-        $this->set(compact('total'));
+        $row_updated = $success->count();
+
+        $this->set(compact('total', 'row_updated'));
     }
 
 

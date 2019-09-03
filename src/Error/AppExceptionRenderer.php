@@ -68,5 +68,13 @@ class AppExceptionRenderer extends ExceptionRenderer
             ->withStringBody($this->errorTemplate($error));
     }
 
+    function MethodNotAllowed(\Exception $error)
+    {
+        $response = $this->controller->response;
+        return $response->withType('application/json')
+            ->withStatus($error->getCode(), $error->getMessage())
+            ->withStringBody($this->errorTemplate($error));
+    }
+
 
 }
