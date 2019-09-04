@@ -28,10 +28,10 @@ class AccessToken implements AccessTokenInterface
 
         switch ($provider) {
             case 'google':
-                $data = file_get_contents('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' . $access_token);
+                $data = @file_get_contents('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' . $access_token);
                 if ($data) {
                     $data = json_decode($data, true);
-                    if ($data) {
+                    if ($data && isset($data['sub'])) {
                         $this->token = $access_token;
                         $this->uid = $data['sub'];
                         $this->expires = $data['exp'];
@@ -39,16 +39,17 @@ class AccessToken implements AccessTokenInterface
                 }
             break;
             case 'facebook':
-                $data = file_get_contents('https://graph.facebook.com/me?access_token=' . $access_token);
+                $data = @file_get_contents('https://graph.facebook.com/me?access_token=' . $access_token);
                 if ($data) {
                     $data = json_decode($data, true);
-                    if ($data) {
+                    if ($data && isset($data['id'])) {
                         $this->token = $access_token;
                         $this->uid = $data['id'];
                         $this->expires = null;
                     }
 
                 }
+
                 break;
         }
     }
