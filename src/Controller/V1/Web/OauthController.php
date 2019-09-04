@@ -16,6 +16,7 @@ use Cake\Utility\Security;
 use Cake\I18n\Time;
 use Cake\Core\Configure;
 use Cake\Validation\Validator;
+use App\Lib\SocialConnect\AccessToken;
 
 /**
  * Class LoginController
@@ -359,7 +360,13 @@ class OauthController extends AppController
             try {
                 $provider = $service->getProvider($providerName);
 
-                $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+                if ($access_token = $this->request->getQuery('access_token')) {
+                    $oauthToken = new AccessToken($providerName, $access_token);
+
+                } else {
+                    $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+                }
+
                 
 
                 $oauth = [
