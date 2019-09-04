@@ -301,7 +301,7 @@ class CartController extends AppController
                     'CustomerCartCoupons.customer_cart_id IS NULL',
                     'CustomerCartCoupons.customer_id' => $customerId,
                     'CustomerCartCoupons.product_id' => $cart->get('product_id'),
-                ]);
+                ])->group('CustomerCartCoupons.product_id');
             $data = $couponList;
 //            $data =  $cart->get('customer_cart_id');
             $this->set(compact('data'));
