@@ -119,7 +119,14 @@ class OauthController extends AppController
 
             try {
                 $provider = $service->getProvider($providerName);
-                $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+
+                if ($access_token = $this->request->getQuery('access_token')) {
+                    $oauthToken = new AccessToken($providerName, $access_token);
+
+                } else {
+                    $oauthToken = $provider->getAccessTokenByRequestParameters($this->request->getQueryParams());
+                }
+
 
                 $oauth = [
                     'token' => $oauthToken->getToken(),
