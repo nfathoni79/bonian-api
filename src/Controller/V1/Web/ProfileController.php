@@ -19,6 +19,7 @@ use Cake\I18n\Time;
 use Cake\Utility\Hash;
 use Cake\I18n\FrozenTime;
 use  Cake\ORM\ResultSet;
+use Cake\Utility\Security;
 use Cake\Validation\Validator;
 use Cake\Http\Client;
 use Cake\Core\Configure;
@@ -125,7 +126,8 @@ class ProfileController extends AppController
         $passwordEntity = $this->Customers->find()
             ->select([
                 'id',
-                'password'
+                'password',
+                'username'
             ])
             ->where([
                 'id' => $this->Authenticate->getId()
@@ -134,41 +136,123 @@ class ProfileController extends AppController
 
         $validator = $this->Customers->getValidator('password');
 
-        if ($passwordEntity->get('password')) {
-            $validator->notBlank('current_password', 'Kolom ini harus diisi')
-                ->add('current_password', 'check_password', [
-                    'rule' => function($value) use ($passwordEntity) {
-                        return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
-                    },
-                    'message' => 'Password lama anda tidak valid'
+        $validator->requirePresence('password')
+            ->requirePresence('repeat_password');
+
+        $error = $validator->errors($this->request->getData());
+
+        if (!$error) {
+            if ($passwordEntity->get('password')) {
+                $validator->requirePresence('current_password');
+                $validator->notBlank('current_password', 'Kolom ini harus diisi')
+                    ->add('current_password', 'check_password', [
+                        'rule' => function($value) use ($passwordEntity) {
+                            return (new DefaultPasswordHasher())->check($value, $passwordEntity->get('password'));
+                        },
+                        'message' => 'Password lama anda tidak valid'
+                    ]);
+            }
+
+
+            $this->Customers->patchEntity($passwordEntity, $this->request->getData(), [
+                'validate' => 'password',
+                'fields' => [
+                    'password'
+                ]
+            ]);
+
+            if (!$this->Customers->save($passwordEntity)) {
+                $this->setResponse($this->response->withStatus(406, 'Failed change password'));
+                $error = $passwordEntity->getErrors();
+            } else {
+
+                //reset token to expired
+                $this->CustomerAuthenticates->query()
+                    ->update()
+                    ->set([
+                        'expired' => (Time::now())->format('Y-m-d H:i:s')
+                    ])
+                    ->where([
+                        'customer_id' => $this->Authenticate->getId()
+                    ])
+                    ->execute();
+
+
+                //generate new token
+
+                $bid = $this->request->getHeader('bid');
+                if(count($bid) > 0) {
+                    $bid = $bid[0];
+                } else {
+                    $bid = null;
+                }
+
+                $userAgent = $this->request->getHeader('user-agent');
+                if(count($userAgent) > 0) {
+                    $userAgent = $userAgent[0];
+                } else {
+                    $userAgent = null;
+                }
+
+                $ip = $this->request->getHeader('ip');
+
+                if(count($ip) > 0) {
+                    $ip = $ip[0];
+                } else {
+                    $ip = null;
+                }
+
+                if (!$ip) {
+                    $ip = $this->request->clientIp();
+                }
+
+                if (!$bid) {
+                    $bid = Security::hash($passwordEntity->get('username') . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
+                }
+                $browserEntity = $this->CustomerAuthenticates->Browsers->find()
+                    ->where([
+                        'bid' => $bid
+                    ])
+                    ->first();
+
+                if (!$browserEntity) {
+                    $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
+                        'bid' => $bid,
+                        'user_agent' => $userAgent
+                    ]);
+                    $this->CustomerAuthenticates->Browsers->save($browserEntity);
+                }
+
+                $key = Security::randomString();
+                $token = base64_encode(Security::encrypt(json_encode([
+                    'id' => $passwordEntity->get('id'),
+                    'email' => $passwordEntity->get('email'),
+                    'token' => $key
+                ]), Configure::read('Encrypt.salt')));
+
+                $find = $this->CustomerAuthenticates->newEntity([
+                    'customer_id' => $passwordEntity->get('id'),
+                    'token' => $key,
+                    'browser_id' => $browserEntity->get('id'),
+                    'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
                 ]);
-        }
 
 
-        $this->Customers->patchEntity($passwordEntity, $this->request->getData(), [
-            'validate' => 'password',
-            'fields' => [
-                'password'
-            ]
-        ]);
 
-        if (!$this->Customers->save($passwordEntity)) {
-            $this->setResponse($this->response->withStatus(406, 'Failed change password'));
-            $error = $passwordEntity->getErrors();
+                $data = [];
+
+                if ($this->CustomerAuthenticates->save($find)) {
+                    $data['token'] = $token;
+                }
+
+            }
         } else {
-            //reset token to expired
-            $this->CustomerAuthenticates->query()
-                ->update()
-                ->set([
-                    'expired' => (Time::now())->format('Y-m-d H:i:s')
-                ])
-                ->where([
-                    'customer_id' => $this->Authenticate->getId()
-                ])
-                ->execute();
+            $this->setResponse($this->response->withStatus(406, 'Please fill the require input'));
         }
 
-        $this->set(compact('error'));
+
+
+        $this->set(compact('error', 'data'));
 
     }
 
