@@ -271,6 +271,12 @@ class ProductRatingsController extends AppController
             ->requirePresence('product_id')
             ->notBlank('product_id');
 
+        $validator->requirePresence('rating')
+            ->notBlank('rating','Silahkan berikan rating terhadap produk')
+            ->range('rating', [1, 5], 'silahkan pilih rating 1 sampai 5');
+        $validator->requirePresence('comment')
+            ->notBlank('comment','Komentar tidak boleh kosong');
+
         $error = $validator->errors($this->request->getData());
         if (empty($error)) {
             $findProductRating = $this->ProductRatings->find()
