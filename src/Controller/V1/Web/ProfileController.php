@@ -179,71 +179,74 @@ class ProfileController extends AppController
 
 
                 //generate new token
+                if (!$this->request->getData('dont_request_token')) {
+                    $bid = $this->request->getHeader('bid');
+                    if(count($bid) > 0) {
+                        $bid = $bid[0];
+                    } else {
+                        $bid = null;
+                    }
 
-                $bid = $this->request->getHeader('bid');
-                if(count($bid) > 0) {
-                    $bid = $bid[0];
-                } else {
-                    $bid = null;
-                }
+                    $userAgent = $this->request->getHeader('user-agent');
+                    if(count($userAgent) > 0) {
+                        $userAgent = $userAgent[0];
+                    } else {
+                        $userAgent = null;
+                    }
 
-                $userAgent = $this->request->getHeader('user-agent');
-                if(count($userAgent) > 0) {
-                    $userAgent = $userAgent[0];
-                } else {
-                    $userAgent = null;
-                }
+                    $ip = $this->request->getHeader('ip');
 
-                $ip = $this->request->getHeader('ip');
+                    if(count($ip) > 0) {
+                        $ip = $ip[0];
+                    } else {
+                        $ip = null;
+                    }
 
-                if(count($ip) > 0) {
-                    $ip = $ip[0];
-                } else {
-                    $ip = null;
-                }
+                    if (!$ip) {
+                        $ip = $this->request->clientIp();
+                    }
 
-                if (!$ip) {
-                    $ip = $this->request->clientIp();
-                }
+                    if (!$bid) {
+                        $bid = Security::hash($passwordEntity->get('username') . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
+                    }
+                    $browserEntity = $this->CustomerAuthenticates->Browsers->find()
+                        ->where([
+                            'bid' => $bid
+                        ])
+                        ->first();
 
-                if (!$bid) {
-                    $bid = Security::hash($passwordEntity->get('username') . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
-                }
-                $browserEntity = $this->CustomerAuthenticates->Browsers->find()
-                    ->where([
-                        'bid' => $bid
-                    ])
-                    ->first();
+                    if (!$browserEntity) {
+                        $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
+                            'bid' => $bid,
+                            'user_agent' => $userAgent
+                        ]);
+                        $this->CustomerAuthenticates->Browsers->save($browserEntity);
+                    }
 
-                if (!$browserEntity) {
-                    $browserEntity = $this->CustomerAuthenticates->Browsers->newEntity([
-                        'bid' => $bid,
-                        'user_agent' => $userAgent
+                    $key = Security::randomString();
+                    $token = base64_encode(Security::encrypt(json_encode([
+                        'id' => $passwordEntity->get('id'),
+                        'email' => $passwordEntity->get('email'),
+                        'token' => $key
+                    ]), Configure::read('Encrypt.salt')));
+
+                    $find = $this->CustomerAuthenticates->newEntity([
+                        'customer_id' => $passwordEntity->get('id'),
+                        'token' => $key,
+                        'browser_id' => $browserEntity->get('id'),
+                        'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
                     ]);
-                    $this->CustomerAuthenticates->Browsers->save($browserEntity);
+
+
+
+                    $data = [];
+
+                    if ($this->CustomerAuthenticates->save($find)) {
+                        $data['token'] = $token;
+                    }
                 }
 
-                $key = Security::randomString();
-                $token = base64_encode(Security::encrypt(json_encode([
-                    'id' => $passwordEntity->get('id'),
-                    'email' => $passwordEntity->get('email'),
-                    'token' => $key
-                ]), Configure::read('Encrypt.salt')));
 
-                $find = $this->CustomerAuthenticates->newEntity([
-                    'customer_id' => $passwordEntity->get('id'),
-                    'token' => $key,
-                    'browser_id' => $browserEntity->get('id'),
-                    'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
-                ]);
-
-
-
-                $data = [];
-
-                if ($this->CustomerAuthenticates->save($find)) {
-                    $data['token'] = $token;
-                }
 
             }
         } else {
