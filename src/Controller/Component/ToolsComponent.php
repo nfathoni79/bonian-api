@@ -2,7 +2,7 @@
 namespace App\Controller\Component;
 
 use Cake\Controller\Component;
-
+use Cake\ORM\Locator\TableLocator;
 
 /**
  * Tools component
@@ -16,6 +16,11 @@ class ToolsComponent extends Component
      * @var array
      */
     protected $_defaultConfig = [];
+
+    /**
+     * @var \App\Model\Table\IpLocationsTable $IpLocations
+     */
+    protected $IpLocations = null;
 
     public function initialize(array $config)
     {
@@ -76,6 +81,38 @@ class ToolsComponent extends Component
             } catch(\Exception $e) {}
         }
         return implode('', $pieces);
+    }
+
+    public function getIpLocation($ip)
+    {
+        return  json_decode(file_get_contents(
+            'https://api.ipdata.co/'.$ip.'?api-key=d3941e87e91ccde61c9a9d0a488f3ceee2cead61fabfaa2de8087e64'
+        ), true);
+    }
+
+    public function initialTableIpLocation()
+    {
+        $this->IpLocations = (new TableLocator ())->get('IpLocations');
+        return $this;
+    }
+
+    public function saveIpLocation($ip)
+    {
+        if (!in_array($ip, ['::1', '127.0.0.1']) && $this->IpLocations instanceof \Cake\ORM\Table) {
+            $exists = $this->IpLocations->find()
+                ->where([
+                    'ip' => $ip
+                ])
+                ->count();
+
+            if ($exists == 0) {
+                $ipEntity = $this->getIpLocation($ip);
+                if ($ip && isset($ipEntity['ip'])) {
+                    $ipEntity = $this->IpLocations->newEntity($ipEntity);
+                    return $this->IpLocations->save($ipEntity);
+                }
+            }
+        }
     }
 
 

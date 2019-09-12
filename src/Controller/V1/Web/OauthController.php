@@ -23,6 +23,7 @@ use App\Lib\SocialConnect\AccessToken;
  * @package App\Controller\V1
  * @property \App\Model\Table\CustomersTable $Customers
  * @property \App\Model\Table\CustomerAuthenticatesTable CustomerAuthenticates
+ * @property \App\Model\Table\IpLocationsTable IpLocations
  */
 class OauthController extends AppController
 {
@@ -37,6 +38,7 @@ class OauthController extends AppController
         parent::initialize();
         $this->loadModel('Customers');
         $this->loadModel('CustomerAuthenticates');
+        $this->loadModel('IpLocations');
         $this->config = Configure::read('Oauth');
     }
 
@@ -320,7 +322,10 @@ class OauthController extends AppController
                         ]);
                     }
 
-                    $this->CustomerAuthenticates->save($find);
+                    if($this->CustomerAuthenticates->save($find)) {
+                        $this->Tools->initialTableIpLocation()
+                            ->saveIpLocation($ip);
+                    }
 
                     $data = [
                         'id' => $user->get('id'),
@@ -515,7 +520,10 @@ class OauthController extends AppController
                             ]);
                         }
 
-                        $this->CustomerAuthenticates->save($find);
+                        if ($this->CustomerAuthenticates->save($find)) {
+                            $this->Tools->initialTableIpLocation()
+                                ->saveIpLocation($ip);
+                        }
 
                         $data = [
                             'id' => $user->get('id'),

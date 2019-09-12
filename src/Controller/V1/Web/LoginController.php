@@ -321,6 +321,9 @@ class LoginController extends AppController
                     if ($find->isNew()) {
                         $this->sendNotification($ip, $userAgent, $user);
                     }
+
+                    $this->Tools->initialTableIpLocation()
+                        ->saveIpLocation($ip);
                 }
 
                 $data = [

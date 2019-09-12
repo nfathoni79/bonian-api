@@ -68,6 +68,7 @@ class CustomersController extends AppController
                 if (empty($ua['platform'])) {
                     switch ($ua['browser']) {
                         case 'okhttp':
+                            $ua['browser'] = 'MobileApp'; //TODO force to MobileApp if okhttp
                             $ua['platform'] = 'Android';
                             break;
                         default:
@@ -104,23 +105,8 @@ class CustomersController extends AppController
                 ]
             ]);
             if ($this->CustomerAuthenticates->save($auth)) {
-                if (!in_array($auth->get('ip'), ['::1', '127.0.0.1'])) {
-                    $ip = json_decode(file_get_contents(
-                        'https://api.ipdata.co/'.$auth->get('ip').'?api-key=d3941e87e91ccde61c9a9d0a488f3ceee2cead61fabfaa2de8087e64'
-                    ), true);
-                    if ($ip && isset($ip['ip'])) {
-                        $exists = $this->IpLocations->find()
-                            ->where([
-                                'ip' => $ip['ip']
-                            ])
-                            ->count();
-                        if ($exists == 0) {
-                            $entity = $this->IpLocations->newEntity($ip);
-                            $this->IpLocations->save($entity);
-                        }
-
-                    }
-                }
+                $this->Tools->initialTableIpLocation()
+                    ->saveIpLocation($auth->get('ip'));
             }
         }
     }
