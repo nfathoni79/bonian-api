@@ -162,6 +162,10 @@ class LoginController extends AppController
             $ip = $this->request->clientIp();
         }
 
+        if (!$ip) {
+            $ip = env('REMOTE_ADDR');
+        }
+
         if (!$bid) {
             $bid = Security::hash($username . $userAgent . $ip, 'sha256', true); //($username . $userAgent . $ip);
         }

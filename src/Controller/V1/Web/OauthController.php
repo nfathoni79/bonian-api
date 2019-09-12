@@ -164,6 +164,10 @@ class OauthController extends AppController
                     $ip = $this->request->clientIp();
                 }
 
+                if (!$ip) {
+                    $ip = env('REMOTE_ADDR');
+                }
+
 
 
                 if ($profile && $profile instanceof \SocialConnect\Common\Entity\User) {
@@ -416,6 +420,10 @@ class OauthController extends AppController
 
                 if (!$ip) {
                     $ip = $this->request->clientIp();
+                }
+
+                if (!$ip) {
+                    $ip = env('REMOTE_ADDR');
                 }
 
 
