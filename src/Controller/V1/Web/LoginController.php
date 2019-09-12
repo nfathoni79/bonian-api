@@ -59,6 +59,9 @@ class LoginController extends AppController
     {
         $this->request->allowMethod('post');
         $user_id = $this->request->getData('user_id');
+        if (empty($user_id)) {
+            $user_id = $this->request->getQuery('user_id');
+        }
 
         try {
             $user = $this->ChatKit->getInstance()->getUser([ 'id' => $user_id ]);
