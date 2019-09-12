@@ -321,6 +321,7 @@ class OauthController extends AppController
                         $find = $this->CustomerAuthenticates->newEntity([
                             'customer_id' => $user->get('id'),
                             'token' => $key,
+                            'ip' => $ip,
                             'browser_id' => $browserEntity->get('id'),
                             'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
                         ]);
@@ -523,6 +524,7 @@ class OauthController extends AppController
                             $find = $this->CustomerAuthenticates->newEntity([
                                 'customer_id' => $user->get('id'),
                                 'token' => $key,
+                                'ip' => $ip,
                                 'browser_id' => $browserEntity->get('id'),
                                 'expired' => (Time::now())->addMonth(6)->format('Y-m-d H:i:s')
                             ]);
