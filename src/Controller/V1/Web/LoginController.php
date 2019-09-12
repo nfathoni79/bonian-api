@@ -115,10 +115,10 @@ class LoginController extends AppController
         }
 
 
-        if ($platform) {
+        if ($platform && $platform === 'mobile') {
             return $this->response->withStatus(200)
                 ->withType('application/json')
-                ->withStringBody(json_encode($auth));
+                ->withStringBody(json_encode($auth['body']));
         }
 
         $this->set(compact('auth', 'user'));
