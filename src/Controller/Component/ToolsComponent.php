@@ -98,7 +98,8 @@ class ToolsComponent extends Component
 
     public function saveIpLocation($ip)
     {
-        if (!in_array($ip, ['::1', '127.0.0.1']) && $this->IpLocations instanceof \Cake\ORM\Table) {
+
+        if ($ip && !in_array($ip, ['::1', '127.0.0.1']) && $this->IpLocations instanceof \Cake\ORM\Table) {
             $exists = $this->IpLocations->find()
                 ->where([
                     'ip' => $ip
@@ -108,6 +109,11 @@ class ToolsComponent extends Component
             if ($exists == 0) {
                 $ipEntity = $this->getIpLocation($ip);
                 if ($ip && isset($ipEntity['ip'])) {
+                    if (is_array($ipEntity['asn'])) {
+                        $asn = $ipEntity['asn'];
+                        $ipEntity['asn'] = isset($asn['asn']) ? $asn['asn'] : null ;
+                        $ipEntity['organisation'] = isset($asn['name']) ? $asn['name'] : null ;
+                    }
                     $ipEntity = $this->IpLocations->newEntity($ipEntity);
                     return $this->IpLocations->save($ipEntity);
                 }
