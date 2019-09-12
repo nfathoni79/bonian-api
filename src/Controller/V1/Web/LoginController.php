@@ -117,7 +117,7 @@ class LoginController extends AppController
                 $this->setResponse($this->response->withStatus(403, 'failed authenticate socket'));
             }
         } else {
-            $this->setResponse($this->response->withStatus(403, 'failed invalid user_id'));
+            $this->setResponse($this->response->withStatus(403, 'failed user_id'));
         }
 
 
