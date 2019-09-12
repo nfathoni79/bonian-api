@@ -58,6 +58,14 @@ class LoginController extends AppController
     public function chatEndPoint()
     {
         $this->request->allowMethod('post');
+
+        $platform = $this->request->getHeader('platform');
+        if(count($platform) > 0) {
+            $platform = $platform[0];
+        } else {
+            $platform = null;
+        }
+
         $user_id = $this->request->getData('user_id');
         if (empty($user_id)) {
             $user_id = $this->request->getQuery('user_id');
@@ -106,6 +114,12 @@ class LoginController extends AppController
             $this->setResponse($this->response->withStatus(403, 'failed authenticate socket'));
         }
 
+
+        if ($platform) {
+            return $this->response->withStatus(200)
+                ->withType('application/json')
+                ->withStringBody(json_encode($auth));
+        }
 
         $this->set(compact('auth', 'user'));
     }
