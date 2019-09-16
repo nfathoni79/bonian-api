@@ -94,7 +94,8 @@ class LoginController extends AppController
                         'id' => $user_id,
                         'name' => $customerEntity ? $customerEntity->get('first_name') . ' ' . $customerEntity->get('last_name') : '',
                         'custom_data' => [
-                            'is_admin' => false
+                            'is_admin' => false,
+                            'customer_id' => $this->Authenticate->getId()
                         ]
                     ];
 
@@ -148,6 +149,9 @@ class LoginController extends AppController
                 'new_login_notification'
             );
     }
+
+
+
 
     /**
      * index login
