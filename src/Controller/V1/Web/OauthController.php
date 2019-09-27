@@ -224,7 +224,7 @@ class OauthController extends AppController
                         $register->set('reffcode', strtoupper($this->Tools->reffcode('10')));
                         $register->set('customer_group_id', 1);
                         $register->set('customer_status_id', 1);
-                        $register->set('is_verified', 0);
+                        $register->set('is_verified', 1); //TODO this force set 1 Request by mobile apps
                         $register->set('is_email_verified', $profile->emailVerified);
                         $register->set('avatar', 'avatar.jpg');
                         $register->set('platforrm', $this->request->getQuery('platform', 'Web'));
