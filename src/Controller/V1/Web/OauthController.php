@@ -206,6 +206,20 @@ class OauthController extends AppController
                             $register->set('last_name', $last_name);
                         }
 
+                        list($username, $domain) = explode('@', $profile->email);
+                        //check Exists username
+                        $usernameCheck = $this->Customers->find()
+                            ->where([
+                                'username' => $username
+                            ])
+                            ->count();
+
+                        if ($usernameCheck > 0) {
+                            $username .= rand(1000, 9999);
+                        }
+
+                        $register->set('username', $username);
+
 
                         $register->set('reffcode', strtoupper($this->Tools->reffcode('10')));
                         $register->set('customer_group_id', 1);
@@ -216,6 +230,8 @@ class OauthController extends AppController
                         $register->set('platforrm', $this->request->getQuery('platform', 'Web'));
 
                         $save = $this->Customers->save($register);
+
+
                         if($save){
                             $balanceEntity = $this->Customers->CustomerBalances->newEntity([
                                 'customer_id' => $save->get('id'),
