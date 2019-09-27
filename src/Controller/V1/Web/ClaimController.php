@@ -122,7 +122,9 @@ class ClaimController extends AppController
                             }else{
                                 $this->setResponse($this->response->withStatus(406, 'Syarat batas claim 5.000 point sudah terpenuhi atau gunakan sisa untuk dapat melakukan penukaran voucher.'));
                             }
-                        }
+                        }else{ 
+							$this->setResponse($this->response->withStatus(406, 'Validasi point'));
+						}
                     }else{
                         $this->setResponse($this->response->withStatus(406, 'Stok tidak tersedia'));
                     }
