@@ -371,7 +371,8 @@ class ProfileController extends AppController
                 $row->point_balance =  $row->customer_balances[0]->point;
                 $row->gender_name = ($row->gender == 'm') ? 'Male' : 'Female';
                 $row->dob = $row->dob instanceof \Cake\I18n\FrozenDate  ? $row->dob->format('Y-m-d') : $row->dob;
-                $row->phone = $this->Tools->maskPhone($row->phone);
+                //$row->phone = $row->phone;
+                $row->phone_masked = $this->Tools->maskPhone($row->phone);
 
 
                 unset($row->customer_balances);
